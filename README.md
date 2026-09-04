@@ -117,10 +117,28 @@ git tag -a v0.1.0 -m "release v0.1.0"
 git push origin v0.1.0
 ```
 
-## 自更新
+## 自更新与版本切换
 
-已安装 `upy` 后，可直接通过内置命令自更新到最新版本：
+已安装 `upy` 后，可通过内置命令一键升级或切换版本：
 
 ```bash
+# 1. 自动检查并升级到 Releases 最新版本
 upy update
+
+# 2. 切换/更新/回滚到指定版本
+upy update v0.1.0
+
+# 3. 强制重新下载并覆盖当前版本
+upy update --force
+upy update v0.1.0 --force
 ```
+
+### 私有仓库授权机制
+
+若 `upy` 所在的仓库为**私有仓库 (Private Repository)**，自更新会自动按以下顺序提取 Token 访问 GitHub API 进行鉴权与资产下载：
+
+1. `~/.upy/config.yaml` 中为归属 `AaronConlon` 配置的专属 Token (`github.tokens.AaronConlon`)
+2. 配置文件中的全局默认 Token (`github.token`)
+3. 环境变量 `DEPLOY_GITHUB_TOKEN`
+
+> 推荐只需运行一次 `upy init AaronConlon <token>` 即可无缝自更新与切换版本。

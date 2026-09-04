@@ -123,7 +123,11 @@ func GetLatest(repo string) (*GHRelease, error) {
 		return nil, err
 	}
 	if resp.StatusCode == 404 {
-		return nil, fmt.Errorf("仓库 %s 没有已发布版本。", repo)
+		owner := config.ParseRepoOwner(repo)
+		if tok == "" {
+			return nil, fmt.Errorf("仓库 %s 不可访问或没有发布版本。若为私有仓库，请通过 upy init %s <token> 添加访问权限。", repo, owner)
+		}
+		return nil, fmt.Errorf("仓库 %s 没有已发布的正式版本（请检查该 token 是否具有目标仓库权限）。", repo)
 	}
 	defer resp.Body.Close()
 	var r GHRelease
@@ -142,7 +146,11 @@ func GetByTag(repo, tag string) (*GHRelease, error) {
 		return nil, err
 	}
 	if resp.StatusCode == 404 {
-		return nil, fmt.Errorf("找不到版本 %s。", tag)
+		owner := config.ParseRepoOwner(repo)
+		if tok == "" {
+			return nil, fmt.Errorf("仓库 %s 找不到版本 %s。若为私有仓库，请通过 upy init %s <token> 添加访问权限。", repo, tag, owner)
+		}
+		return nil, fmt.Errorf("仓库 %s 找不到版本 %s（请检查版本号或 token 权限）。", repo, tag)
 	}
 	defer resp.Body.Close()
 	var r GHRelease

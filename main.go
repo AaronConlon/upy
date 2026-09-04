@@ -23,7 +23,7 @@ func printHelp() {
 		"                                 (不带参数时交互选择版本)",
 		"  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)",
 		"  version                        查看当前版本并检查更新",
-		"  update                         自更新到最新版本",
+		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
 		"  init [owner] <token>           初始化或添加 GitHub 访问 token (支持按组织/用户归属)",
 		"",
 		"选项:",
@@ -48,6 +48,8 @@ func printHelp() {
 		"  upy bundle ./bundle.zip       部署本地 bundle",
 		"  upy init ghp_xxx              设置默认全局 GitHub token",
 		"  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token",
+		"  upy update                    自更新到最新版本",
+		"  upy update v0.1.0             更新/切换到指定版本",
 	}
 	fmt.Println(strings.Join(lines, "\n"))
 }
@@ -131,7 +133,11 @@ func main() {
 	case "version":
 		err = commands.VersionCmd()
 	case "update":
-		err = commands.UpdateCmd()
+		target := ""
+		if len(p.positional) > 0 {
+			target = p.positional[0]
+		}
+		err = commands.UpdateCmd(target, p.force)
 	case "init":
 		err = commands.Init(commands.InitArgs{Args: p.positional})
 	}
