@@ -31,7 +31,13 @@ func stubRun(t *testing.T, failOnSubstr string) *[]cmdrun.Call {
 		}
 		return nil
 	}
-	t.Cleanup(func() { cmdrun.Run = cmdrun.RealRun })
+	cmdrun.Output = func(cmd string, args []string, opts cmdrun.Options) (string, error) {
+		return "codia\n", nil
+	}
+	t.Cleanup(func() {
+		cmdrun.Run = cmdrun.RealRun
+		cmdrun.Output = cmdrun.RealOutput
+	})
 	return &calls
 }
 
@@ -83,6 +89,32 @@ func TestComposeDeactivateDownsPrevious(t *testing.T) {
 	}
 }
 
+func TestComposeArgsLoadsReleaseEnvBeforeSharedEnv(t *testing.T) {
+	d, root := newComposeCtx(t, "", "0.3.17")
+	releaseEnv := filepath.Join(root, "releases", "0.3.17", ".env")
+	sharedEnv := filepath.Join(root, "shared", ".env")
+	if err := os.MkdirAll(filepath.Dir(sharedEnv), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(releaseEnv, []byte("SURVEY_HOST_FONT_DIR=/release/fonts\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sharedEnv, []byte("SURVEY_HOST_FONT_DIR=/shared/fonts\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	composeFile := filepath.Join(root, "releases", "0.3.17", "docker-compose.yml")
+	wanted := []string{
+		"-f", composeFile,
+		"--env-file", releaseEnv,
+		"--env-file", sharedEnv,
+		"config",
+	}
+	if got := d.composeArgs("config"); !reflect.DeepEqual(got, wanted) {
+		t.Fatalf("compose 环境文件顺序错误\n期望: %v\n得到: %v", wanted, got)
+	}
+}
+
 func TestComposeDeactivateSkipsWithoutPrevious(t *testing.T) {
 	d, _ := newComposeCtx(t, "", "0.3.17") // 首次部署
 	calls := stubRun(t, "")
@@ -104,9 +136,29 @@ func TestComposeDeactivateFailsWhenDownFails(t *testing.T) {
 	}
 }
 
+func TestComposeDeactivateRecordsStoppedPrevious(t *testing.T) {
+	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
+	stubRun(t, "")
+	cmdrun.Output = func(cmd string, args []string, opts cmdrun.Options) (string, error) {
+		return "", nil // docker compose ps 没有 running service
+	}
+
+	if err := d.Deactivate(); err != nil {
+		t.Fatalf("Deactivate 不应失败: %v", err)
+	}
+	if d.previousWasRunning {
+		t.Fatal("无 running service 时应记录为停机")
+	}
+	if !d.previousStopped {
+		t.Fatal("清理旧 compose 后应记录为已停止")
+	}
+}
+
 func TestComposeRollbackStopsNewThenStartsPrevious(t *testing.T) {
 	d, root := newComposeCtx(t, "0.3.16", "0.3.17")
 	calls := stubRun(t, "")
+	d.previousStopped = true
+	d.previousWasRunning = true
 
 	if err := d.Rollback(); err != nil {
 		t.Fatalf("Rollback 不应失败: %v", err)
@@ -144,6 +196,8 @@ func TestComposeRollbackWithoutPrevious(t *testing.T) {
 func TestComposeRollbackStillUpsPreviousWhenDownNewFails(t *testing.T) {
 	d, root := newComposeCtx(t, "0.3.16", "0.3.17")
 	calls := stubRun(t, "down") // down 新版本失败
+	d.previousStopped = true
+	d.previousWasRunning = true
 
 	if err := d.Rollback(); err != nil {
 		t.Fatalf("down 失败不应阻断回滚: %v", err)
@@ -152,5 +206,37 @@ func TestComposeRollbackStillUpsPreviousWhenDownNewFails(t *testing.T) {
 	wantedUp := []string{"compose", "-f", prevFile, "up", "-d"}
 	if len(*calls) != 2 || !reflect.DeepEqual((*calls)[1].Args, wantedUp) {
 		t.Fatalf("down 新版本失败后仍应尝试 up -d 上一版本, calls=%v", *calls)
+	}
+}
+
+func TestComposeRollbackKeepsStoppedPreviousStopped(t *testing.T) {
+	d, root := newComposeCtx(t, "0.3.16", "0.3.17")
+	calls := stubRun(t, "")
+	d.previousStopped = true
+	d.previousWasRunning = false
+
+	if err := d.Rollback(); err != nil {
+		t.Fatalf("Rollback 不应失败: %v", err)
+	}
+
+	if len(*calls) != 1 {
+		t.Fatalf("旧服务原本停机时仅应清理失败新版本，calls=%v", *calls)
+	}
+	curFile := filepath.Join(root, "releases", "0.3.17", "docker-compose.yml")
+	wantedDown := []string{"compose", "-f", curFile, "down", "--remove-orphans"}
+	if !reflect.DeepEqual((*calls)[0].Args, wantedDown) {
+		t.Fatalf("应仅 down 失败新版本\n期望: %v\n得到: %v", wantedDown, (*calls)[0].Args)
+	}
+}
+
+func TestComposeRollbackDoesNotTouchPreviousBeforeDeactivate(t *testing.T) {
+	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
+	calls := stubRun(t, "")
+
+	if err := d.Rollback(); err != nil {
+		t.Fatalf("Rollback 不应失败: %v", err)
+	}
+	if len(*calls) != 0 {
+		t.Fatalf("旧服务未被停止时不应执行任何回滚命令，calls=%v", *calls)
 	}
 }

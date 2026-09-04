@@ -34,6 +34,8 @@ VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main
 
 安装器会自动识别并提示当前 shell；对 zsh、bash、fish 自动配置 Tab 一级命令补全（`release`、`deploy`、`bundle`、`version`、`update`、`init`）。新开终端后即可使用，例如 `upy rel<Tab>`。
 
+每个 Release 还会附带 `SHA256SUMS`。安装器与 `upy update` 都会先校验当前平台二进制的 SHA-256；缺少清单或校验不一致时会拒绝替换本地二进制。
+
 ## 初始化与多 Token 配置
 
 `upy` 内置了 `init` 命令，支持快速创建用户配置文件，并**支持多 Token 归属管理**。当拉取不同组织或个人私有仓库时，自动根据仓库的 Owner 匹配对应的 Token。

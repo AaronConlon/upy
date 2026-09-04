@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/checksum"
 	"github.com/AaronConlon/upy/internal/github"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/platform"
@@ -61,6 +62,10 @@ func UpdateCmd(target string, force bool) error {
 	if err != nil {
 		return err
 	}
+	sumsAsset, err := github.FindAsset(release, "SHA256SUMS", "", "")
+	if err != nil {
+		return fmt.Errorf("版本 %s 缺少 SHA256SUMS，拒绝安装未校验的二进制: %w", release.Tag, err)
+	}
 
 	self, err := os.Executable()
 	if err != nil {
@@ -74,11 +79,22 @@ func UpdateCmd(target string, force bool) error {
 	tmpPath := tmp.Name()
 	tmp.Close()
 	os.Remove(tmpPath) // 需要干净路径, 让下载创建
+	sumsPath := tmpPath + ".SHA256SUMS"
+	defer os.Remove(tmpPath)
+	defer os.Remove(sumsPath)
 
 	log.Step(fmt.Sprintf("⬇️  正在下载 %s（%s）...", assetName, humanSize(asset.Size)))
 	if err := github.DownloadAsset(selfRepo, asset, tmpPath); err != nil {
 		return err
 	}
+	log.Step("正在校验 SHA-256...")
+	if err := github.DownloadAsset(selfRepo, sumsAsset, sumsPath); err != nil {
+		return fmt.Errorf("无法下载 SHA256SUMS，拒绝安装未校验的二进制: %w", err)
+	}
+	if err := checksum.VerifySHA256SUMS(tmpPath, sumsPath, assetName); err != nil {
+		return err
+	}
+	log.Ok("SHA-256 校验通过")
 	if err := os.Chmod(tmpPath, 0o755); err != nil {
 		return err
 	}

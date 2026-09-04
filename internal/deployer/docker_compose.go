@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/AaronConlon/upy/internal/cmdrun"
 	"github.com/AaronConlon/upy/internal/log"
@@ -14,8 +15,10 @@ import (
 
 // DockerComposeDeployer Docker Compose 部署器
 type DockerComposeDeployer struct {
-	ctx         *DeployContext
-	composeFile string
+	ctx                *DeployContext
+	composeFile        string
+	previousWasRunning bool
+	previousStopped    bool
 }
 
 // NewDockerCompose 创建 compose 部署器
@@ -30,10 +33,23 @@ func NewDockerCompose(ctx *DeployContext) *DockerComposeDeployer {
 func (d *DockerComposeDeployer) composeArgsFor(dir string, extra ...string) []string {
 	f := filepath.Join(dir, d.composeFile)
 	args := []string{"-f", f}
+	if envFile := releaseEnvFile(dir); envFile != "" {
+		args = append(args, "--env-file", envFile)
+	}
 	if envFile := SharedEnvFile(d.ctx.Root); envFile != "" {
 		args = append(args, "--env-file", envFile)
 	}
 	return append(args, extra...)
+}
+
+// releaseEnvFile 返回 bundle 解压后的 release .env；只允许携带 CI 生成的非敏感默认配置。
+// SharedEnvFile 会在其后传入，按 Docker Compose 优先级覆盖同名变量。
+func releaseEnvFile(dir string) string {
+	p := filepath.Join(dir, ".env")
+	if _, err := os.Stat(p); err == nil {
+		return p
+	}
+	return ""
 }
 
 func (d *DockerComposeDeployer) composeArgs(extra ...string) []string {
@@ -74,14 +90,33 @@ func (d *DockerComposeDeployer) Deactivate() error {
 		}
 		return nil
 	}
+	running, err := d.composeHasRunningService(prevDir)
+	if err != nil {
+		return fmt.Errorf("无法检查上一版本运行状态，已中止部署: %v", err)
+	}
+	d.previousWasRunning = running
+	if !running {
+		log.Info("上一版本服务在部署前未运行，将仅清理残留容器，不会在回滚时重新启动")
+	}
 	log.Step("正在停止上一版本 compose 服务 (" + d.ctx.PreviousVersion + ", down --remove-orphans)...")
 	args := append([]string{"compose"}, d.composeArgsFor(prevDir, "down", "--remove-orphans")...)
 	if err := cmdrun.Run("docker", args, cmdrun.Options{}); err != nil {
 		// 停不掉旧栈就不启动新栈: 旧栈仍在运行, 立即中止部署是安全状态
 		return fmt.Errorf("停止上一版本失败，为避免新旧栈冲突已中止部署: %v", err)
 	}
+	d.previousStopped = true
 	log.Ok("上一版本已停止 (" + d.ctx.PreviousVersion + ")")
 	return nil
+}
+
+// composeHasRunningService 只查看 running 的 service；不存在容器或全部停机都返回 false。
+func (d *DockerComposeDeployer) composeHasRunningService(dir string) (bool, error) {
+	args := append([]string{"compose"}, d.composeArgsFor(dir, "ps", "--status", "running", "--services")...)
+	out, err := cmdrun.Output("docker", args, cmdrun.Options{})
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(out) != "", nil
 }
 
 // Activate 执行 docker compose up -d
@@ -116,12 +151,21 @@ func (d *DockerComposeDeployer) Rollback() error {
 		log.Info("没有可回滚的上一版本")
 		return nil
 	}
+	// 构建阶段失败时，旧服务尚未被 down；无需也不能触碰它。
+	if !d.previousStopped {
+		log.Info("上一版本尚未被停止，无需回滚")
+		return nil
+	}
 
 	// 先停掉失败的新版本栈 (best-effort: 新版本可能尚未启动, down 幂等)
 	log.Step("回滚: 停止失败的新版本 compose...")
 	downArgs := append([]string{"compose"}, d.composeArgs("down", "--remove-orphans")...)
 	if err := cmdrun.Run("docker", downArgs, cmdrun.Options{}); err != nil {
 		log.Warn("停止新版本失败，继续尝试回滚: " + err.Error())
+	}
+	if !d.previousWasRunning {
+		log.Info("上一版本在部署前未运行，保持停止状态")
+		return nil
 	}
 
 	// 再启动上一版本

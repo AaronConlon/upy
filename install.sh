@@ -121,6 +121,7 @@ if [ -n "$AUTH_TOKEN" ]; then
 fi
 
 ASSET_ID=""
+SUMS_ASSET_ID=""
 if [ -z "$TARGET_VERSION" ]; then
   log_step "正在从 GitHub Releases 检查最新发布版本..."
   API_URL="https://api.github.com/repos/${REPO}/releases/latest"
@@ -159,12 +160,14 @@ fi
 # 提取资产 ID (用于私有仓库走 API 端点下载)
 if [ -n "${RELEASE_JSON:-}" ]; then
   ASSET_ID="$(printf '%s' "$RELEASE_JSON" | grep -B 2 -A 5 "\"name\": *\"${ASSET_NAME}\"" | grep -m1 '"id":' | tr -dc '0-9' || true)"
+  SUMS_ASSET_ID="$(printf '%s' "$RELEASE_JSON" | grep -B 2 -A 5 '"name": *"SHA256SUMS"' | grep -m1 '"id":' | tr -dc '0-9' || true)"
 fi
 
 # 5. 下载对应架构二进制
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'upy-install')"
 trap 'rm -rf "$TMP_DIR"' EXIT
 TMP_FILE="${TMP_DIR}/${ASSET_NAME}"
+SUMS_FILE="${TMP_DIR}/SHA256SUMS"
 
 if [ -n "$CURRENT_VERSION" ]; then
   log_step "正在从 Releases 拉取最新资产更新: ${CURRENT_VERSION} -> ${TARGET_VERSION}..."
@@ -193,6 +196,50 @@ if [ "$DOWNLOAD_SUCCESS" -ne 1 ]; then
   log_err "资产下载失败。若仓库为私有，请确认 Token 是否具有目标仓库的 Contents 读取权限。"
   exit 1
 fi
+
+SUMS_DOWNLOAD_SUCCESS=0
+if [ -n "$AUTH_TOKEN" ] && [ -n "$SUMS_ASSET_ID" ]; then
+  API_SUMS_URL="https://api.github.com/repos/${REPO}/releases/assets/${SUMS_ASSET_ID}"
+  if curl -fL --progress-bar -H "Authorization: Bearer ${AUTH_TOKEN}" -H "Accept: application/octet-stream" -o "$SUMS_FILE" "$API_SUMS_URL"; then
+    SUMS_DOWNLOAD_SUCCESS=1
+  fi
+fi
+if [ "$SUMS_DOWNLOAD_SUCCESS" -ne 1 ]; then
+  PUBLIC_SUMS_URL="https://github.com/${REPO}/releases/download/${TARGET_VERSION}/SHA256SUMS"
+  if curl -fL --progress-bar "${AUTH_HEADER[@]}" -o "$SUMS_FILE" "$PUBLIC_SUMS_URL"; then
+    SUMS_DOWNLOAD_SUCCESS=1
+  fi
+fi
+if [ "$SUMS_DOWNLOAD_SUCCESS" -ne 1 ]; then
+  log_err "无法下载 SHA256SUMS，拒绝安装未校验的二进制。"
+  exit 1
+fi
+
+EXPECTED_SHA="$(awk -v asset="$ASSET_NAME" '$2 { name=$2; sub(/^\*/, "", name); if (name == asset) print $1 }' "$SUMS_FILE")"
+EXPECTED_COUNT="$(printf '%s\n' "$EXPECTED_SHA" | sed '/^$/d' | wc -l | tr -d '[:space:]')"
+if [ "$EXPECTED_COUNT" != "1" ]; then
+  log_err "SHA256SUMS 中资产 ${ASSET_NAME} 的记录缺失或重复。"
+  exit 1
+fi
+if ! printf '%s\n' "$EXPECTED_SHA" | grep -Eq '^[[:xdigit:]]{64}$'; then
+  log_err "SHA256SUMS 中不存在或格式不正确的资产校验值: ${ASSET_NAME}"
+  exit 1
+fi
+if command -v sha256sum >/dev/null 2>&1; then
+  ACTUAL_SHA="$(sha256sum "$TMP_FILE" | awk '{print $1}')"
+elif command -v shasum >/dev/null 2>&1; then
+  ACTUAL_SHA="$(shasum -a 256 "$TMP_FILE" | awk '{print $1}')"
+else
+  log_err "未找到 sha256sum 或 shasum，无法校验下载的二进制。"
+  exit 1
+fi
+EXPECTED_SHA_LOWER="$(printf '%s' "$EXPECTED_SHA" | tr '[:upper:]' '[:lower:]')"
+ACTUAL_SHA_LOWER="$(printf '%s' "$ACTUAL_SHA" | tr '[:upper:]' '[:lower:]')"
+if [ "$EXPECTED_SHA_LOWER" != "$ACTUAL_SHA_LOWER" ]; then
+  log_err "SHA-256 校验失败，拒绝安装二进制。"
+  exit 1
+fi
+log_ok "SHA-256 校验通过。"
 
 chmod +x "$TMP_FILE"
 
