@@ -1,4 +1,4 @@
-module github.com/AaronConlon/uply
+module github.com/AaronConlon/upy
 
 go 1.25.1
 

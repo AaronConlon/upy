@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AaronConlon/uply/internal/bundle"
-	"github.com/AaronConlon/uply/internal/config"
-	"github.com/AaronConlon/uply/internal/deployer"
-	"github.com/AaronConlon/uply/internal/log"
-	"github.com/AaronConlon/uply/internal/notify"
-	"github.com/AaronConlon/uply/internal/platform"
-	"github.com/AaronConlon/uply/internal/state"
-	"github.com/AaronConlon/uply/internal/ui"
+	"github.com/AaronConlon/upy/internal/bundle"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/deployer"
+	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/notify"
+	"github.com/AaronConlon/upy/internal/platform"
+	"github.com/AaronConlon/upy/internal/state"
+	"github.com/AaronConlon/upy/internal/ui"
 )
 
 // Options 部署选项
@@ -51,7 +51,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		return nil, fmt.Errorf("未找到 bundle 文件: %s", zipPath)
 	}
 
-	tmp, err := os.MkdirTemp("", "uply-deploy-")
+	tmp, err := os.MkdirTemp("", "upy-deploy-")
 	if err != nil {
 		return nil, err
 	}

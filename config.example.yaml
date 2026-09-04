@@ -1,4 +1,4 @@
-# 复制到 ~/.uply/config.yaml
+# 复制到 ~/.upy/config.yaml
 # 也可用 UPLY_CONFIG=/path/to/config.yaml 覆盖路径
 #
 # github.token 优先于环境变量 DEPLOY_GITHUB_TOKEN。
@@ -12,7 +12,7 @@ notify:
     - name: phone
       serverUrl: https://api.day.app
       token: your-bark-device-key
-      group: uply.phone
+      group: upy.phone
     # - name: watch
     #   serverUrl: https://api.day.app
     #   deviceKey: another-device-key

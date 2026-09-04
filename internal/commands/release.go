@@ -1,4 +1,4 @@
-// uply release [list|latest|<版本>] [--force] [--root <dir>]
+// upy release [list|latest|<版本>] [--force] [--root <dir>]
 package commands
 
 import (
@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/config"
-	"github.com/AaronConlon/uply/internal/deploy"
-	"github.com/AaronConlon/uply/internal/github"
-	"github.com/AaronConlon/uply/internal/log"
-	"github.com/AaronConlon/uply/internal/ui"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/deploy"
+	"github.com/AaronConlon/upy/internal/github"
+	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/ui"
 )
 
 // ReleaseArgs release 命令参数

@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 // Options 执行选项

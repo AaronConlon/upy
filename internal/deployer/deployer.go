@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AaronConlon/uply/internal/config"
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 // DeployContext 部署上下文
@@ -84,7 +84,7 @@ func AtomicSymlink(target, linkPath string) error {
 	if rel, err := filepath.Rel(filepath.Dir(linkPath), target); err == nil {
 		linkTarget = rel
 	}
-	tmp := linkPath + ".uply-tmp-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	tmp := linkPath + ".upy-tmp-" + fmt.Sprintf("%d", time.Now().UnixNano())
 	if err := os.Symlink(linkTarget, tmp); err != nil {
 		return fmt.Errorf("无法创建符号链接: %v", log.Redact(err.Error()))
 	}

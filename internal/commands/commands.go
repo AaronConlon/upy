@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const selfRepo = "AaronConlon/uply"
+const selfRepo = "AaronConlon/upy"
 
 func stripV(v string) string {
 	return strings.TrimPrefix(strings.TrimSpace(v), "v")

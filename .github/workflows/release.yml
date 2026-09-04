@@ -1,10 +1,16 @@
-# 打 tag v* 触发: 矩阵构建 4 平台二进制并发布到 Release (asset 命名 uply-<os>-<arch>)
+# 打 tag v* 触发: 矩阵构建 4 平台二进制并发布到 Release (asset 命名 upy-<os>-<arch>)
 name: release
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '发布版本 Tag (例如 v0.1.0)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -35,25 +41,39 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Resolve Version
+        id: ver
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          fi
+          if [ -z "$VERSION" ]; then
+            VERSION="vdev"
+          fi
+          echo "val=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build
         env:
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ steps.ver.outputs.val }}
         run: |
           CGO_ENABLED=0 go build \
             -trimpath \
-            -ldflags "-s -w -X github.com/AaronConlon/uply/internal/version.Value=${GITHUB_REF_NAME}" \
-            -o "uply-${{ matrix.suffix }}" .
-          ls -lh "uply-${{ matrix.suffix }}"
-          file "uply-${{ matrix.suffix }}"
+            -ldflags "-s -w -X github.com/AaronConlon/upy/internal/version.Value=${VERSION}" \
+            -o "upy-${{ matrix.suffix }}" .
+          ls -lh "upy-${{ matrix.suffix }}"
+          file "upy-${{ matrix.suffix }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: uply-${{ matrix.suffix }}
-          path: uply-${{ matrix.suffix }}
+          name: upy-${{ matrix.suffix }}
+          path: upy-${{ matrix.suffix }}
 
   release:
     needs: build
@@ -70,7 +90,7 @@ jobs:
       - name: Move binaries to one dir
         run: |
           mkdir -p out
-          find dist -type f -name 'uply-*' -exec cp {} out/ \;
+          find dist -type f -name 'upy-*' -exec cp {} out/ \;
           chmod +x out/*
           ls -lh out/
 
@@ -78,10 +98,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" out/* --clobber
+          TAG="${GITHUB_REF_NAME}"
+          if [ -z "$TAG" ] || [ "$TAG" = "main" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "No tag specified for release" >&2
+            exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/* --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" out/* \
-              --title "${GITHUB_REF_NAME}" \
+            gh release create "$TAG" out/* \
+              --title "$TAG" \
               --generate-notes
           fi
+

@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"io"
 
-	"github.com/AaronConlon/uply/internal/config"
+	"github.com/AaronConlon/upy/internal/config"
 )
 
 // manifestTypeFromZip 从 zip 中读取 deploy.yaml 推断部署类型 (失败返回空串)

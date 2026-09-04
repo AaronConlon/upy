@@ -1,4 +1,4 @@
-// uply: 轻量级 Web 项目部署 CLI (Go 实现)
+// upy: 轻量级 Web 项目部署 CLI (Go 实现)
 // 中文 CLI: 除名字外全部使用中文介绍
 package main
 
@@ -7,16 +7,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/commands"
-	"github.com/AaronConlon/uply/internal/log"
-	"github.com/AaronConlon/uply/internal/version"
+	"github.com/AaronConlon/upy/internal/commands"
+	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/version"
 )
 
 func printHelp() {
 	lines := []string{
-		"uply " + version.String() + " — 轻量级 Web 项目部署工具",
+		"upy " + version.String() + " — 轻量级 Web 项目部署工具",
 		"",
-		"用法: uply <命令> [选项]",
+		"用法: upy <命令> [选项]",
 		"",
 		"命令:",
 		"  release [list|latest|<版本>]   从 GitHub Release 获取并部署 bundle",
@@ -32,18 +32,18 @@ func printHelp() {
 		"  -h, --help                     打印帮助后退出",
 		"",
 		"配置:",
-		"  ~/.uply/config.yaml            用户配置 (可用 UPLY_CONFIG 覆盖)",
+		"  ~/.upy/config.yaml            用户配置 (可用 UPY_CONFIG 覆盖)",
 		"  github.token                   GitHub 访问令牌, 优先于环境变量",
 		"",
 		"环境变量:",
 		"  DEPLOY_GITHUB_TOKEN            GitHub 访问令牌兜底 (配置文件未写时使用)",
-		"  UPLY_CONFIG                    覆盖用户配置文件路径",
+		"  UPY_CONFIG                    覆盖用户配置文件路径",
 		"",
 		"示例:",
-		"  uply release list              查看项目仓库的发布历史",
-		"  uply release latest            部署最新版本",
-		"  uply release v0.3.0            部署指定版本",
-		"  uply bundle ./bundle.zip       部署本地 bundle",
+		"  upy release list              查看项目仓库的发布历史",
+		"  upy release latest            部署最新版本",
+		"  upy release v0.3.0            部署指定版本",
+		"  upy bundle ./bundle.zip       部署本地 bundle",
 	}
 	fmt.Println(strings.Join(lines, "\n"))
 }
@@ -93,7 +93,7 @@ func main() {
 		return
 	}
 	if p.showVersion {
-		fmt.Println("uply " + version.String())
+		fmt.Println("upy " + version.String())
 		return
 	}
 

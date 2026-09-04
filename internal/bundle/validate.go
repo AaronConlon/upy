@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AaronConlon/uply/internal/config"
+	"github.com/AaronConlon/upy/internal/config"
 )
 
 // ReadManifest 读取解压目录根部的 deploy.yaml 并解析校验

@@ -1,12 +1,12 @@
-// uply bundle <文件> [--force] [--root <dir>]: 直接部署本地 zip, 不访问 GitHub
+// upy bundle <文件> [--force] [--root <dir>]: 直接部署本地 zip, 不访问 GitHub
 package commands
 
 import (
 	"fmt"
 
-	"github.com/AaronConlon/uply/internal/deploy"
-	"github.com/AaronConlon/uply/internal/log"
-	"github.com/AaronConlon/uply/internal/ui"
+	"github.com/AaronConlon/upy/internal/deploy"
+	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/ui"
 )
 
 // BundleArgs bundle 命令参数
@@ -19,7 +19,7 @@ type BundleArgs struct {
 // Bundle 执行 bundle 命令
 func Bundle(args BundleArgs) error {
 	if args.File == "" {
-		return fmt.Errorf("bundle 命令需要一个 <文件> 参数: uply bundle <文件> [--force] [--root <目录>]")
+		return fmt.Errorf("bundle 命令需要一个 <文件> 参数: upy bundle <文件> [--force] [--root <目录>]")
 	}
 	ui.PrintProjectBanner(args.Root, ui.BannerOptions{ZipPath: args.File})
 

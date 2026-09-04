@@ -1,5 +1,5 @@
 // Package version 保存构建时注入的版本号
-// 通过 ldflags 注入: -X github.com/AaronConlon/uply/internal/version.Value=v0.1.11
+// 通过 ldflags 注入: -X github.com/AaronConlon/upy/internal/version.Value=v0.1.11
 package version
 
 import "strings"

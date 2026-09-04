@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/config"
-	"github.com/AaronConlon/uply/internal/log"
-	"github.com/AaronConlon/uply/internal/state"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/state"
 )
 
 // BannerOptions 横幅选项

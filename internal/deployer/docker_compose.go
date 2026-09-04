@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/AaronConlon/uply/internal/cmdrun"
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/cmdrun"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 // DockerComposeDeployer Docker Compose 部署器

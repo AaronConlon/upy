@@ -1,15 +1,15 @@
-// uply update: 自更新. 内置仓库 AaronConlon/uply, 按 platform/arch 选资产
+// upy update: 自更新. 内置仓库 AaronConlon/uply, 按 platform/arch 选资产
 package commands
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/AaronConlon/uply/internal/github"
-	"github.com/AaronConlon/uply/internal/log"
-	"github.com/AaronConlon/uply/internal/platform"
-	"github.com/AaronConlon/uply/internal/semver"
-	"github.com/AaronConlon/uply/internal/version"
+	"github.com/AaronConlon/upy/internal/github"
+	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/platform"
+	"github.com/AaronConlon/upy/internal/semver"
+	"github.com/AaronConlon/upy/internal/version"
 )
 
 // UpdateCmd 自更新
@@ -24,7 +24,7 @@ func UpdateCmd() error {
 	}
 	log.Info("发现新版本: " + latest.Tag)
 
-	assetName := "uply-" + platform.CurrentOS() + "-" + platform.CurrentArch()
+	assetName := "upy-" + platform.CurrentOS() + "-" + platform.CurrentArch()
 	asset, err := github.FindAsset(latest, assetName, "", "")
 	if err != nil {
 		return err
@@ -32,10 +32,10 @@ func UpdateCmd() error {
 
 	self, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("无法定位 uply 二进制路径，自更新仅支持编译后的 uply 二进制")
+		return fmt.Errorf("无法定位 upy 二进制路径，自更新仅支持编译后的 upy 二进制")
 	}
 
-	tmp, err := os.CreateTemp("", "uply-update-")
+	tmp, err := os.CreateTemp("", "upy-update-")
 	if err != nil {
 		return err
 	}
@@ -59,6 +59,6 @@ func UpdateCmd() error {
 	}
 
 	log.Ok("已更新 " + self + " 到 " + latest.Tag)
-	log.Info("请重新运行 uply 以使用新版本。")
+	log.Info("请重新运行 upy 以使用新版本。")
 	return nil
 }

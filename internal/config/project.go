@@ -35,7 +35,7 @@ func ReadProjectConfig(root string) (*ProjectConfig, error) {
 	path := filepath.Join(root, "deploy.yaml")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("在 %s 中找不到 deploy.yaml（请在项目目录中运行 uply，或用 --root 指定目录）", root)
+		return nil, fmt.Errorf("在 %s 中找不到 deploy.yaml（请在项目目录中运行 upy，或用 --root 指定目录）", root)
 	}
 	var cfg ProjectConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {

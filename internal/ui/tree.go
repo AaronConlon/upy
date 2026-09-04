@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 const (

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AaronConlon/uply/internal/config"
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 // Kind 通知类型
@@ -70,7 +70,7 @@ func Send(evt Event) {
 func formatEvent(evt Event) (title, body, groupSuffix, level string) {
 	name := strings.TrimSpace(evt.Project)
 	if name == "" {
-		name = "uply"
+		name = "upy"
 	}
 	ver := strings.TrimSpace(evt.Version)
 	if ver == "" {
@@ -126,7 +126,7 @@ func sendBark(b config.UserBark, title, body, groupSuffix, defaultLevel string) 
 	url := b.Endpoint() + "/" + b.Key()
 	group := strings.TrimSpace(b.Group)
 	if group == "" {
-		group = "uply." + groupSuffix
+		group = "upy." + groupSuffix
 	}
 	level := strings.TrimSpace(b.Level)
 	if level == "" {
@@ -150,7 +150,7 @@ func sendBark(b config.UserBark, title, body, groupSuffix, defaultLevel string) 
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("User-Agent", "uply-cli")
+	req.Header.Set("User-Agent", "upy-cli")
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

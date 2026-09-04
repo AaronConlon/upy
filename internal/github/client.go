@@ -1,5 +1,5 @@
 // GitHub Releases 客户端
-// 认证: 优先 ~/.uply/config.yaml 的 github.token, 其次 DEPLOY_GITHUB_TOKEN。私有资产走 API 端点。
+// 认证: 优先 ~/.upy/config.yaml 的 github.token, 其次 DEPLOY_GITHUB_TOKEN。私有资产走 API 端点。
 package github
 
 import (
@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AaronConlon/uply/internal/config"
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 const apiBase = "https://api.github.com"
@@ -51,7 +51,7 @@ func newRequest(method, url, token string) (*http.Request, error) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	req.Header.Set("User-Agent", "uply-cli")
+	req.Header.Set("User-Agent", "upy-cli")
 	return req, nil
 }
 
@@ -234,7 +234,7 @@ func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 	}
 	req.Header.Set("Authorization", "Bearer "+tok)
 	req.Header.Set("Accept", "application/octet-stream")
-	req.Header.Set("User-Agent", "uply-cli")
+	req.Header.Set("User-Agent", "upy-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -262,7 +262,7 @@ func PeekLatestTag(repo string) string {
 		return ""
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "uply-cli")
+	req.Header.Set("User-Agent", "upy-cli")
 	if t, err := config.LookupGitHubToken(); err == nil && t != "" {
 		log.RegisterSecret(t)
 		req.Header.Set("Authorization", "Bearer "+t)

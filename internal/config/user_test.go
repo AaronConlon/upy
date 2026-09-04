@@ -32,7 +32,7 @@ func TestLoadUserConfigBarks(t *testing.T) {
       token: "  "
     - name: watch
       deviceKey: key-c
-      group: uply.watch
+      group: upy.watch
 `)
 	if err := os.WriteFile(path, raw, 0o644); err != nil {
 		t.Fatal(err)

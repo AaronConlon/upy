@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 // StaticDeployer 静态站点部署器

@@ -1,4 +1,4 @@
-// 用户级配置: ~/.uply/config.yaml
+// 用户级配置: ~/.upy/config.yaml
 // 放 Bark / webhook 这类跨项目通知渠道, 不进项目目录, 也不进 bundle。
 package config
 
@@ -35,7 +35,7 @@ type UserGitHub struct {
 	Token string `yaml:"token"`
 }
 
-// UserConfig ~/.uply/config.yaml
+// UserConfig ~/.upy/config.yaml
 type UserConfig struct {
 	GitHub UserGitHub `yaml:"github"`
 	Notify UserNotify `yaml:"notify"`
@@ -75,6 +75,9 @@ func (b UserBark) Label() string {
 
 // UserConfigPath 返回配置文件路径。UPLY_CONFIG 可覆盖。
 func UserConfigPath() string {
+	if p := strings.TrimSpace(os.Getenv("UPY_CONFIG")); p != "" {
+		return p
+	}
 	if p := strings.TrimSpace(os.Getenv("UPLY_CONFIG")); p != "" {
 		return p
 	}
@@ -82,7 +85,15 @@ func UserConfigPath() string {
 	if err != nil || home == "" {
 		return ""
 	}
-	return filepath.Join(home, ".uply", "config.yaml")
+	newPath := filepath.Join(home, ".upy", "config.yaml")
+	if _, err := os.Stat(newPath); err == nil {
+		return newPath
+	}
+	oldPath := filepath.Join(home, ".uply", "config.yaml")
+	if _, err := os.Stat(oldPath); err == nil {
+		return oldPath
+	}
+	return newPath
 }
 
 // LoadUserConfig 读取用户配置。文件不存在时返回空配置, 不报错。
@@ -149,7 +160,7 @@ func ResolveGitHubToken() (string, error) {
 	if t == "" {
 		path := UserConfigPath()
 		if path == "" {
-			path = "~/.uply/config.yaml"
+			path = "~/.upy/config.yaml"
 		}
 		return "", fmt.Errorf("未配置 GitHub token。请在 %s 写入 github.token，或设置环境变量 DEPLOY_GITHUB_TOKEN。", path)
 	}

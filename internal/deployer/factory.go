@@ -4,7 +4,7 @@ package deployer
 import (
 	"fmt"
 
-	"github.com/AaronConlon/uply/internal/config"
+	"github.com/AaronConlon/upy/internal/config"
 )
 
 // CreateDeployer 按 manifest.type + docker.mode 创建部署器

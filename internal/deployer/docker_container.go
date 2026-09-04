@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AaronConlon/uply/internal/cmdrun"
-	"github.com/AaronConlon/uply/internal/log"
+	"github.com/AaronConlon/upy/internal/cmdrun"
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 // DockerContainerDeployer Docker 容器部署器
