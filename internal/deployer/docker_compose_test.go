@@ -32,7 +32,12 @@ func stubRun(t *testing.T, failOnSubstr string) *[]cmdrun.Call {
 		return nil
 	}
 	cmdrun.Output = func(cmd string, args []string, opts cmdrun.Options) (string, error) {
-		return "codia\n", nil
+		for _, arg := range args {
+			if arg == "ps" {
+				return "codia\n", nil
+			}
+		}
+		return "", nil
 	}
 	t.Cleanup(func() {
 		cmdrun.Run = cmdrun.RealRun
@@ -127,6 +132,48 @@ func TestComposeDeactivateSkipsWithoutPrevious(t *testing.T) {
 	}
 }
 
+func TestComposeDeactivateRemovesComposeContainerWhenPreviousFileIsMissing(t *testing.T) {
+	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
+	if err := os.Remove(filepath.Join(d.ctx.Root, "releases", "0.3.16", "docker-compose.yml")); err != nil {
+		t.Fatal(err)
+	}
+	calls := stubRun(t, "")
+	cmdrun.Output = func(cmd string, args []string, opts cmdrun.Options) (string, error) {
+		if len(args) > 0 && args[0] == "compose" {
+			return `{"services":{"app":{"container_name":"codia"}}}`, nil
+		}
+		return "deadbeef\tlegacy-release\n", nil
+	}
+
+	if err := d.Deactivate(); err != nil {
+		t.Fatalf("应清理受 Compose 管理的同名残留容器: %v", err)
+	}
+	if len(*calls) != 1 || !reflect.DeepEqual((*calls)[0].Args, []string{"rm", "-f", "deadbeef"}) {
+		t.Fatalf("应精确删除残留 Compose 容器，calls=%v", *calls)
+	}
+}
+
+func TestComposeDeactivateRefusesUnmanagedNamedContainer(t *testing.T) {
+	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
+	if err := os.Remove(filepath.Join(d.ctx.Root, "releases", "0.3.16", "docker-compose.yml")); err != nil {
+		t.Fatal(err)
+	}
+	calls := stubRun(t, "")
+	cmdrun.Output = func(cmd string, args []string, opts cmdrun.Options) (string, error) {
+		if len(args) > 0 && args[0] == "compose" {
+			return `{"services":{"app":{"container_name":"codia"}}}`, nil
+		}
+		return "deadbeef\t\n", nil
+	}
+
+	if err := d.Deactivate(); err == nil || !strings.Contains(err.Error(), "非 Compose 容器") {
+		t.Fatalf("应拒绝删除无 Compose 标签的同名容器，err=%v", err)
+	}
+	if len(*calls) != 0 {
+		t.Fatalf("不应删除非 Compose 容器，calls=%v", *calls)
+	}
+}
+
 func TestComposeDeactivateFailsWhenDownFails(t *testing.T) {
 	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
 	stubRun(t, "down")
@@ -159,6 +206,7 @@ func TestComposeRollbackStopsNewThenStartsPrevious(t *testing.T) {
 	calls := stubRun(t, "")
 	d.previousStopped = true
 	d.previousWasRunning = true
+	d.activationAttempted = true
 
 	if err := d.Rollback(); err != nil {
 		t.Fatalf("Rollback 不应失败: %v", err)
@@ -193,11 +241,27 @@ func TestComposeRollbackWithoutPrevious(t *testing.T) {
 	}
 }
 
+func TestComposeRollbackWithoutPreviousCleansAttemptedNewStack(t *testing.T) {
+	d, root := newComposeCtx(t, "", "0.3.17")
+	calls := stubRun(t, "")
+	d.activationAttempted = true
+
+	if err := d.Rollback(); err != nil {
+		t.Fatalf("Rollback 不应失败: %v", err)
+	}
+	curFile := filepath.Join(root, "releases", "0.3.17", "docker-compose.yml")
+	wanted := []string{"compose", "-f", curFile, "down", "--remove-orphans"}
+	if len(*calls) != 1 || !reflect.DeepEqual((*calls)[0].Args, wanted) {
+		t.Fatalf("无旧版本时也应清理已尝试启动的新栈，calls=%v", *calls)
+	}
+}
+
 func TestComposeRollbackStillUpsPreviousWhenDownNewFails(t *testing.T) {
 	d, root := newComposeCtx(t, "0.3.16", "0.3.17")
 	calls := stubRun(t, "down") // down 新版本失败
 	d.previousStopped = true
 	d.previousWasRunning = true
+	d.activationAttempted = true
 
 	if err := d.Rollback(); err != nil {
 		t.Fatalf("down 失败不应阻断回滚: %v", err)
@@ -214,6 +278,7 @@ func TestComposeRollbackKeepsStoppedPreviousStopped(t *testing.T) {
 	calls := stubRun(t, "")
 	d.previousStopped = true
 	d.previousWasRunning = false
+	d.activationAttempted = true
 
 	if err := d.Rollback(); err != nil {
 		t.Fatalf("Rollback 不应失败: %v", err)
@@ -237,6 +302,6 @@ func TestComposeRollbackDoesNotTouchPreviousBeforeDeactivate(t *testing.T) {
 		t.Fatalf("Rollback 不应失败: %v", err)
 	}
 	if len(*calls) != 0 {
-		t.Fatalf("旧服务未被停止时不应执行任何回滚命令，calls=%v", *calls)
+		t.Fatalf("新版本未启动时不应执行任何回滚命令，calls=%v", *calls)
 	}
 }
