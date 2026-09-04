@@ -34,13 +34,12 @@ type GHRelease struct {
 	Assets     []GHAsset `json:"assets"`
 }
 
-func token(repo string) (string, error) {
-	t, err := config.ResolveGitHubTokenForRepo(repo)
-	if err != nil {
-		return "", err
+func token(repo string) string {
+	t, _ := config.LookupGitHubTokenForRepo(repo)
+	if t != "" {
+		log.RegisterSecret(t)
 	}
-	log.RegisterSecret(t)
-	return t, nil
+	return t
 }
 
 func newRequest(method, url, token string) (*http.Request, error) {
@@ -48,7 +47,9 @@ func newRequest(method, url, token string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	req.Header.Set("User-Agent", "upy-cli")
@@ -66,12 +67,16 @@ func ghGet(url, token string, allow404 bool) (*http.Response, error) {
 	if err != nil {
 		return nil, fmt.Errorf("仓库访问失败: %v", log.Redact(err.Error()))
 	}
-	if resp.StatusCode == 404 || resp.StatusCode == 403 {
-		if allow404 {
+	if resp.StatusCode == 401 || resp.StatusCode == 403 || resp.StatusCode == 404 {
+		if allow404 && resp.StatusCode == 404 {
 			return resp, nil
 		}
 		repo := repoFromPath(url)
-		return nil, fmt.Errorf("仓库 %s 不可访问（请检查 token 权限）。", repo)
+		// 若没有 token 或 token 失效，给出针对性的友好提示
+		if _, err := config.ResolveGitHubTokenForRepo(repo); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("仓库 %s 无法访问 (HTTP %d，请检查 token 权限)。", repo, resp.StatusCode)
 	}
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("GitHub API 错误 (%d): %s", resp.StatusCode, strings.TrimPrefix(url, apiBase))
@@ -91,10 +96,7 @@ func repoFromPath(url string) string {
 
 // ListReleases 列出 repo 的 releases (排除 draft)
 func ListReleases(repo string) ([]GHRelease, error) {
-	tok, err := token(repo)
-	if err != nil {
-		return nil, err
-	}
+	tok := token(repo)
 	resp, err := ghGet(apiBase+"/repos/"+repo+"/releases?per_page=100", tok, false)
 	if err != nil {
 		return nil, err
@@ -115,10 +117,7 @@ func ListReleases(repo string) ([]GHRelease, error) {
 
 // GetLatest 取最新正式 release (GitHub 的 latest)
 func GetLatest(repo string) (*GHRelease, error) {
-	tok, err := token(repo)
-	if err != nil {
-		return nil, err
-	}
+	tok := token(repo)
 	resp, err := ghGet(apiBase+"/repos/"+repo+"/releases/latest", tok, true)
 	if err != nil {
 		return nil, err
@@ -136,10 +135,7 @@ func GetLatest(repo string) (*GHRelease, error) {
 
 // GetByTag 按 tag 精确取 release
 func GetByTag(repo, tag string) (*GHRelease, error) {
-	tok, err := token(repo)
-	if err != nil {
-		return nil, err
-	}
+	tok := token(repo)
 	url := apiBase + "/repos/" + repo + "/releases/tags/" + tag
 	resp, err := ghGet(url, tok, true)
 	if err != nil {
@@ -223,17 +219,28 @@ func listAssets(release *GHRelease) string {
 
 // DownloadAsset 下载资产到 dest (走 API 资产端点, 私有仓库必需)
 func DownloadAsset(repo string, asset *GHAsset, dest string) error {
-	tok, err := token(repo)
-	if err != nil {
-		return err
+	tok := token(repo)
+	var req *http.Request
+	var err error
+	if tok != "" {
+		// 具有 token，走 GitHub API 资产端点 (私有仓库必需)
+		url := fmt.Sprintf("%s/repos/%s/releases/assets/%d", apiBase, repo, asset.ID)
+		req, err = http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", "Bearer "+tok)
+		req.Header.Set("Accept", "application/octet-stream")
+	} else {
+		// 无 token，公开仓库直接通过 Browser Download URL 下载
+		if asset.URL == "" {
+			return fmt.Errorf("资产 %s 无公开下载地址，请配置 GitHub token", asset.Name)
+		}
+		req, err = http.NewRequest(http.MethodGet, asset.URL, nil)
+		if err != nil {
+			return err
+		}
 	}
-	url := fmt.Sprintf("%s/repos/%s/releases/assets/%d", apiBase, repo, asset.ID)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+tok)
-	req.Header.Set("Accept", "application/octet-stream")
 	req.Header.Set("User-Agent", "upy-cli")
 
 	resp, err := client.Do(req)
