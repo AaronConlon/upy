@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/bundle"
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/deploy"
 	"github.com/AaronConlon/upy/internal/github"
@@ -79,19 +80,32 @@ func Release(args ReleaseArgs) error {
 		return err
 	}
 
-	// bundle 下载保留到 <root>/bundles/<资产原始名>, 已存在则复用 (除非 --force)
-	// 文件名保留下载资产的完整语义, 如 test-deploy-website-v0.5.2-20260815.zip
+	// bundle 缓存保留到 <root>/bundles/:
+	// - 资产名本身含版本号 (如 test-deploy-website-v0.5.2-20260815.zip) → 沿用资产原始名
+	// - 资产名固定不含版本 (如 bundle.zip) → 加上 <tag>- 前缀, 避免不同版本互相覆盖复用
 	bundlesDir := filepath.Join(args.Root, "bundles")
 	os.MkdirAll(bundlesDir, 0o755)
-	localZip := filepath.Join(bundlesDir, asset.Name)
+	cacheName := asset.Name
+	if !assetNameHasTag(asset.Name, release.Tag) {
+		cacheName = release.Tag + "-" + asset.Name
+	}
+	localZip := filepath.Join(bundlesDir, cacheName)
 
 	zipPath := localZip
+	reuseCache := false
 	if _, err := os.Stat(localZip); err == nil && !args.Force {
-		log.Info("📦 本地已存在 bundle，直接复用 " + log.Path(localZip) + "（--force 可强制重新下载）")
-	} else {
-		if _, err := os.Stat(localZip); err == nil && args.Force {
-			log.Info("♻️  --force 已指定，重新下载覆盖本地 bundle")
+		// 复用前校验: zip 内 manifest 的 version 必须与目标版本一致, 不一致则重新下载
+		if v := bundle.ManifestVersionFromZip(localZip); v != "" && !sameVersion(v, release.Tag) {
+			log.Info(fmt.Sprintf("⚠️  本地缓存 bundle 的版本是 %s，与目标版本 %s 不一致，重新下载", v, release.Tag))
+		} else {
+			reuseCache = true
+			log.Info("📦 本地已存在 bundle，直接复用 " + log.Path(localZip) + "（--force 可强制重新下载）")
 		}
+	} else if _, err := os.Stat(localZip); err == nil && args.Force {
+		log.Info("♻️  --force 已指定，重新下载覆盖本地 bundle")
+	}
+
+	if !reuseCache {
 		log.Step("⬇️  正在下载资产 " + asset.Name + "（" + humanSize(asset.Size) + "）...")
 		if err := github.DownloadAsset(cfg.Release.Repository, asset, localZip); err != nil {
 			return err
@@ -152,4 +166,20 @@ func joinStr(parts []string, sep string) string {
 		out += p
 	}
 	return out
+}
+
+// assetNameHasTag 判断资产文件名是否已包含版本语义 (大小写不敏感, 兼容带/不带 v 前缀)
+func assetNameHasTag(assetName, tag string) bool {
+	n := strings.ToLower(assetName)
+	if strings.Contains(n, strings.ToLower(tag)) {
+		return true
+	}
+	return strings.Contains(n, strings.TrimPrefix(strings.ToLower(tag), "v"))
+}
+
+// sameVersion 比较 manifest 版本与 release tag 是否一致 (大小写与 v 前缀不敏感)
+func sameVersion(manifestVersion, tag string) bool {
+	mv := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(manifestVersion)), "v")
+	tv := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(tag)), "v")
+	return mv == tv
 }
