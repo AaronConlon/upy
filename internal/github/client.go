@@ -34,8 +34,8 @@ type GHRelease struct {
 	Assets     []GHAsset `json:"assets"`
 }
 
-func token() (string, error) {
-	t, err := config.ResolveGitHubToken()
+func token(repo string) (string, error) {
+	t, err := config.ResolveGitHubTokenForRepo(repo)
 	if err != nil {
 		return "", err
 	}
@@ -91,7 +91,7 @@ func repoFromPath(url string) string {
 
 // ListReleases 列出 repo 的 releases (排除 draft)
 func ListReleases(repo string) ([]GHRelease, error) {
-	tok, err := token()
+	tok, err := token(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func ListReleases(repo string) ([]GHRelease, error) {
 
 // GetLatest 取最新正式 release (GitHub 的 latest)
 func GetLatest(repo string) (*GHRelease, error) {
-	tok, err := token()
+	tok, err := token(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func GetLatest(repo string) (*GHRelease, error) {
 
 // GetByTag 按 tag 精确取 release
 func GetByTag(repo, tag string) (*GHRelease, error) {
-	tok, err := token()
+	tok, err := token(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func listAssets(release *GHRelease) string {
 
 // DownloadAsset 下载资产到 dest (走 API 资产端点, 私有仓库必需)
 func DownloadAsset(repo string, asset *GHAsset, dest string) error {
-	tok, err := token()
+	tok, err := token(repo)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func PeekLatestTag(repo string) string {
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "upy-cli")
-	if t, err := config.LookupGitHubToken(); err == nil && t != "" {
+	if t, err := config.LookupGitHubTokenForRepo(repo); err == nil && t != "" {
 		log.RegisterSecret(t)
 		req.Header.Set("Authorization", "Bearer "+t)
 	}

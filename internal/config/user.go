@@ -1,5 +1,5 @@
-// 用户级配置: ~/.upy/config.yaml
-// 放 Bark / webhook 这类跨项目通知渠道, 不进项目目录, 也不进 bundle。
+// 用户级配置: ~/.upy/config.yaml (兼容 ~/.uply/config.yaml)
+// 放 Bark / webhook 这类跨项目通知渠道, 以及多组织 GitHub token
 package config
 
 import (
@@ -21,24 +21,25 @@ type UserBark struct {
 	Sound     string `yaml:"sound"`
 	Icon      string `yaml:"icon"`
 	Level     string `yaml:"level"`
-	Enabled   *bool  `yaml:"enabled"`
+	Enabled   *bool  `yaml:"enabled,omitempty"`
 }
 
 // UserNotify 通知总开关。渠道先做 Bark, 结构预留 webhook / 飞书 / 邮件。
 type UserNotify struct {
 	Enabled bool       `yaml:"enabled"`
-	Bark    []UserBark `yaml:"bark"`
+	Bark    []UserBark `yaml:"bark,omitempty"`
 }
 
-// UserGitHub GitHub 访问配置。token 优先于环境变量 DEPLOY_GITHUB_TOKEN。
+// UserGitHub GitHub 访问配置。支持单 token 及按组织/个人归属的多 token。
 type UserGitHub struct {
-	Token string `yaml:"token"`
+	Token  string            `yaml:"token,omitempty"`  // 默认 / 兜底 token
+	Tokens map[string]string `yaml:"tokens,omitempty"` // 按归属映射: WeiaiHealth-Software: ghp_xxx
 }
 
 // UserConfig ~/.upy/config.yaml
 type UserConfig struct {
 	GitHub UserGitHub `yaml:"github"`
-	Notify UserNotify `yaml:"notify"`
+	Notify UserNotify `yaml:"notify,omitempty"`
 }
 
 func (b UserBark) active() bool {
@@ -73,7 +74,16 @@ func (b UserBark) Label() string {
 	return "bark"
 }
 
-// UserConfigPath 返回配置文件路径。UPLY_CONFIG 可覆盖。
+// DefaultUserConfigPath 默认用户配置保存路径: ~/.upy/config.yaml
+func DefaultUserConfigPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return ".upy/config.yaml"
+	}
+	return filepath.Join(home, ".upy", "config.yaml")
+}
+
+// UserConfigPath 返回当前生效的配置文件路径。优先 UPY_CONFIG，兜底 UPLY_CONFIG。
 func UserConfigPath() string {
 	if p := strings.TrimSpace(os.Getenv("UPY_CONFIG")); p != "" {
 		return p
@@ -85,6 +95,7 @@ func UserConfigPath() string {
 	if err != nil || home == "" {
 		return ""
 	}
+	// 若 ~/.upy/config.yaml 不存在但 ~/.uply/config.yaml 存在，自动兼容旧路径
 	newPath := filepath.Join(home, ".upy", "config.yaml")
 	if _, err := os.Stat(newPath); err == nil {
 		return newPath
@@ -130,30 +141,67 @@ func (c *UserConfig) ActiveBarks() []UserBark {
 	return out
 }
 
-// GitHubToken 返回配置文件里的 GitHub token
+// GitHubToken 返回配置文件里的默认 GitHub token
 func (c *UserConfig) GitHubToken() string {
 	if c == nil {
 		return ""
 	}
-	return strings.TrimSpace(c.GitHub.Token)
+	if t := strings.TrimSpace(c.GitHub.Token); t != "" {
+		return t
+	}
+	if len(c.GitHub.Tokens) > 0 {
+		if t, ok := c.GitHub.Tokens["default"]; ok && strings.TrimSpace(t) != "" {
+			return strings.TrimSpace(t)
+		}
+	}
+	return ""
 }
 
-// LookupGitHubToken 优先读用户配置 github.token, 其次环境变量 DEPLOY_GITHUB_TOKEN。
-// 配置文件损坏时返回错误; 两者都空时返回空字符串。
-func LookupGitHubToken() (string, error) {
+// GitHubTokenForOwner 按组织名/用户名精确或大小写不敏感匹配 token，未匹配时回退到默认 token
+func (c *UserConfig) GitHubTokenForOwner(owner string) string {
+	if c == nil {
+		return ""
+	}
+	owner = strings.TrimSpace(owner)
+	if owner != "" && len(c.GitHub.Tokens) > 0 {
+		for k, v := range c.GitHub.Tokens {
+			if strings.EqualFold(k, owner) && strings.TrimSpace(v) != "" {
+				return strings.TrimSpace(v)
+			}
+		}
+	}
+	return c.GitHubToken()
+}
+
+// ParseRepoOwner 辅助函数: 从 owner/repo 或 owner 中提取 owner
+func ParseRepoOwner(repo string) string {
+	repo = strings.TrimSpace(repo)
+	if repo == "" {
+		return ""
+	}
+	parts := strings.Split(repo, "/")
+	return strings.TrimSpace(parts[0])
+}
+
+// LookupGitHubTokenForRepo 针对特定 repo/owner 查找 token:
+// 1. 配置文件匹配 owner 的 tokens[owner]
+// 2. 配置文件兜底默认 token
+// 3. 环境变量 DEPLOY_GITHUB_TOKEN
+func LookupGitHubTokenForRepo(repo string) (string, error) {
 	cfg, err := LoadUserConfig()
 	if err != nil {
 		return "", err
 	}
-	if t := cfg.GitHubToken(); t != "" {
+	owner := ParseRepoOwner(repo)
+	if t := cfg.GitHubTokenForOwner(owner); t != "" {
 		return t, nil
 	}
 	return strings.TrimSpace(os.Getenv("DEPLOY_GITHUB_TOKEN")), nil
 }
 
-// ResolveGitHubToken 取 GitHub token; 配置和环境变量都没有时返回可操作错误。
-func ResolveGitHubToken() (string, error) {
-	t, err := LookupGitHubToken()
+// ResolveGitHubTokenForRepo 针对特定 repo/owner 取 token，均未配置时返回可操作错误提示
+func ResolveGitHubTokenForRepo(repo string) (string, error) {
+	t, err := LookupGitHubTokenForRepo(repo)
 	if err != nil {
 		return "", err
 	}
@@ -162,7 +210,64 @@ func ResolveGitHubToken() (string, error) {
 		if path == "" {
 			path = "~/.upy/config.yaml"
 		}
-		return "", fmt.Errorf("未配置 GitHub token。请在 %s 写入 github.token，或设置环境变量 DEPLOY_GITHUB_TOKEN。", path)
+		owner := ParseRepoOwner(repo)
+		if owner != "" {
+			return "", fmt.Errorf("未配置访问 %s 的 GitHub token。请在 %s 写入 github.tokens.%s，或通过 upy init %s <token> 添加。", owner, path, owner, owner)
+		}
+		return "", fmt.Errorf("未配置 GitHub token。请在 %s 写入 github.token，或通过 upy init <token> 添加。", path)
 	}
 	return t, nil
+}
+
+// LookupGitHubToken (兼容保留) 查询默认全局 token
+func LookupGitHubToken() (string, error) {
+	return LookupGitHubTokenForRepo("")
+}
+
+// ResolveGitHubToken (兼容保留) 获取默认全局 token
+func ResolveGitHubToken() (string, error) {
+	return ResolveGitHubTokenForRepo("")
+}
+
+// SaveGitHubToken 保存/更新 GitHub Token。owner 为空或 "default" 时保存为默认全局 token
+func SaveGitHubToken(owner, token string) (string, error) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", fmt.Errorf("token 不能为空")
+	}
+
+	path := UserConfigPath()
+	if path == "" {
+		path = DefaultUserConfigPath()
+	}
+
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		cfg = &UserConfig{}
+	}
+
+	owner = strings.TrimSpace(owner)
+	if owner == "" || strings.EqualFold(owner, "default") {
+		cfg.GitHub.Token = token
+	} else {
+		if cfg.GitHub.Tokens == nil {
+			cfg.GitHub.Tokens = make(map[string]string)
+		}
+		cfg.GitHub.Tokens[owner] = token
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return "", fmt.Errorf("无法创建配置目录 %s: %v", filepath.Dir(path), err)
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return "", fmt.Errorf("序列化配置失败: %v", err)
+	}
+
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		return "", fmt.Errorf("写入配置文件失败 %s: %v", path, err)
+	}
+
+	return path, nil
 }

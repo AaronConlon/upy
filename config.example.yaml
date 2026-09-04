@@ -1,11 +1,20 @@
 # 复制到 ~/.upy/config.yaml
-# 也可用 UPLY_CONFIG=/path/to/config.yaml 覆盖路径
+# 也可用 UPY_CONFIG=/path/to/config.yaml 覆盖路径
+# 权限建议设为 600: chmod 600 ~/.upy/config.yaml
 #
-# github.token 优先于环境变量 DEPLOY_GITHUB_TOKEN。
-# 通知失败不会让部署失败。没配渠道时静默跳过。
+# 也可通过命令快速配置:
+#   upy init <token>              # 设置全局默认 token
+#   upy init <owner> <token>      # 设置指定组织或个人的专属 token
 
 github:
-  token: github_pat_xxx
+  # 全局默认 / 兜底 token (可选)
+  token: github_pat_default_xxx
+
+  # 按组织名或个人归属的专属 token 映射 (可选)
+  # 从对应仓库 (如 WeiaiHealth-Software/app) 拉取资产时会自动匹配对应 token
+  tokens:
+    WeiaiHealth-Software: github_pat_org_xxx
+    AaronConlon: github_pat_personal_xxx
 
 notify:
   bark:

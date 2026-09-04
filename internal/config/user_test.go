@@ -94,3 +94,75 @@ func TestResolveGitHubTokenMissing(t *testing.T) {
 		t.Fatal("期望报错")
 	}
 }
+
+func TestLookupGitHubTokenForOwner(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte(`github:
+  token: default-token
+  tokens:
+    WeiaiHealth-Software: org-token
+    AaronConlon: user-token
+`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("UPY_CONFIG", path)
+	t.Setenv("DEPLOY_GITHUB_TOKEN", "env-token")
+
+	// 匹配指定组织 (大小写不敏感)
+	tok, err := LookupGitHubTokenForRepo("WeiaiHealth-Software/my-repo")
+	if err != nil || tok != "org-token" {
+		t.Fatalf("期望 org-token, 得到 %q (err: %v)", tok, err)
+	}
+	tokCase, err := LookupGitHubTokenForRepo("weiaihealth-software/lower-case-repo")
+	if err != nil || tokCase != "org-token" {
+		t.Fatalf("期望大小写不敏感匹配 org-token, 得到 %q (err: %v)", tokCase, err)
+	}
+
+	// 匹配指定个人用户
+	tokUser, err := LookupGitHubTokenForRepo("AaronConlon/private-project")
+	if err != nil || tokUser != "user-token" {
+		t.Fatalf("期望 user-token, 得到 %q (err: %v)", tokUser, err)
+	}
+
+	// 未在 tokens 中配置的仓库，回退到 default-token
+	tokOther, err := LookupGitHubTokenForRepo("OtherOrg/other-repo")
+	if err != nil || tokOther != "default-token" {
+		t.Fatalf("期望回退 default-token, 得到 %q (err: %v)", tokOther, err)
+	}
+}
+
+func TestSaveGitHubToken(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	t.Setenv("UPY_CONFIG", path)
+
+	// 1. 保存全局 token
+	savedPath, err := SaveGitHubToken("", "my-global-token")
+	if err != nil || savedPath != path {
+		t.Fatalf("保存全局 token 失败: %v", err)
+	}
+
+	tok, err := LookupGitHubTokenForRepo("any/repo")
+	if err != nil || tok != "my-global-token" {
+		t.Fatalf("期望 my-global-token, 得到 %q (err: %v)", tok, err)
+	}
+
+	// 2. 保存特定组织 token
+	_, err = SaveGitHubToken("SpecialOrg", "special-token")
+	if err != nil {
+		t.Fatalf("保存组织 token 失败: %v", err)
+	}
+
+	// 验证组织 token 与全局 token 共存
+	tokSpecial, err := LookupGitHubTokenForRepo("SpecialOrg/special-project")
+	if err != nil || tokSpecial != "special-token" {
+		t.Fatalf("期望 special-token, 得到 %q (err: %v)", tokSpecial, err)
+	}
+
+	tokDefault, err := LookupGitHubTokenForRepo("Random/project")
+	if err != nil || tokDefault != "my-global-token" {
+		t.Fatalf("期望全局 token 仍存在, 得到 %q (err: %v)", tokDefault, err)
+	}
+}
