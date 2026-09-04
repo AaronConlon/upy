@@ -38,6 +38,9 @@ func (s *StaticDeployer) Prepare() error {
 	return nil
 }
 
+// Deactivate 静态部署无需停旧版本 (仅切换软链), 空实现
+func (s *StaticDeployer) Deactivate() error { return nil }
+
 // Activate 原子切换 current 软链
 func (s *StaticDeployer) Activate() error {
 	log.Step("正在激活静态版本...")

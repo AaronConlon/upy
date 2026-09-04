@@ -165,6 +165,10 @@ func runDeployer(d deployer.Deployer) error {
 	if err := d.Prepare(); err != nil {
 		return err
 	}
+	// 新版本构建成功后, 先停掉上一版本再启动新版本, 避免端口/容器名冲突
+	if err := d.Deactivate(); err != nil {
+		return err
+	}
 	if err := d.Activate(); err != nil {
 		return err
 	}

@@ -18,8 +18,18 @@ type Options struct {
 	AllowNonZero bool
 }
 
-// Run 执行命令并透传 stdio, 非零退出码返回错误
-func Run(cmd string, args []string, opts Options) error {
+// Call 一次命令调用的记录 (测试辅助)
+type Call struct {
+	Cmd  string
+	Args []string
+}
+
+// Run 执行命令并透传 stdio, 非零退出码返回错误。
+// 保留为变量以便测试中替换为桩函数; 恢复时赋回 RealRun。
+var Run = RealRun
+
+// RealRun Run 的真实实现
+func RealRun(cmd string, args []string, opts Options) error {
 	c := exec.Command(cmd, args...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr

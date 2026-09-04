@@ -5,6 +5,7 @@
 - 单二进制，无运行时依赖，约 **9MB**（Bun 版约 60MB）
 - 功能与 Bun 版一致：`release` / `bundle` / `version` / `update` / `init`
 - 支持两类部署：静态 SPA（切 current 软链）和 Docker Compose 集成项目
+- Compose 部署顺序安全：新镜像构建成功后先对上一版本执行 `down --remove-orphans` 释放端口与容器名，再启动新版本；健康检查失败自动停掉失败新栈并 `up -d` 回滚上一版本
 - 私有 GitHub Release 部署、多 Token 组织归属自动路由、bundle 本地缓存复用、SQLite 数据卷持久化
 - Release 资产名不固定也支持：先精确匹配配置的 `asset`，未命中时按「项目名 + 版本号」模糊匹配（如 `test-deploy-website-v0.5.1-20260815.zip`）
 - 中文 CLI（横幅 / 目录树 / 颜色 / emoji）

@@ -26,7 +26,11 @@ type DeployContext struct {
 
 // Deployer 部署器接口
 type Deployer interface {
+	// Prepare 准备阶段 (compose: 构建镜像; static: 校验 bundle)
 	Prepare() error
+	// Deactivate 新版本准备成功后、启动新版本前, 停掉上一版本
+	// (compose: 对上一版本执行 down --remove-orphans 释放端口/容器名; 其他类型可为空实现)
+	Deactivate() error
 	Activate() error
 	HealthCheck() error
 	Rollback() error

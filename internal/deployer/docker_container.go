@@ -76,6 +76,9 @@ func (d *DockerContainerDeployer) runArgs(image string) []string {
 	return args
 }
 
+// Deactivate 容器模式在 Activate 内已停旧替新, 空实现
+func (d *DockerContainerDeployer) Deactivate() error { return nil }
+
 // Activate 停旧删旧后启动新容器
 func (d *DockerContainerDeployer) Activate() error {
 	log.Step("正在启动容器 " + d.container + "...")
