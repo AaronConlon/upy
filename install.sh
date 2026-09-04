@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 #
-# upy 一键安装脚本
+# upy 一键安装与从 Releases 自动更新脚本
+#
 # 用法:
+#   # 安装或更新到最新 Release 版本
 #   curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
-# 自定义安装目录或版本:
-#   INSTALL_DIR=/usr/local/bin VERSION=v0.1.0 curl -fsSL ... | bash
+#
+# 自定义安装目录、指定版本或强制重装:
+#   INSTALL_DIR=~/.local/bin curl -fsSL ... | bash
+#   VERSION=v0.1.0 curl -fsSL ... | bash
+#   FORCE=1 curl -fsSL ... | bash
 #
 set -euo pipefail
 
 REPO="AaronConlon/upy"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+FORCE="${FORCE:-0}"
 
 # 颜色输出
 if [ -t 1 ]; then
@@ -44,7 +50,7 @@ log_err() {
   printf "%b✗ %s%b\n" "$RED" "$*" "$RESET" >&2
 }
 
-# 1. 识别操作系统
+# 1. 识别当前平台 OS 与架构
 OS_RAW="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$OS_RAW" in
   darwin) OS="darwin" ;;
@@ -55,7 +61,6 @@ case "$OS_RAW" in
     ;;
 esac
 
-# 2. 识别 CPU 架构
 ARCH_RAW="$(uname -m | tr '[:upper:]' '[:lower:]')"
 case "$ARCH_RAW" in
   x86_64|amd64) ARCH="x64" ;;
@@ -67,12 +72,25 @@ case "$ARCH_RAW" in
 esac
 
 ASSET_NAME="upy-${OS}-${ARCH}"
-log_info "检测到平台: ${BOLD}${OS}-${ARCH}${RESET} (目标资产: ${ASSET_NAME})"
+TARGET_BIN="${INSTALL_DIR}/upy"
 
-# 3. 解析版本
+# 2. 检测本地当前已安装版本
+CURRENT_VERSION=""
+if [ -x "$TARGET_BIN" ]; then
+  CURRENT_VERSION="$("$TARGET_BIN" --version 2>/dev/null | awk '{print $2}' || true)"
+elif command -v upy >/dev/null 2>&1; then
+  CURRENT_VERSION="$(upy --version 2>/dev/null | awk '{print $2}' || true)"
+fi
+
+log_info "运行环境: ${BOLD}${OS}-${ARCH}${RESET} (目标资产: ${ASSET_NAME})"
+if [ -n "$CURRENT_VERSION" ]; then
+  log_info "本地当前已安装版本: ${BOLD}${CURRENT_VERSION}${RESET}"
+fi
+
+# 3. 从 GitHub Releases 解析最新版本
 TARGET_VERSION="${VERSION:-}"
 if [ -z "$TARGET_VERSION" ]; then
-  log_step "正在从 GitHub 获取最新版本..."
+  log_step "正在从 GitHub Releases 检查最新发布版本..."
   # 优先通过 release redirect 探测, 避免 API 速率限制
   LATEST_URL="$(curl -fsSLI -o /dev/null -w "%{url_effective}" "https://github.com/${REPO}/releases/latest" 2>/dev/null || true)"
   if [[ "$LATEST_URL" =~ /releases/tag/(v?[0-9a-zA-Z.-]+) ]]; then
@@ -91,19 +109,31 @@ if [ -z "$TARGET_VERSION" ]; then
 fi
 
 if [ -z "$TARGET_VERSION" ]; then
-  log_err "无法获取最新版本号（可能仓库尚未发布任何 Release，或请使用 VERSION=vX.Y.Z 手动指定）。"
+  log_err "无法从 Releases 获取版本号（请检查网络，或使用 VERSION=vX.Y.Z 指定）。"
   exit 1
 fi
 
-log_info "目标版本: ${BOLD}${TARGET_VERSION}${RESET}"
+log_info "Releases 目标版本: ${BOLD}${TARGET_VERSION}${RESET}"
 
-# 4. 下载对应架构二进制
+# 若本地已安装且版本一致，且未开启强制覆盖，直接提示退出
+if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" = "$TARGET_VERSION" ] && [ "$FORCE" != "1" ]; then
+  log_ok "当前已是 Releases 最新版本 (${CURRENT_VERSION})，无需更新。"
+  log_info "如需强制重新下载安装，可指定 FORCE=1，例如: FORCE=1 ./install.sh"
+  exit 0
+fi
+
+# 4. 从 GitHub Releases 下载对应架构二进制
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TARGET_VERSION}/${ASSET_NAME}"
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'upy-install')"
 trap 'rm -rf "$TMP_DIR"' EXIT
 TMP_FILE="${TMP_DIR}/${ASSET_NAME}"
 
-log_step "正在下载 ${DOWNLOAD_URL}..."
+if [ -n "$CURRENT_VERSION" ]; then
+  log_step "正在从 Releases 拉取新版本进行更新: ${CURRENT_VERSION} -> ${TARGET_VERSION}..."
+else
+  log_step "正在从 Releases 下载 ${DOWNLOAD_URL}..."
+fi
+
 if ! curl -fL --progress-bar -o "$TMP_FILE" "$DOWNLOAD_URL"; then
   log_err "下载失败: ${DOWNLOAD_URL}"
   exit 1
@@ -111,13 +141,13 @@ fi
 
 chmod +x "$TMP_FILE"
 
-# 5. 安装到目标目录
+# 5. 安装/替换到目标目录
 SUDO=""
 if [ "$(id -u)" -ne 0 ]; then
   if [ ! -w "$INSTALL_DIR" ] || [ ! -d "$INSTALL_DIR" ]; then
     if command -v sudo >/dev/null 2>&1; then
       SUDO="sudo"
-      log_info "需要管理员权限将 upy 安装到 ${INSTALL_DIR}"
+      log_info "需要管理员权限将 upy 写入 ${INSTALL_DIR}"
     else
       log_err "无权限写入 ${INSTALL_DIR}，且未找到 sudo 命令"
       exit 1
@@ -129,16 +159,20 @@ if [ ! -d "$INSTALL_DIR" ]; then
   $SUDO mkdir -p "$INSTALL_DIR"
 fi
 
-TARGET_BIN="${INSTALL_DIR}/upy"
-log_step "正在安装到 ${TARGET_BIN}..."
+log_step "正在写入 ${TARGET_BIN}..."
 $SUDO mv "$TMP_FILE" "$TARGET_BIN"
 $SUDO chmod 755 "$TARGET_BIN"
 
-# 6. 验证
-log_ok "upy ${TARGET_VERSION} 安装成功！"
+# 6. 验证安装/更新结果
+if [ -n "$CURRENT_VERSION" ]; then
+  log_ok "upy 已成功从 Releases 更新至 ${TARGET_VERSION}！"
+else
+  log_ok "upy ${TARGET_VERSION} 已成功从 Releases 安装完成！"
+fi
+
 if command -v upy >/dev/null 2>&1; then
   INSTALLED_PATH="$(command -v upy)"
-  log_info "执行路径: ${INSTALLED_PATH}"
+  log_info "可执行文件路径: ${INSTALLED_PATH}"
 else
   log_info "提示: ${INSTALL_DIR} 可能尚未加入系统 PATH，请将其加入您的 shell 配置文件 (如 ~/.zshrc 或 ~/.bashrc):"
   printf "    export PATH=\"%s:\$PATH\"\n" "$INSTALL_DIR"
