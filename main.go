@@ -16,11 +16,13 @@ func printHelp() {
 	lines := []string{
 		"upy " + version.String() + " — 轻量级 Web 项目部署工具",
 		"",
-		"用法: upy <命令> [选项]",
+		"用法: upy [命令] [选项]",
 		"",
 		"命令:",
+		"  （不带命令）                  选择已登记的本地项目并交互部署",
 		"  release [list|latest|<版本>]   从 GitHub Release 获取并部署 bundle",
 		"                                 (不带参数时交互选择版本)",
+		"  deploy [项目名称]              部署已登记项目的最新正式版本",
 		"  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)",
 		"  version                        查看当前版本并检查更新",
 		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
@@ -45,6 +47,7 @@ func printHelp() {
 		"  upy release list              查看项目仓库的发布历史",
 		"  upy release latest            部署最新版本",
 		"  upy release v0.3.0            部署指定版本",
+		"  upy deploy codia              部署本机项目 codia 的最新版本",
 		"  upy bundle ./bundle.zip       部署本地 bundle",
 		"  upy init ghp_xxx              设置默认全局 GitHub token",
 		"  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token",
@@ -65,7 +68,7 @@ type parsedArgs struct {
 
 func parseArgs(argv []string) parsedArgs {
 	var p parsedArgs
-	known := map[string]bool{"release": true, "bundle": true, "version": true, "update": true, "init": true}
+	known := map[string]bool{"release": true, "deploy": true, "bundle": true, "version": true, "update": true, "init": true}
 	for i := 0; i < len(argv); i++ {
 		a := argv[i]
 		switch {
@@ -92,6 +95,21 @@ func parseArgs(argv []string) parsedArgs {
 }
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "__install-completion" {
+		result, err := commands.InstallShellCompletion()
+		if err != nil {
+			log.Fail("命令补全安装失败: " + err.Error())
+			os.Exit(1)
+		}
+		if !result.Supported {
+			log.Info("检测到当前 shell: " + result.Shell + "（暂不支持自动安装 Tab 补全）")
+			return
+		}
+		log.Info("检测到当前 shell: " + result.Shell)
+		log.Ok("已安装 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+		return
+	}
+
 	p := parseArgs(os.Args[1:])
 
 	if p.showHelp {
@@ -116,14 +134,19 @@ func main() {
 	var err error
 	switch p.cmd {
 	case "":
-		printHelp()
-		return
+		err = commands.SelectProjectAndRelease(p.force)
 	case "release":
 		target := ""
 		if len(p.positional) > 0 {
 			target = p.positional[0]
 		}
 		err = commands.Release(commands.ReleaseArgs{Target: target, Force: p.force, Root: root})
+	case "deploy":
+		projectName := ""
+		if len(p.positional) > 0 {
+			projectName = p.positional[0]
+		}
+		err = commands.Deploy(projectName, p.force)
 	case "bundle":
 		file := ""
 		if len(p.positional) > 0 {

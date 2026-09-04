@@ -4,6 +4,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/AaronConlon/upy/internal/github"
@@ -27,6 +28,7 @@ func UpdateCmd(target string, force bool) error {
 		}
 		if !force && !semver.Newer(release.Tag, version.Value) {
 			log.Info(fmt.Sprintf("当前已是最新版本 (%s)。可使用 --force 重新安装。", version.String()))
+			reportCompletionInstall()
 			return nil
 		}
 		log.Info(fmt.Sprintf("发现新版本: %s (当前版本: %s)", release.Tag, version.String()))
@@ -48,6 +50,7 @@ func UpdateCmd(target string, force bool) error {
 		}
 		if !force && release.Tag == version.Value {
 			log.Info(fmt.Sprintf("当前已是目标版本 (%s)。可使用 --force 重新安装。", version.String()))
+			reportCompletionInstall()
 			return nil
 		}
 		log.Info(fmt.Sprintf("准备切换到版本: %s (当前版本: %s)", release.Tag, version.String()))
@@ -88,7 +91,27 @@ func UpdateCmd(target string, force bool) error {
 	}
 
 	log.Ok(fmt.Sprintf("已成功更新 %s 到 %s", self, release.Tag))
+	// 已替换为新二进制，交由新版本写入补全规则，避免把旧命令列表写回 shell。
+	completion := exec.Command(self, "__install-completion")
+	completion.Stdout = os.Stdout
+	completion.Stderr = os.Stderr
+	if err := completion.Run(); err != nil {
+		log.Warn("Tab 命令补全同步失败: " + err.Error())
+	}
 	log.Info("请重新运行 upy 以使用新版本。")
 	return nil
 }
 
+func reportCompletionInstall() {
+	result, err := InstallShellCompletion()
+	if err != nil {
+		log.Warn("Tab 命令补全同步失败: " + err.Error())
+		return
+	}
+	if !result.Supported {
+		log.Info("检测到当前 shell: " + result.Shell + "（暂不支持自动安装 Tab 补全）")
+		return
+	}
+	log.Info("检测到当前 shell: " + result.Shell)
+	log.Ok("已同步 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+}

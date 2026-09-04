@@ -3,7 +3,7 @@
 轻量级 Web 项目部署 CLI 的 **Go 实现**（原 Bun/TypeScript 版本在 `WeiaiHealth-Software/uply`）。
 
 - 单二进制，无运行时依赖，约 **9MB**（Bun 版约 60MB）
-- 功能与 Bun 版一致：`release` / `bundle` / `version` / `update` / `init`
+- 功能与 Bun 版一致：`release` / `deploy` / `bundle` / `version` / `update` / `init`
 - 支持两类部署：静态 SPA（切 current 软链）和 Docker Compose 集成项目
 - Compose 部署顺序安全：新镜像构建成功后先对上一版本执行 `down --remove-orphans` 释放端口与容器名，再启动新版本；健康检查失败自动停掉失败新栈并 `up -d` 回滚上一版本
 - 私有 GitHub Release 部署、多 Token 组织归属自动路由、bundle 本地缓存复用、SQLite 数据卷持久化
@@ -31,6 +31,8 @@ INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/AaronConlo
 # 安装指定版本
 VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 ```
+
+安装器会自动识别并提示当前 shell；对 zsh、bash、fish 自动配置 Tab 一级命令补全（`release`、`deploy`、`bundle`、`version`、`update`、`init`）。新开终端后即可使用，例如 `upy rel<Tab>`。
 
 ## 初始化与多 Token 配置
 
@@ -82,6 +84,11 @@ notify:
       serverUrl: https://api.day.app
       token: your-bark-device-key
       group: upy.phone
+
+# 由 upy release 成功后自动维护；可在任意目录执行 upy 选择项目
+projects:
+  - name: codia
+    root: /opt/apps/codia
 ```
 
 **Token 解析与匹配优先级**：
@@ -134,6 +141,8 @@ upy update --force
 upy update v0.1.0 --force
 ```
 
+`upy update` 同样会输出识别到的 shell，并同步 Tab 命令补全。
+
 ### 私有仓库授权机制
 
 若 `upy` 所在的仓库为**私有仓库 (Private Repository)**，自更新会自动按以下顺序提取 Token 访问 GitHub API 进行鉴权与资产下载：
@@ -143,3 +152,15 @@ upy update v0.1.0 --force
 3. 环境变量 `DEPLOY_GITHUB_TOKEN`
 
 > 推荐只需运行一次 `upy init AaronConlon <token>` 即可无缝自更新与切换版本。
+
+## 本地项目快捷部署
+
+每次 `upy release` 成功后，upy 会将项目名称和根目录保存进 `~/.upy/config.yaml` 的 `projects` 字段。直接执行 `upy` 时，会先过滤并清理根目录已不存在、不是目录或缺少 `deploy.yaml` 的项目，再交互选择项目，并进入常规的 Release 版本选择。
+
+```bash
+# 在任意目录选择已部署项目，再选择要部署的版本
+upy
+
+# 直接为已登记项目拉取并部署最新正式版本
+upy deploy codia
+```

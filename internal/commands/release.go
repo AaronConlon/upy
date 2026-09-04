@@ -121,6 +121,10 @@ func Release(args ReleaseArgs) error {
 	if res.Skipped {
 		log.Info("当前已是目标版本，跳过部署（--force 可强制重新部署）。")
 	}
+	// 只在 release 完整成功后登记；下载、解压或部署失败时不会污染本地项目列表。
+	if err := config.SaveLocalProject(cfg.Name, args.Root); err != nil {
+		log.Warn("部署成功，但无法记录本地项目: " + err.Error())
+	}
 	return nil
 }
 

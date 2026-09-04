@@ -166,3 +166,53 @@ func TestSaveGitHubToken(t *testing.T) {
 		t.Fatalf("期望全局 token 仍存在, 得到 %q (err: %v)", tokDefault, err)
 	}
 }
+
+func TestLocalProjectsAreSavedAndStaleRootsAreCleaned(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	t.Setenv("UPY_CONFIG", path)
+
+	root := filepath.Join(dir, "codia")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte("name: codia\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := SaveGitHubToken("", "kept-token"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveLocalProject("codia", root); err != nil {
+		t.Fatal(err)
+	}
+
+	projects, err := ListLocalProjects()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projects) != 1 || projects[0].Name != "codia" || projects[0].Root != root {
+		t.Fatalf("项目记录不正确: %+v", projects)
+	}
+	if token, err := LookupGitHubToken(); err != nil || token != "kept-token" {
+		t.Fatalf("保存项目不应覆盖 token: token=%q err=%v", token, err)
+	}
+
+	if err := os.RemoveAll(root); err != nil {
+		t.Fatal(err)
+	}
+	projects, err = ListLocalProjects()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projects) != 0 {
+		t.Fatalf("失效根目录应被清理，得到: %+v", projects)
+	}
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Projects) != 0 {
+		t.Fatalf("清理结果未写回配置: %+v", cfg.Projects)
+	}
+}

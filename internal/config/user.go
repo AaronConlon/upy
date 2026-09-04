@@ -38,8 +38,15 @@ type UserGitHub struct {
 
 // UserConfig ~/.upy/config.yaml
 type UserConfig struct {
-	GitHub UserGitHub `yaml:"github"`
-	Notify UserNotify `yaml:"notify,omitempty"`
+	GitHub   UserGitHub     `yaml:"github"`
+	Notify   UserNotify     `yaml:"notify,omitempty"`
+	Projects []LocalProject `yaml:"projects,omitempty"`
+}
+
+// LocalProject 一台机器上曾成功部署过的项目。Name 在注册表中唯一。
+type LocalProject struct {
+	Name string `yaml:"name"`
+	Root string `yaml:"root"`
 }
 
 func (b UserBark) active() bool {
@@ -256,18 +263,102 @@ func SaveGitHubToken(owner, token string) (string, error) {
 		cfg.GitHub.Tokens[owner] = token
 	}
 
+	return saveUserConfig(cfg)
+}
+
+// ListLocalProjects 返回可用的本地项目。根目录丢失、不是目录或缺少 deploy.yaml 的记录会被自动清理。
+func ListLocalProjects() ([]LocalProject, error) {
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	projects := make([]LocalProject, 0, len(cfg.Projects))
+	seen := make(map[string]bool, len(cfg.Projects))
+	changed := false
+	for _, project := range cfg.Projects {
+		name := strings.TrimSpace(project.Name)
+		root := strings.TrimSpace(project.Root)
+		if name == "" || root == "" {
+			changed = true
+			continue
+		}
+		absRoot, err := filepath.Abs(root)
+		if err != nil || !isProjectRoot(absRoot) || seen[name] {
+			changed = true
+			continue
+		}
+		if absRoot != project.Root || name != project.Name {
+			changed = true
+		}
+		seen[name] = true
+		projects = append(projects, LocalProject{Name: name, Root: absRoot})
+	}
+
+	if changed {
+		cfg.Projects = projects
+		if _, err := saveUserConfig(cfg); err != nil {
+			return nil, err
+		}
+	}
+	return projects, nil
+}
+
+// SaveLocalProject 在 release 成功后保存项目名称及绝对根目录。同名或同根目录旧记录会被替换。
+func SaveLocalProject(name, root string) error {
+	name = strings.TrimSpace(name)
+	root = strings.TrimSpace(root)
+	absRoot, err := filepath.Abs(root)
+	if err != nil || name == "" || !isProjectRoot(absRoot) {
+		return fmt.Errorf("项目名称或根目录无效，无法保存本地项目")
+	}
+
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		return err
+	}
+	projects, err := ListLocalProjects()
+	if err != nil {
+		return err
+	}
+	cfg.Projects = append([]LocalProject{{Name: name, Root: absRoot}}, filterDifferentProject(projects, name, absRoot)...)
+	_, err = saveUserConfig(cfg)
+	return err
+}
+
+func filterDifferentProject(projects []LocalProject, name, root string) []LocalProject {
+	filtered := make([]LocalProject, 0, len(projects))
+	for _, project := range projects {
+		if project.Name != name && project.Root != root {
+			filtered = append(filtered, project)
+		}
+	}
+	return filtered
+}
+
+func isProjectRoot(root string) bool {
+	info, err := os.Stat(root)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+	manifest, err := os.Stat(filepath.Join(root, "deploy.yaml"))
+	return err == nil && manifest.Mode().IsRegular()
+}
+
+func saveUserConfig(cfg *UserConfig) (string, error) {
+	path := UserConfigPath()
+	if path == "" {
+		path = DefaultUserConfigPath()
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return "", fmt.Errorf("无法创建配置目录 %s: %v", filepath.Dir(path), err)
 	}
-
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return "", fmt.Errorf("序列化配置失败: %v", err)
 	}
-
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		return "", fmt.Errorf("写入配置文件失败 %s: %v", path, err)
 	}
-
 	return path, nil
 }

@@ -149,6 +149,9 @@ log_info "Releases 目标版本: ${BOLD}${TARGET_VERSION}${RESET}"
 # 若本地已安装且版本一致，未开启强制覆盖，直接提示退出
 if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" = "$TARGET_VERSION" ] && [ "$FORCE" != "1" ]; then
   log_ok "当前已是 Releases 目标版本 (${CURRENT_VERSION})，无需更新。"
+  if [ -x "$TARGET_BIN" ]; then
+    "$TARGET_BIN" __install-completion || log_err "Tab 命令补全安装失败，但 upy 可正常使用。"
+  fi
   log_info "如需强制重新下载安装，可传 FORCE=1，例如: FORCE=1 ./install.sh"
   exit 0
 fi
@@ -222,6 +225,11 @@ else
   log_ok "upy ${TARGET_VERSION} 已成功安装完成！"
 fi
 
+log_step "正在配置 Tab 命令补全..."
+if ! "$TARGET_BIN" __install-completion; then
+  log_err "Tab 命令补全安装失败，但 upy 已可正常使用。"
+fi
+
 if command -v upy >/dev/null 2>&1; then
   INSTALLED_PATH="$(command -v upy)"
   log_info "执行文件路径: ${INSTALLED_PATH}"
@@ -229,4 +237,3 @@ else
   log_info "提示: ${INSTALL_DIR} 可能尚未加入系统 PATH，请将其加入您的 shell 配置文件 (如 ~/.zshrc 或 ~/.bashrc):"
   printf "    export PATH=\"%s:\$PATH\"\n" "$INSTALL_DIR"
 fi
-
