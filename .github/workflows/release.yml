@@ -1,0 +1,87 @@
+# 打 tag v* 触发: 矩阵构建 4 平台二进制并发布到 Release (asset 命名 uply-<os>-<arch>)
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            suffix: linux-x64
+          - os: linux
+            arch: arm64
+            suffix: linux-arm64
+          - os: darwin
+            arch: amd64
+            suffix: darwin-x64
+          - os: darwin
+            arch: arm64
+            suffix: darwin-arm64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          CGO_ENABLED=0 go build \
+            -trimpath \
+            -ldflags "-s -w -X github.com/AaronConlon/uply/internal/version.Value=${GITHUB_REF_NAME}" \
+            -o "uply-${{ matrix.suffix }}" .
+          ls -lh "uply-${{ matrix.suffix }}"
+          file "uply-${{ matrix.suffix }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uply-${{ matrix.suffix }}
+          path: uply-${{ matrix.suffix }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Move binaries to one dir
+        run: |
+          mkdir -p out
+          find dist -type f -name 'uply-*' -exec cp {} out/ \;
+          chmod +x out/*
+          ls -lh out/
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" out/* --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" out/* \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes
+          fi

@@ -1,0 +1,46 @@
+// 外部命令执行包装: 一律使用 args 数组, 不拼 shell 字符串
+package cmdrun
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
+	"github.com/AaronConlon/uply/internal/log"
+)
+
+// Options 执行选项
+type Options struct {
+	Cwd          string
+	Env          []string
+	AllowNonZero bool
+}
+
+// Run 执行命令并透传 stdio, 非零退出码返回错误
+func Run(cmd string, args []string, opts Options) error {
+	c := exec.Command(cmd, args...)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	c.Stdin = os.Stdin
+	if opts.Cwd != "" {
+		c.Dir = opts.Cwd
+	}
+	c.Env = append(os.Environ(), opts.Env...)
+	err := c.Run()
+	if err == nil {
+		return nil
+	}
+	if opts.AllowNonZero {
+		return nil
+	}
+	code := 1
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		code = ee.ExitCode()
+	}
+	msg := fmt.Sprintf("命令执行失败（退出码 %d）: %s %s", code, cmd, strings.Join(args, " "))
+	log.Fail(msg)
+	return fmt.Errorf("%s", log.Redact(msg))
+}
