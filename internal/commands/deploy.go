@@ -4,6 +4,7 @@ package commands
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/log"
@@ -11,24 +12,36 @@ import (
 )
 
 // SelectProjectAndRelease 是无命令启动入口：选择项目后继续 release 的版本选择流程。
-func SelectProjectAndRelease(force bool) error {
+func SelectProjectAndRelease(force bool, startedAt ...time.Time) error {
+	var start time.Time
+	if len(startedAt) > 0 && !startedAt[0].IsZero() {
+		start = startedAt[0]
+	} else {
+		start = time.Now()
+	}
 	project, ok, err := selectLocalProject("")
 	if err != nil || !ok {
 		return err
 	}
 	log.Info("已选择项目 " + project.Name + "（" + log.Path(project.Root) + "）")
-	return Release(ReleaseArgs{Force: force, Root: project.Root})
+	return Release(ReleaseArgs{Force: force, Root: project.Root, StartedAt: start})
 }
 
 // Deploy 按项目名（或交互选择）定位根目录，直接部署最新正式版本。
-func Deploy(projectName string, force bool) error {
+func Deploy(projectName string, force bool, startedAt ...time.Time) error {
+	var start time.Time
+	if len(startedAt) > 0 && !startedAt[0].IsZero() {
+		start = startedAt[0]
+	} else {
+		start = time.Now()
+	}
 	project, ok, err := selectLocalProject(projectName)
 	if err != nil || !ok {
 		return err
 	}
 	log.Info("正在项目 " + project.Name + "（" + log.Path(project.Root) + "）部署最新版本。")
 	// Root 贯穿下载、解压、部署与状态读写，效果等同于切入该目录执行 upy release latest。
-	return Release(ReleaseArgs{Target: "latest", Force: force, Root: project.Root})
+	return Release(ReleaseArgs{Target: "latest", Force: force, Root: project.Root, StartedAt: start})
 }
 
 func selectLocalProject(projectName string) (config.LocalProject, bool, error) {

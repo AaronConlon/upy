@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/bundle"
 	"github.com/AaronConlon/upy/internal/config"
@@ -17,13 +18,18 @@ import (
 
 // ReleaseArgs release 命令参数
 type ReleaseArgs struct {
-	Target string
-	Force  bool
-	Root   string
+	Target    string
+	Force     bool
+	Root      string
+	StartedAt time.Time
 }
 
 // Release 执行 release 命令
 func Release(args ReleaseArgs) error {
+	startedAt := args.StartedAt
+	if startedAt.IsZero() {
+		startedAt = time.Now()
+	}
 	ui.PrintProjectBanner(args.Root, ui.BannerOptions{})
 
 	cfg, err := config.ReadProjectConfig(args.Root)
@@ -85,6 +91,7 @@ func Release(args ReleaseArgs) error {
 	// - 资产名固定不含版本 (如 bundle.zip) → 加上 <tag>- 前缀, 避免不同版本互相覆盖复用
 	bundlesDir := filepath.Join(args.Root, "bundles")
 	os.MkdirAll(bundlesDir, 0o755)
+	_ = os.Chmod(bundlesDir, 0o755)
 	cacheName := asset.Name
 	if !assetNameHasTag(asset.Name, release.Tag) {
 		cacheName = release.Tag + "-" + asset.Name
@@ -109,12 +116,13 @@ func Release(args ReleaseArgs) error {
 	}
 
 	log.Info(fmt.Sprintf("开始部署 %s v%s%s", cfg.Name, stripV(release.Tag), forceSuffix(args.Force)))
-	res, err := deploy.DeployBundle(zipPath, deploy.Options{Force: args.Force, Root: args.Root})
+	_, err = deploy.DeployBundle(zipPath, deploy.Options{
+		Force:     args.Force,
+		Root:      args.Root,
+		StartedAt: startedAt,
+	})
 	if err != nil {
 		return err
-	}
-	if res.Skipped {
-		log.Info("当前已是目标版本，跳过部署（--force 可强制重新部署）。")
 	}
 	// 只在 release 完整成功后登记；下载、解压或部署失败时不会污染本地项目列表。
 	if err := config.SaveLocalProject(cfg.Name, args.Root); err != nil {

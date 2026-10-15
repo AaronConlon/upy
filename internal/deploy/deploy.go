@@ -21,8 +21,9 @@ import (
 
 // Options 部署选项
 type Options struct {
-	Force bool
-	Root  string
+	Force     bool
+	Root      string
+	StartedAt time.Time
 }
 
 // Result 部署结果
@@ -40,7 +41,10 @@ func DeployBundle(zipPath string, opts Options) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	startedAt := time.Now()
+	startedAt := opts.StartedAt
+	if startedAt.IsZero() {
+		startedAt = time.Now()
+	}
 	res, err := deployBundle(zipPath, root, opts.Force, startedAt)
 	notifyDeploy(res, err, root, startedAt)
 	return res, err
@@ -57,6 +61,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	if err := os.MkdirAll(releasesDir, 0o755); err != nil {
 		return nil, err
 	}
+	_ = os.Chmod(releasesDir, 0o755)
+	_ = os.Chmod(root, 0o755)
 
 	tmp, err := os.MkdirTemp(releasesDir, ".tmp-deploy-")
 	if err != nil {
@@ -66,6 +72,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 			return nil, err
 		}
 	}
+	_ = os.Chmod(tmp, 0o755)
 	cleanupTmp := true
 	defer func() {
 		if cleanupTmp {
@@ -100,6 +107,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	// 相同版本跳过
 	if st.CurrentVersion != "" && st.CurrentVersion == manifest.Version && !force {
 		log.Info(fmt.Sprintf("当前已是 %s，跳过部署（--force 可强制重新部署）", manifest.Version))
+		elapsed := time.Since(startedAt).Seconds()
+		log.Info("⏱ 部署耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
 		return &Result{Skipped: true, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 	}
 
@@ -116,6 +125,11 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	}
 	cleanupTmp = false
 	log.Ok("版本已安装到 releases/" + manifest.Version)
+
+	// 规范化版本目录权限: 确保目录为 0755, 文件为 0644/0755, 供 Nginx 等 Web 服务器正常访问
+	if err := EnsurePermissions(releaseDir); err != nil {
+		log.Warn("设置版本目录权限失败: " + err.Error())
+	}
 
 	ctx := &deployer.DeployContext{
 		Root:            root,
@@ -308,4 +322,24 @@ func dockerMode(m *config.Manifest) string {
 		return ""
 	}
 	return m.Docker.Mode
+}
+
+// EnsurePermissions 递归确保目录为 0755，普通文件至少为 0644 (若含可执行位则设为 0755)。
+// 忽略符号链接，避免操作系统变更符号链接目标文件的权限或跨系统报错。
+func EnsurePermissions(rootPath string) error {
+	return filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+		if info.IsDir() {
+			return os.Chmod(path, 0o755)
+		}
+		if info.Mode().Perm()&0o111 != 0 {
+			return os.Chmod(path, 0o755)
+		}
+		return os.Chmod(path, 0o644)
+	})
 }

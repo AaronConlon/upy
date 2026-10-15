@@ -51,6 +51,7 @@ func (s *StaticDeployer) Activate() error {
 	if _, err := os.Stat(target); err != nil {
 		return fmt.Errorf("静态版本目录不存在: %s", target)
 	}
+	_ = os.Chmod(target, 0o755)
 	if err := AtomicSymlink(target, filepath.Join(s.ctx.Root, "current")); err != nil {
 		return err
 	}

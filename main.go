@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/commands"
 	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/platform"
 	"github.com/AaronConlon/upy/internal/version"
 )
 
@@ -95,6 +97,9 @@ func parseArgs(argv []string) parsedArgs {
 }
 
 func main() {
+	platform.SetDefaultUmask()
+	cmdStartedAt := time.Now()
+
 	if len(os.Args) == 2 && os.Args[1] == "__install-completion" {
 		result, err := commands.InstallShellCompletion()
 		if err != nil {
@@ -134,25 +139,25 @@ func main() {
 	var err error
 	switch p.cmd {
 	case "":
-		err = commands.SelectProjectAndRelease(p.force)
+		err = commands.SelectProjectAndRelease(p.force, cmdStartedAt)
 	case "release":
 		target := ""
 		if len(p.positional) > 0 {
 			target = p.positional[0]
 		}
-		err = commands.Release(commands.ReleaseArgs{Target: target, Force: p.force, Root: root})
+		err = commands.Release(commands.ReleaseArgs{Target: target, Force: p.force, Root: root, StartedAt: cmdStartedAt})
 	case "deploy":
 		projectName := ""
 		if len(p.positional) > 0 {
 			projectName = p.positional[0]
 		}
-		err = commands.Deploy(projectName, p.force)
+		err = commands.Deploy(projectName, p.force, cmdStartedAt)
 	case "bundle":
 		file := ""
 		if len(p.positional) > 0 {
 			file = p.positional[0]
 		}
-		err = commands.Bundle(commands.BundleArgs{File: file, Force: p.force, Root: root})
+		err = commands.Bundle(commands.BundleArgs{File: file, Force: p.force, Root: root, StartedAt: cmdStartedAt})
 	case "version":
 		err = commands.VersionCmd()
 	case "update":

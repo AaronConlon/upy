@@ -44,16 +44,23 @@ func SafeExtract(zipPath, destDir string) error {
 			if err := os.MkdirAll(absPath, 0o755); err != nil {
 				return err
 			}
+			_ = os.Chmod(absPath, 0o755)
 			continue
 		}
 		if err := os.MkdirAll(filepath.Dir(absPath), 0o755); err != nil {
 			return err
 		}
+		_ = os.Chmod(filepath.Dir(absPath), 0o755)
 		rc, err := f.Open()
 		if err != nil {
 			return err
 		}
-		out, err := os.OpenFile(absPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+		mode := f.Mode()
+		filePerm := os.FileMode(0o644)
+		if mode&0o111 != 0 {
+			filePerm = 0o755
+		}
+		out, err := os.OpenFile(absPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, filePerm)
 		if err != nil {
 			rc.Close()
 			return err
@@ -65,6 +72,7 @@ func SafeExtract(zipPath, destDir string) error {
 		}
 		rc.Close()
 		out.Close()
+		_ = os.Chmod(absPath, filePerm)
 	}
 	return nil
 }
