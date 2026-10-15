@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/checksum"
 	"github.com/AaronConlon/upy/internal/github"
@@ -17,6 +18,7 @@ import (
 
 // UpdateCmd 自更新: 支持最新版本或指定版本 (upy update [tag])
 func UpdateCmd(target string, force bool) error {
+	startedAt := time.Now()
 	target = strings.TrimSpace(target)
 
 	var release *github.GHRelease
@@ -30,6 +32,8 @@ func UpdateCmd(target string, force bool) error {
 		if !force && !semver.Newer(release.Tag, version.Value) {
 			log.Info(fmt.Sprintf("当前已是最新版本 (%s)。可使用 --force 重新安装。", version.String()))
 			reportCompletionInstall()
+			elapsed := time.Since(startedAt).Seconds()
+			log.Info("⏱ 耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
 			return nil
 		}
 		log.Info(fmt.Sprintf("发现新版本: %s (当前版本: %s)", release.Tag, version.String()))
@@ -52,6 +56,8 @@ func UpdateCmd(target string, force bool) error {
 		if !force && release.Tag == version.Value {
 			log.Info(fmt.Sprintf("当前已是目标版本 (%s)。可使用 --force 重新安装。", version.String()))
 			reportCompletionInstall()
+			elapsed := time.Since(startedAt).Seconds()
+			log.Info("⏱ 耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
 			return nil
 		}
 		log.Info(fmt.Sprintf("准备切换到版本: %s (当前版本: %s)", release.Tag, version.String()))
@@ -87,6 +93,7 @@ func UpdateCmd(target string, force bool) error {
 	if err := github.DownloadAsset(selfRepo, asset, tmpPath); err != nil {
 		return err
 	}
+	log.Ok(fmt.Sprintf("%s 下载完成", assetName))
 	log.Step("正在校验 SHA-256...")
 	if err := github.DownloadAsset(selfRepo, sumsAsset, sumsPath); err != nil {
 		return fmt.Errorf("无法下载 SHA256SUMS，拒绝安装未校验的二进制: %w", err)
@@ -114,6 +121,8 @@ func UpdateCmd(target string, force bool) error {
 	if err := completion.Run(); err != nil {
 		log.Warn("Tab 命令补全同步失败: " + err.Error())
 	}
+	elapsed := time.Since(startedAt).Seconds()
+	log.Info("⏱ 耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
 	log.Info("请重新运行 upy 以使用新版本。")
 	return nil
 }

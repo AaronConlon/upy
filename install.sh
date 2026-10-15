@@ -13,6 +13,8 @@
 #
 set -euo pipefail
 
+START_TIME="$(date +%s)"
+
 REPO="AaronConlon/upy"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 FORCE="${FORCE:-0}"
@@ -48,6 +50,12 @@ log_ok() {
 
 log_err() {
   printf "%b✗ %s%b\n" "$RED" "$*" "$RESET" >&2
+}
+
+print_elapsed() {
+  END_TIME="$(date +%s)"
+  ELAPSED=$((END_TIME - START_TIME))
+  log_info "⏱ 耗时: ${GREEN}${BOLD}${ELAPSED}s${RESET}"
 }
 
 # 1. 识别当前平台 OS 与架构
@@ -154,6 +162,7 @@ if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" = "$TARGET_VERSION" ] && [ 
     "$TARGET_BIN" __install-completion || log_err "Tab 命令补全安装失败，但 upy 可正常使用。"
   fi
   log_info "如需强制重新下载安装，可传 FORCE=1，例如: FORCE=1 ./install.sh"
+  print_elapsed
   exit 0
 fi
 
@@ -284,3 +293,6 @@ else
   log_info "提示: ${INSTALL_DIR} 可能尚未加入系统 PATH，请将其加入您的 shell 配置文件 (如 ~/.zshrc 或 ~/.bashrc):"
   printf "    export PATH=\"%s:\$PATH\"\n" "$INSTALL_DIR"
 fi
+
+print_elapsed
+

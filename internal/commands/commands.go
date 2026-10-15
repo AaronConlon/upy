@@ -2,8 +2,9 @@
 package commands
 
 import (
-	"strconv"
 	"strings"
+
+	"github.com/AaronConlon/upy/internal/log"
 )
 
 const selfRepo = "AaronConlon/upy"
@@ -20,12 +21,5 @@ func forceSuffix(force bool) string {
 }
 
 func humanSize(bytes int64) string {
-	switch {
-	case bytes < 1024:
-		return strconv.FormatInt(bytes, 10) + "B"
-	case bytes < 1024*1024:
-		return strconv.FormatFloat(float64(bytes)/1024, 'f', 1, 64) + "KB"
-	default:
-		return strconv.FormatFloat(float64(bytes)/1024/1024, 'f', 1, 64) + "MB"
-	}
+	return log.HumanSize(bytes)
 }

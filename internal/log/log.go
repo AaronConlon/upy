@@ -4,6 +4,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"golang.org/x/term"
@@ -82,3 +83,15 @@ func Ok(msg string)       { emit("  " + paint(green, "✓") + " " + msg) }
 func Info(msg string)     { emit("  " + paint(dim, "-") + " " + msg) }
 func Warn(msg string)     { emit("  " + paint(yellow, "!") + " " + msg) }
 func Fail(msg string)     { emit("  " + paint(red, "错误: ") + msg) }
+
+// HumanSize 将字节大小格式化为易读的字符串 (如 1.2MB, 512KB)
+func HumanSize(bytes int64) string {
+	switch {
+	case bytes < 1024:
+		return strconv.FormatInt(bytes, 10) + "B"
+	case bytes < 1024*1024:
+		return strconv.FormatFloat(float64(bytes)/1024, 'f', 1, 64) + "KB"
+	default:
+		return strconv.FormatFloat(float64(bytes)/1024/1024, 'f', 1, 64) + "MB"
+	}
+}

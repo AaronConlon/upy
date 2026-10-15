@@ -3,11 +3,15 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,7 +19,7 @@ import (
 	"github.com/AaronConlon/upy/internal/log"
 )
 
-const apiBase = "https://api.github.com"
+var apiBase = "https://api.github.com"
 
 // GHAsset Release 资产
 type GHAsset struct {
@@ -56,14 +60,102 @@ func newRequest(method, url, token string) (*http.Request, error) {
 	return req, nil
 }
 
-var client = &http.Client{Timeout: 60 * time.Second}
+// envProxy 优先读取 HTTP_PROXY / HTTPS_PROXY，其次支持标准库默认忽略的 ALL_PROXY / all_proxy (包括 socks5://)
+func envProxy(req *http.Request) (*url.URL, error) {
+	if u, err := http.ProxyFromEnvironment(req); err == nil && u != nil {
+		return u, nil
+	}
+	all := strings.TrimSpace(os.Getenv("ALL_PROXY"))
+	if all == "" {
+		all = strings.TrimSpace(os.Getenv("all_proxy"))
+	}
+	if all == "" {
+		return nil, nil
+	}
+	if isLoopback(req.URL.Host) || !useProxyForHost(req.URL.Host) {
+		return nil, nil
+	}
+	if !strings.Contains(all, "://") {
+		all = "http://" + all
+	}
+	return url.Parse(all)
+}
+
+func isLoopback(host string) bool {
+	h, _, err := net.SplitHostPort(host)
+	if err != nil {
+		h = host
+	}
+	if h == "localhost" || h == "127.0.0.1" || h == "::1" {
+		return true
+	}
+	if ip := net.ParseIP(h); ip != nil && ip.IsLoopback() {
+		return true
+	}
+	return false
+}
+
+func useProxyForHost(host string) bool {
+	noProxy := strings.TrimSpace(os.Getenv("NO_PROXY"))
+	if noProxy == "" {
+		noProxy = strings.TrimSpace(os.Getenv("no_proxy"))
+	}
+	if noProxy == "*" {
+		return false
+	}
+	if noProxy == "" {
+		return true
+	}
+	h, _, err := net.SplitHostPort(host)
+	if err != nil {
+		h = host
+	}
+	h = strings.ToLower(strings.TrimSpace(h))
+	for _, p := range strings.Split(noProxy, ",") {
+		p = strings.ToLower(strings.TrimSpace(p))
+		if p == "" {
+			continue
+		}
+		if p == "*" || p == h || strings.HasSuffix(h, "."+strings.TrimPrefix(p, ".")) {
+			return false
+		}
+	}
+	return true
+}
+
+func newTransport() *http.Transport {
+	var t *http.Transport
+	if dt, ok := http.DefaultTransport.(*http.Transport); ok {
+		t = dt.Clone()
+	} else {
+		t = &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:  10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+	}
+	t.Proxy = envProxy
+	return t
+}
+
+var client = &http.Client{
+	Timeout:   60 * time.Second,
+	Transport: newTransport(),
+}
 
 // downloadClient 用于下载大资产，不设整体超时以避免大文件下载中断，通过响应头超时保证不挂死
 var downloadClient = &http.Client{
-	Transport: &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		ResponseHeaderTimeout: 60 * time.Second,
-	},
+	Transport: func() *http.Transport {
+		t := newTransport()
+		t.ResponseHeaderTimeout = 60 * time.Second
+		return t
+	}(),
 }
 
 func ghGet(url, token string, allow404 bool) (*http.Response, error) {
@@ -233,71 +325,288 @@ func listAssets(release *GHRelease) string {
 	return strings.Join(names, ", ")
 }
 
-// DownloadAsset 下载资产到 dest (走 API 资产端点, 私有仓库必需)
+const (
+	maxDownloadRetries = 3
+	readIdleTimeout    = 30 * time.Second
+)
+
+type progressReader struct {
+	reader      io.Reader
+	total       int64
+	initial     int64
+	current     int64
+	startTime   time.Time
+	lastUpdate  time.Time
+	idleTimer   *time.Timer
+	idleTimeout time.Duration
+	isTTY       bool
+}
+
+func newProgressReader(r io.Reader, total, initial int64, idleTimer *time.Timer, idleTimeout time.Duration) *progressReader {
+	return &progressReader{
+		reader:      r,
+		total:       total,
+		initial:     initial,
+		current:     initial,
+		startTime:   time.Now(),
+		lastUpdate:  time.Now(),
+		idleTimer:   idleTimer,
+		idleTimeout: idleTimeout,
+		isTTY:       log.UseColor,
+	}
+}
+
+func (pr *progressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	if n > 0 {
+		pr.current += int64(n)
+		if pr.idleTimer != nil {
+			pr.idleTimer.Reset(pr.idleTimeout)
+		}
+		pr.render()
+	}
+	return n, err
+}
+
+func (pr *progressReader) render() {
+	if !pr.isTTY {
+		return
+	}
+	now := time.Now()
+	// 控制刷新频率为 100ms 一次，避免刷屏卡顿；若已全部读完则立即刷新
+	if now.Sub(pr.lastUpdate) < 100*time.Millisecond && (pr.total <= 0 || pr.current < pr.total) {
+		return
+	}
+	pr.lastUpdate = now
+
+	elapsed := now.Sub(pr.startTime).Seconds()
+	if elapsed <= 0 {
+		elapsed = 0.001
+	}
+	// 计算当前轮次的实时传输速度，避免加上续传的历史字节
+	readInThisRound := pr.current - pr.initial
+	speed := float64(readInThisRound) / elapsed
+
+	var line string
+	if pr.total > 0 {
+		percent := float64(pr.current) / float64(pr.total) * 100
+		if percent > 100 {
+			percent = 100
+		}
+		barWidth := 20
+		filled := int(float64(barWidth) * float64(pr.current) / float64(pr.total))
+		if filled > barWidth {
+			filled = barWidth
+		}
+		bar := strings.Repeat("=", filled)
+		if filled < barWidth {
+			bar += ">" + strings.Repeat(" ", barWidth-filled-1)
+		}
+		line = fmt.Sprintf("\r    [%s] %5.1f%% %s/%s (%s/s)",
+			bar, percent, log.HumanSize(pr.current), log.HumanSize(pr.total), log.HumanSize(int64(speed)))
+	} else {
+		line = fmt.Sprintf("\r    %s (%s/s)", log.HumanSize(pr.current), log.HumanSize(int64(speed)))
+	}
+
+	os.Stderr.WriteString(line)
+}
+
+func (pr *progressReader) finish() {
+	if pr.isTTY {
+		os.Stderr.WriteString("\r\x1b[2K\r")
+	}
+}
+
+// DownloadAsset 下载资产到 dest (走 API 资产端点，失败时自动降级公开直链)
 func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 	tok := token(repo)
-	var req *http.Request
-	var err error
 	if tok != "" {
-		// 具有 token，走 GitHub API 资产端点 (私有仓库必需)
+		// 具有 token，优先走 GitHub API 资产端点 (私有仓库必需)
 		url := fmt.Sprintf("%s/repos/%s/releases/assets/%d", apiBase, repo, asset.ID)
-		req, err = http.NewRequest(http.MethodGet, url, nil)
-		if err != nil {
-			return err
+		err := downloadToFile(url, tok, asset, dest)
+		if err == nil {
+			return nil
 		}
-		req.Header.Set("Authorization", "Bearer "+tok)
-		req.Header.Set("Accept", "application/octet-stream")
-	} else {
-		// 无 token，公开仓库直接通过 Browser Download URL 下载
-		if asset.URL == "" {
-			return fmt.Errorf("资产 %s 无公开下载地址，请配置 GitHub token", asset.Name)
+		// 若 API 端点下载失败且存在公开下载直链，自动降级重试公开直链 (与 install.sh 保持一致)
+		if asset.URL != "" {
+			log.Info(fmt.Sprintf("API 资产端点下载失败 (%v)，正在降级尝试公开直链...", log.Redact(err.Error())))
+			if err2 := downloadToFile(asset.URL, "", asset, dest); err2 == nil {
+				return nil
+			}
 		}
-		req, err = http.NewRequest(http.MethodGet, asset.URL, nil)
-		if err != nil {
-			return err
-		}
-	}
-	req.Header.Set("User-Agent", "upy-cli")
-
-	resp, err := downloadClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("下载失败: %v", log.Redact(err.Error()))
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("资产 %s 下载失败 (%d)", asset.Name, resp.StatusCode)
-	}
-
-	// 写入临时文件，下载并校验完成后再原子重命名为目标路径，避免中途中断留下损坏文件
-	tmpDest := fmt.Sprintf("%s.tmp-%d", dest, time.Now().UnixNano())
-	out, err := os.Create(tmpDest)
-	if err != nil {
 		return err
 	}
 
+	// 无 token，公开仓库直接通过 Browser Download URL 下载
+	if asset.URL == "" {
+		return fmt.Errorf("资产 %s 无公开下载地址，请配置 GitHub token", asset.Name)
+	}
+	return downloadToFile(asset.URL, "", asset, dest)
+}
+
+func downloadToFile(url, token string, asset *GHAsset, dest string) error {
+	tmpDest := fmt.Sprintf("%s.tmp-%d", dest, time.Now().UnixNano())
 	success := false
 	defer func() {
-		out.Close()
 		if !success {
 			_ = os.Remove(tmpDest)
 		}
 	}()
 
-	written, err := io.Copy(out, resp.Body)
-	if err != nil {
-		return fmt.Errorf("下载失败: %v", log.Redact(err.Error()))
+	var lastErr error
+	for attempt := 1; attempt <= maxDownloadRetries+1; attempt++ {
+		if attempt > 1 {
+			backoff := time.Duration(attempt-1) * time.Second
+			time.Sleep(backoff)
+		}
+
+		var existingSize int64
+		if fi, err := os.Stat(tmpDest); err == nil {
+			existingSize = fi.Size()
+		}
+
+		if asset.Size > 0 && existingSize == asset.Size {
+			if err := os.Rename(tmpDest, dest); err != nil {
+				return err
+			}
+			success = true
+			return nil
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			cancel()
+			return err
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+			req.Header.Set("Accept", "application/octet-stream")
+		}
+		if existingSize > 0 {
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-", existingSize))
+		}
+		req.Header.Set("User-Agent", "upy-cli")
+
+		idleTimer := time.AfterFunc(readIdleTimeout, func() {
+			cancel()
+		})
+
+		resp, err := downloadClient.Do(req)
+		if err != nil {
+			idleTimer.Stop()
+			cancel()
+			lastErr = err
+			if attempt <= maxDownloadRetries {
+				log.Warn(fmt.Sprintf("下载连接中断 (%v)，正在尝试断点续传 (第 %d/%d 次)...",
+					log.Redact(err.Error()), attempt, maxDownloadRetries))
+				continue
+			}
+			return fmt.Errorf("下载失败: %v", log.Redact(err.Error()))
+		}
+
+		isPartial := resp.StatusCode == http.StatusPartialContent
+		isOK := resp.StatusCode == http.StatusOK
+		isRangeInvalid := resp.StatusCode == http.StatusRequestedRangeNotSatisfiable
+
+		if isRangeInvalid {
+			resp.Body.Close()
+			idleTimer.Stop()
+			cancel()
+			_ = os.Truncate(tmpDest, 0)
+			if attempt <= maxDownloadRetries {
+				log.Warn(fmt.Sprintf("Range 请求无效 (HTTP 416)，已重置为从头下载 (第 %d/%d 次)...", attempt, maxDownloadRetries))
+				continue
+			}
+			return fmt.Errorf("资产 %s 下载失败 (HTTP 416)", asset.Name)
+		}
+
+		if !isPartial && !isOK {
+			resp.Body.Close()
+			idleTimer.Stop()
+			cancel()
+			lastErr = fmt.Errorf("资产 %s 下载失败 (%d)", asset.Name, resp.StatusCode)
+			if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+				return lastErr
+			}
+			if attempt <= maxDownloadRetries {
+				log.Warn(fmt.Sprintf("服务端异常 (%d)，准备重试 (第 %d/%d 次)...", resp.StatusCode, attempt, maxDownloadRetries))
+				continue
+			}
+			return lastErr
+		}
+
+		var out *os.File
+		var currentOffset int64
+		if isPartial {
+			out, err = os.OpenFile(tmpDest, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0o644)
+			currentOffset = existingSize
+		} else {
+			out, err = os.Create(tmpDest)
+			currentOffset = 0
+		}
+		if err != nil {
+			resp.Body.Close()
+			idleTimer.Stop()
+			cancel()
+			return err
+		}
+
+		totalSize := asset.Size
+		if totalSize <= 0 {
+			if isPartial {
+				if cr := resp.Header.Get("Content-Range"); cr != "" {
+					if slashIdx := strings.LastIndex(cr, "/"); slashIdx != -1 {
+						if tot, parseErr := strconv.ParseInt(strings.TrimSpace(cr[slashIdx+1:]), 10, 64); parseErr == nil {
+							totalSize = tot
+						}
+					}
+				}
+			} else if resp.ContentLength > 0 {
+				totalSize = resp.ContentLength
+			}
+		}
+
+		pr := newProgressReader(resp.Body, totalSize, currentOffset, idleTimer, readIdleTimeout)
+		_, copyErr := io.Copy(out, pr)
+		pr.finish()
+		idleTimer.Stop()
+		out.Close()
+		resp.Body.Close()
+		cancel()
+
+		if copyErr != nil {
+			lastErr = copyErr
+			if attempt <= maxDownloadRetries {
+				log.Warn(fmt.Sprintf("传输中断 (%v)，正在尝试断点续传 (第 %d/%d 次)...",
+					log.Redact(copyErr.Error()), attempt, maxDownloadRetries))
+				continue
+			}
+			return fmt.Errorf("下载失败: %v", log.Redact(copyErr.Error()))
+		}
+
+		fi, statErr := os.Stat(tmpDest)
+		if statErr != nil {
+			return statErr
+		}
+		if asset.Size > 0 && fi.Size() != asset.Size {
+			lastErr = fmt.Errorf("资产 %s 下载不完整: 预期 %d 字节，实际得到 %d 字节", asset.Name, asset.Size, fi.Size())
+			if attempt <= maxDownloadRetries {
+				log.Warn(fmt.Sprintf("下载大小不一致 (已下载 %s / 预期 %s)，正在重试续传 (第 %d/%d 次)...",
+					log.HumanSize(fi.Size()), log.HumanSize(asset.Size), attempt, maxDownloadRetries))
+				continue
+			}
+			return lastErr
+		}
+
+		if err := os.Rename(tmpDest, dest); err != nil {
+			return err
+		}
+		success = true
+		return nil
 	}
-	if asset.Size > 0 && written != asset.Size {
-		return fmt.Errorf("资产 %s 下载不完整: 预期 %d 字节，实际得到 %d 字节", asset.Name, asset.Size, written)
-	}
-	if err := out.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpDest, dest); err != nil {
-		return err
-	}
-	success = true
-	return nil
+
+	return lastErr
 }
 
 // PeekLatestTag 不强制 token 的 latest tag 探测 (version 自更新检查, 失败返回空)
