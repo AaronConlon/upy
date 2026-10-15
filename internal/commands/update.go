@@ -3,8 +3,10 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -77,10 +79,23 @@ func UpdateCmd(target string, force bool) error {
 	if err != nil {
 		return fmt.Errorf("无法定位 upy 二进制路径，自更新仅支持编译后的 upy 二进制")
 	}
-
-	tmp, err := os.CreateTemp("", "upy-update-")
+	self, err = filepath.EvalSymlinks(self)
 	if err != nil {
-		return err
+		return fmt.Errorf("无法解析 upy 二进制实际路径: %w", err)
+	}
+
+	selfDir := filepath.Dir(self)
+	// 优先在目标二进制所在目录下创建临时文件：保证与目标在同一文件系统，避免跨设备 rename 报错 (EXDEV)
+	tmp, err := os.CreateTemp(selfDir, ".upy-update-")
+	if err != nil {
+		if os.IsPermission(err) {
+			return fmt.Errorf("无法在目录 %s 创建临时更新文件: 权限不足 (若安装在系统受限目录如 /usr/local/bin，请使用 sudo upy update)", selfDir)
+		}
+		// 其他错误回退到系统临时目录
+		tmp, err = os.CreateTemp("", "upy-update-")
+		if err != nil {
+			return err
+		}
 	}
 	tmpPath := tmp.Name()
 	tmp.Close()
@@ -106,12 +121,13 @@ func UpdateCmd(target string, force bool) error {
 		return err
 	}
 
-	if err := os.Rename(tmpPath, self); err != nil {
-		return fmt.Errorf("无法替换二进制文件 %s: %v (若安装在系统受限目录如 /usr/local/bin，请使用 sudo upy update)", self, err)
+	if err := replaceExecutable(tmpPath, self); err != nil {
+		if os.IsPermission(err) {
+			return fmt.Errorf("无法替换二进制文件 %s: 权限不足 (若安装在系统受限目录如 /usr/local/bin，请使用 sudo upy update)", self)
+		}
+		return fmt.Errorf("无法替换二进制文件 %s: %w", self, err)
 	}
-	if err := os.Chmod(self, 0o755); err != nil {
-		return err
-	}
+	_ = os.Chmod(self, 0o755)
 
 	log.Ok(fmt.Sprintf("已成功更新 %s 到 %s", self, release.Tag))
 	// 已替换为新二进制，交由新版本写入补全规则，避免把旧命令列表写回 shell。
@@ -139,4 +155,72 @@ func reportCompletionInstall() {
 	}
 	log.Info("检测到当前 shell: " + result.Shell)
 	log.Ok("已同步 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+}
+
+// replaceExecutable 替换目标二进制文件，妥善处理同分区原子 rename、跨分区 EXDEV 以及 Linux 运行中二进制 ETXTBSY 保护
+func replaceExecutable(src, dst string) error {
+	// 1. 优先尝试原子 rename（同分区/文件系统下最安全且原子）
+	if err := os.Rename(src, dst); err == nil {
+		return nil
+	}
+
+	// 2. 若 rename 失败（如跨设备/分区 EXDEV），尝试在目标目录创建临时文件并 rename
+	dstDir := filepath.Dir(dst)
+	dstTmp, err := os.CreateTemp(dstDir, ".upy-update-")
+	if err == nil {
+		dstTmpPath := dstTmp.Name()
+		defer os.Remove(dstTmpPath)
+		if err := copyExecutable(src, dstTmp); err == nil {
+			_ = dstTmp.Close()
+			_ = os.Chmod(dstTmpPath, 0o755)
+			if err := os.Rename(dstTmpPath, dst); err == nil {
+				return nil
+			}
+		} else {
+			_ = dstTmp.Close()
+		}
+	}
+
+	// 3. 跨分区终极回退（无法在目标目录建立同分区临时文件时）：
+	// 在 Linux 下直接写入运行中的目标文件会触发 ETXTBSY (text file busy)，
+	// 因此先将原目标文件重命名为 .old 腾出位置，再写入新文件
+	backup := dst + ".old-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	if err := os.Rename(dst, backup); err == nil {
+		defer os.Remove(backup)
+		if err := copyFileDirect(src, dst, 0o755); err != nil {
+			_ = os.Rename(backup, dst) // 失败则尝试回滚
+			return err
+		}
+		return nil
+	}
+
+	// 4. 若备份重命名也失败，尝试直接覆盖
+	return copyFileDirect(src, dst, 0o755)
+}
+
+func copyExecutable(src string, dst *os.File) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	_, err = io.Copy(dst, in)
+	return err
+}
+
+func copyFileDirect(src, dst string, mode os.FileMode) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return os.Chmod(dst, mode)
 }
