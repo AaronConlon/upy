@@ -3,6 +3,7 @@ package deploy
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,9 +52,19 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		return nil, fmt.Errorf("未找到 bundle 文件: %s", zipPath)
 	}
 
-	tmp, err := os.MkdirTemp("", "upy-deploy-")
-	if err != nil {
+	// 保证 releases 目录就绪；临时解压目录建在 releasesDir 下，保证与目标目录在同一分区/设备，避免跨设备 rename 报错 (EXDEV)
+	releasesDir := filepath.Join(root, "releases")
+	if err := os.MkdirAll(releasesDir, 0o755); err != nil {
 		return nil, err
+	}
+
+	tmp, err := os.MkdirTemp(releasesDir, ".tmp-deploy-")
+	if err != nil {
+		// 若 releasesDir 下创建临时目录失败，回退到系统临时目录
+		tmp, err = os.MkdirTemp("", "upy-deploy-")
+		if err != nil {
+			return nil, err
+		}
 	}
 	cleanupTmp := true
 	defer func() {
@@ -92,11 +103,6 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		return &Result{Skipped: true, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 	}
 
-	// 安装 release 目录
-	releasesDir := filepath.Join(root, "releases")
-	if err := os.MkdirAll(releasesDir, 0o755); err != nil {
-		return nil, err
-	}
 	releaseDir := filepath.Join(releasesDir, manifest.Version)
 	log.Step("版本目录: " + log.Path(releaseDir))
 	if _, err := os.Stat(releaseDir); err == nil {
@@ -105,7 +111,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		}
 	}
 	log.Step("正在安装版本 " + manifest.Version + "...")
-	if err := os.Rename(tmp, releaseDir); err != nil {
+	if err := moveDir(tmp, releaseDir); err != nil {
 		return nil, err
 	}
 	cleanupTmp = false
@@ -186,12 +192,73 @@ func cleanupOldReleases(root string, st *state.State) {
 		if !e.IsDir() {
 			continue
 		}
+		if strings.HasPrefix(e.Name(), ".tmp-deploy-") {
+			_ = os.RemoveAll(filepath.Join(releasesDir, e.Name()))
+			continue
+		}
 		if e.Name() == st.CurrentVersion {
 			continue
 		}
 		log.Info("🗑 清理旧版本目录 " + e.Name())
 		os.RemoveAll(filepath.Join(releasesDir, e.Name()))
 	}
+}
+
+// moveDir 尝试将 src 移动到 dst。优先使用原子重命名 (os.Rename)；若跨设备/分区 (EXDEV) 则回退到递归复制 + 删除
+func moveDir(src, dst string) error {
+	if err := os.Rename(src, dst); err == nil {
+		return nil
+	}
+	// 跨文件系统 (EXDEV) 或其他 rename 失败时，回退到 copy + remove
+	if err := copyDir(src, dst); err != nil {
+		_ = os.RemoveAll(dst)
+		return fmt.Errorf("移动目录失败，且跨分区复制失败: %w", err)
+	}
+	_ = os.RemoveAll(src)
+	return nil
+}
+
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		if info.IsDir() {
+			return os.MkdirAll(target, info.Mode())
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			linkTarget, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			return os.Symlink(linkTarget, target)
+		}
+		return copyFile(path, target, info.Mode())
+	})
+}
+
+func copyFile(src, dst string, mode os.FileMode) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return nil
 }
 
 func stripV(v string) string {

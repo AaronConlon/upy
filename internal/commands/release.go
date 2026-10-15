@@ -92,23 +92,18 @@ func Release(args ReleaseArgs) error {
 	localZip := filepath.Join(bundlesDir, cacheName)
 
 	zipPath := localZip
-	reuseCache := false
-	if _, err := os.Stat(localZip); err == nil && !args.Force {
-		// 复用前校验: zip 内 manifest 的 version 必须与目标版本一致, 不一致则重新下载
-		if v := bundle.ManifestVersionFromZip(localZip); v != "" && !sameVersion(v, release.Tag) {
-			log.Info(fmt.Sprintf("⚠️  本地缓存 bundle 的版本是 %s，与目标版本 %s 不一致，重新下载", v, release.Tag))
-		} else {
-			reuseCache = true
-			log.Info("📦 本地已存在 bundle，直接复用 " + log.Path(localZip) + "（--force 可强制重新下载）")
-		}
-	} else if _, err := os.Stat(localZip); err == nil && args.Force {
-		log.Info("♻️  --force 已指定，重新下载覆盖本地 bundle")
-	}
+	reuseCache := checkBundleCache(localZip, release.Tag, args.Force)
 
 	if !reuseCache {
+		_ = os.Remove(localZip)
 		log.Step("⬇️  正在下载资产 " + asset.Name + "（" + humanSize(asset.Size) + "）...")
 		if err := github.DownloadAsset(cfg.Release.Repository, asset, localZip); err != nil {
+			_ = os.Remove(localZip)
 			return err
+		}
+		if v := bundle.ManifestVersionFromZip(localZip); v == "" {
+			_ = os.Remove(localZip)
+			return fmt.Errorf("下载完成但 bundle 格式无效或缺少 deploy.yaml，已清理损坏文件")
 		}
 		log.Ok("已保存到 " + log.Path(localZip))
 	}
@@ -186,4 +181,29 @@ func sameVersion(manifestVersion, tag string) bool {
 	mv := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(manifestVersion)), "v")
 	tv := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(tag)), "v")
 	return mv == tv
+}
+
+// checkBundleCache 检查本地 bundle 缓存是否可直接复用；若损坏或版本不一致则清理
+func checkBundleCache(localZip, targetTag string, force bool) bool {
+	if _, err := os.Stat(localZip); err != nil {
+		return false
+	}
+	if force {
+		log.Info("♻️  --force 已指定，重新下载覆盖本地 bundle")
+		return false
+	}
+	// 复用前校验: zip 必须有效且 manifest 的 version 必须与目标版本一致, 否则清理并重新下载
+	v := bundle.ManifestVersionFromZip(localZip)
+	if v == "" {
+		log.Warn("⚠️  本地缓存 bundle 损坏或无效，清理后重新下载")
+		_ = os.Remove(localZip)
+		return false
+	}
+	if !sameVersion(v, targetTag) {
+		log.Info(fmt.Sprintf("⚠️  本地缓存 bundle 的版本是 %s，与目标版本 %s 不一致，重新下载", v, targetTag))
+		_ = os.Remove(localZip)
+		return false
+	}
+	log.Info("📦 本地已存在 bundle，直接复用 " + log.Path(localZip) + "（--force 可强制重新下载）")
+	return true
 }

@@ -58,6 +58,14 @@ func newRequest(method, url, token string) (*http.Request, error) {
 
 var client = &http.Client{Timeout: 60 * time.Second}
 
+// downloadClient 用于下载大资产，不设整体超时以避免大文件下载中断，通过响应头超时保证不挂死
+var downloadClient = &http.Client{
+	Transport: &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		ResponseHeaderTimeout: 60 * time.Second,
+	},
+}
+
 func ghGet(url, token string, allow404 bool) (*http.Response, error) {
 	req, err := newRequest(http.MethodGet, url, token)
 	if err != nil {
@@ -251,7 +259,7 @@ func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 	}
 	req.Header.Set("User-Agent", "upy-cli")
 
-	resp, err := client.Do(req)
+	resp, err := downloadClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("下载失败: %v", log.Redact(err.Error()))
 	}
@@ -259,14 +267,36 @@ func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("资产 %s 下载失败 (%d)", asset.Name, resp.StatusCode)
 	}
-	out, err := os.Create(dest)
+
+	// 写入临时文件，下载并校验完成后再原子重命名为目标路径，避免中途中断留下损坏文件
+	tmpDest := fmt.Sprintf("%s.tmp-%d", dest, time.Now().UnixNano())
+	out, err := os.Create(tmpDest)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
-	if _, err := io.Copy(out, resp.Body); err != nil {
+
+	success := false
+	defer func() {
+		out.Close()
+		if !success {
+			_ = os.Remove(tmpDest)
+		}
+	}()
+
+	written, err := io.Copy(out, resp.Body)
+	if err != nil {
 		return fmt.Errorf("下载失败: %v", log.Redact(err.Error()))
 	}
+	if asset.Size > 0 && written != asset.Size {
+		return fmt.Errorf("资产 %s 下载不完整: 预期 %d 字节，实际得到 %d 字节", asset.Name, asset.Size, written)
+	}
+	if err := out.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpDest, dest); err != nil {
+		return err
+	}
+	success = true
 	return nil
 }
 
