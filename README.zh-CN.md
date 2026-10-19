@@ -38,6 +38,7 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
     - [C. 原生系统服务 (system / Go 二进制 Web 服务)](#c-原生系统服务-system--go-二进制-web-服务)
 - [如何清理与维护](#如何清理与维护)
 - [如何备份与归档](#如何备份与归档)
+- [多接收人 Bark 实时通知](#多接收人-bark-实时通知)
 - [如何升级](#如何升级)
 - [常用命令速查](#常用命令速查)
 - [开源协议](#开源协议)
@@ -61,8 +62,9 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
 - **GitHub Release 驱动**：支持公开与私有仓库，多组织/个人 Token 自动路由匹配，断点续传与 SHA-256 完整性强校验。
 - **多重安全防线**：静态准备阶段与激活回滚正交隔离，跨根目录 unit 归属校验，外部已有 unit 防串扰保护。
 - **磁盘分析与安全清理**：`upy clean` 支持空间分析、Bundle 缓存清理与旧版本安全裁剪，双版本保护（当前活跃与最近回滚版本）与 live unit 引用保护。
+- **约定式数据备份**：零配置项目自动探测（`backup.sh`）、跨进程互斥锁防护、智能多版本轮转与全量一键批处理。
 - **本地项目快速调度**：在任意路径直接运行 `upy`，即可列出本机已纳管的项目并交互式选择部署。
-- **通知与观测**：内置全流程真实耗时统计与 Bark 移动端推送。
+- **多接收人 Bark 移动端推送**：部署与备份结果即时推送至 iOS 设备，底层基于 [Bark](https://bark.day.app/)（一款开源的 iOS 实时推送服务）。支持在 `deploy.yaml` 中进行项目级独立配置、在 `~/.upy/config.yaml` 中进行全局兜底配置、多接收人并行广播（纯 token、完整 URL 或高级对象格式）与智能自动去重。
 
 ---
 
@@ -127,11 +129,18 @@ github:
     AaronConlon: ghp_personal_xxx
 
 notify:
+  enabled: true # 可选总开关 (默认开启)
   bark:
-    - name: phone
+    # 格式 1: 支持多人接收设备 Token 或完整 Bark 推送 URL 列表
+    - your-bark-device-key-1
+    - https://api.day.app/your-bark-device-key-2
+
+    # 格式 2: 完整配置对象 (支持自定义音效、推送分组或自建 Bark 服务)
+    - name: 运维值班
       serverUrl: https://api.day.app
-      token: your-bark-device-key
-      group: upy
+      token: on-call-device-key
+      group: upy.production
+      sound: chime
 ```
 
 ---
@@ -148,6 +157,15 @@ release:
   provider: github
   repository: owner/repo      # GitHub 仓库路径 (组织/仓库名)
   asset: bundle.zip          # 资产文件名（可选，默认 bundle.zip，支持正则/模糊匹配）
+
+# 可选: 项目级独立配置 Bark 通知接收人 (与全局 ~/.upy/config.yaml 智能合并并自动去重)
+notify:
+  bark:
+    - alice-device-key
+    - https://api.day.app/bob-device-key
+    - name: 核心架构组
+      token: arch-device-key
+      sound: bell
 
 # 若为 system 类型部署，可额外指定系统运行账号（可选，防提权）
 service:
@@ -395,6 +413,59 @@ upy backup --all -y
 > - **跨进程排他锁（`.deploy.lock`）**：`upy backup` 执行时自动获取项目排他锁（`action: 备份中`），严格互斥正在进行的部署（`upy release`）或磁盘清理（`upy clean`），杜绝备份产生半更新脏数据。  
 > - **自动轮转防爆盘**：内置基于修改时间的智能轮转清理，自动保留最近 N 份备份（默认 7 份），防止历史备份文件无限膨胀撑爆服务器磁盘。  
 > - **通知联动推送**：备份完成后自动汇总耗时、产物文件体积，并通过 Bark 等渠道实时推送备份结果与告警。
+
+---
+
+## 多接收人 Bark 实时通知
+
+[Bark](https://bark.day.app/) 是一款针对苹果 iOS / iPadOS 设备的轻量、开源即时通知推送服务。只需要发送简单的 HTTP 请求，即可秒级将自定义通知推送至你的手机设备，完全摆脱重型机器人、第三方中转平台以及繁琐 Webhook 中间件的羁绊。
+
+`upy` 将 Bark 原生内建于发布与备份的全生命周期中，打造极简、快速、可靠的团队移动端观测闭环。
+
+### 核心亮点
+
+- **项目与全局双层配置，智能合并去重**：支持在项目目录的 `deploy.yaml` 中配置项目专属通知人，并在 `~/.upy/config.yaml` 中配置机器级兜底通知人。`upy` 会在通知触发时自动聚合两处配置，并基于服务端与 Token 进行智能去重，杜绝单人收到多条重复告警。
+- **多人协同广播**：支持同时配置多位研发、运维或测试人员的 Device Token，单次部署或备份事件并行推送到全体相关人员设备。
+- **多形态灵活配置**：既支持纯 Token 字符串、完整推送 URL 数组（兼容官方 `https://api.day.app` 及自建 Bark 节点），也支持携带独立音效（`sound`）、自定义分组（`group`）和敏感等级（`level`）的高级对象定义。
+- **项目级静音开关**：如果某个内部项目无需推送通知，只需在项目的 `deploy.yaml` 中声明 `notify: { enabled: false }`，即可独立关闭该项目的所有通知。
+- **全方位运维上下文**：推送卡片自动携带项目名称、目标版本、部署类型、执行耗时；若发生异常失败，还会自动附带精准的排障失败原因。
+
+### 配置参考示例
+
+#### 1. 项目专属配置 (`<projectRoot>/deploy.yaml`)
+
+```yaml
+name: my-api-service
+release:
+  provider: github
+  repository: owner/my-api-service
+
+# 项目级独立配置
+notify:
+  bark:
+    # 方式一: 多人 Token 或完整 URL 列表
+    - "DEVICE_KEY_ALICE"
+    - "https://api.day.app/DEVICE_KEY_BOB"
+
+    # 方式二: 高级对象形式 (自定义音效、分组与自建 Bark 节点)
+    - name: "运维负责人"
+      serverUrl: https://bark.mycorp.internal  # 私有部署 Bark 服务
+      token: "DEVICE_KEY_OPS"
+      group: "production-api"
+      sound: "chime"
+      level: "timeSensitive"
+```
+
+#### 2. 机器级全局配置 (`~/.upy/config.yaml`)
+
+```yaml
+notify:
+  enabled: true
+  bark:
+    - name: "架构负责人"
+      token: "DEVICE_KEY_ARCH"
+      sound: "bell"
+```
 
 ---
 

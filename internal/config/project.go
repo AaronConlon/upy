@@ -45,6 +45,15 @@ type ProjectConfig struct {
 	Releases ProjectReleases `yaml:"releases"`
 	Service  *ProjectService `yaml:"service"` // 可选: 允许在服务器端显式配置运行账号与 unit
 	Backup   *ProjectBackup  `yaml:"backup"`  // 可选: 备份脚本与轮转配置
+	Notify   *ProjectNotify  `yaml:"notify"`  // 可选: 项目级部署/备份通知配置
+}
+
+// ActiveBarks 返回当前项目生效的 Bark 渠道
+func (c *ProjectConfig) ActiveBarks() []UserBark {
+	if c == nil {
+		return nil
+	}
+	return c.Notify.ActiveBarks()
 }
 
 // ReadProjectConfig 读取并校验服务器端 deploy.yaml

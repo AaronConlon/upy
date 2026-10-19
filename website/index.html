@@ -153,7 +153,7 @@
           ><b aria-hidden="true">/</b
           ><span><i aria-hidden="true">03</i> Convention Backup</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">04</i> Low Memory Footprint</span>
+          ><span><i aria-hidden="true">04</i> Bark Multi-Alerts</span>
         </div>
       </div>
       <section
@@ -195,8 +195,8 @@
       >
         <div class="section-heading">
           <p class="eyebrow">Core Features</p>
-          <h2 id="workflow-title">Deploy, clean, and backup.</h2>
-          <p>Covering application delivery, disk space maintenance, and baseline data backups in a unified binary.</p>
+          <h2 id="workflow-title">Deploy, clean, backup, and alert.</h2>
+          <p>Covering application delivery, disk space maintenance, baseline data backups, and multi-recipient mobile alerts in a unified binary.</p>
         </div>
         <div class="workflow-track" aria-hidden="true">
           <span class="workflow-progress"></span>
@@ -622,7 +622,7 @@ upy clean --bundles
 upy clean --keep 3</code></pre>
           </div>
         </article>
-        <article class="step last" data-step>
+        <article class="step step-wide" data-step>
           <div class="step-copy">
             <span class="step-number">03 / Backup</span>
             <h3>Convention backups with lock protection.</h3>
@@ -735,6 +735,141 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
                 <div class="backup-cmd-item">
                   <code>upy backup --all -y</code>
                   <span>Batch backup all registered projects</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="step step-wide last" data-step>
+          <div class="step-copy">
+            <span class="step-number">04 / Notify</span>
+            <h3>Multi-recipient Bark mobile push alerts.</h3>
+            <div class="step-copy-desc">
+              <p>
+                Real-time push notifications for deployments and backups delivered directly to iOS devices via <a href="https://bark.day.app" target="_blank" rel="noopener noreferrer">Bark</a>.
+                Zero third-party bots, zero heavy webhooks. Features project-level routing in <code>deploy.yaml</code>, global fallback in <code>~/.upy/config.yaml</code>, multi-recipient broadcasting, and smart deduplication.
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#multi-recipient-bark-notifications"
+                class="text-link"
+                >View notification docs ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="notify-showcase">
+            <div class="showcase-steps">
+              <!-- Card 1: Project-Level deploy.yaml -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / Project Routing <span>deploy.yaml</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
+                </div>
+                <pre><code><span class="comment"># Project-level multi-recipient notifications</span>
+<span class="keyword">notify</span>:
+  <span class="string">bark</span>:
+    - <span class="string">"DEVICE_KEY_ALICE"</span>
+    - <span class="string">"https://api.day.app/DEVICE_KEY_BOB"</span>
+    - <span class="string">name</span>: <span class="string">"DevOps On-Call"</span>
+      <span class="string">serverUrl</span>: <span class="string">https://bark.mycorp.internal</span>
+      <span class="string">token</span>: <span class="string">"DEVICE_KEY_OPS"</span>
+      <span class="string">sound</span>: <span class="string">"chime"</span>
+      <span class="string">level</span>: <span class="string">"timeSensitive"</span></code></pre>
+              </div>
+
+              <!-- Card 2: Global Configuration ~/.upy/config.yaml -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / Global Fallback <span>~/.upy/config.yaml</span></span>
+                  <span class="step-card-file">~/.upy/config.yaml</span>
+                </div>
+                <pre><code><span class="comment"># Host-wide fallback notifications (auto-deduplicated)</span>
+<span class="keyword">notify</span>:
+  <span class="string">enabled</span>: <span class="keyword">true</span>
+  <span class="string">bark</span>:
+    - <span class="string">name</span>: <span class="string">"Lead SRE"</span>
+      <span class="string">token</span>: <span class="string">"DEVICE_KEY_SRE"</span>
+      <span class="string">sound</span>: <span class="string">"bell"</span></code></pre>
+              </div>
+
+              <!-- Card 3: Guarantees -->
+              <div class="showcase-guarantees">
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>Multi-Recipient Broadcasting:</strong> Notify entire engineering teams, on-call groups, or testing devices in parallel with one event.</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>Smart Deduplication:</strong> Overlapping recipients between project and global configs are merged and dispatched once.</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>Zero External Daemons:</strong> Pure Go HTTP client, zero Redis, zero node processes, and zero webhook gateway services.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Bark Introduction Card & Terminal Log -->
+            <div class="showcase-terminal-col">
+              <!-- Bark What-Is Card -->
+              <div class="bark-callout">
+                <div class="bark-callout-header">
+                  <div class="bark-callout-title">
+                    <span class="bark-badge">Open Source</span>
+                    <span>What is Bark?</span>
+                  </div>
+                  <a class="bark-link" href="https://bark.day.app" target="_blank" rel="noopener noreferrer">bark.day.app ↗</a>
+                </div>
+                <p class="bark-callout-desc">
+                  <strong>Bark</strong> is a lightweight, open-source push notification service for iOS. It allows developers to send custom push notifications to Apple devices via simple HTTP GET/POST requests. <code>upy</code> integrates Bark natively to give you instant, zero-middleware deployment and backup observability.
+                </p>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots" aria-hidden="true">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">Terminal — Mobile Push</span>
+                  <button type="button" class="btn-terminal-copy" data-copy="term-notify-code">Copy Log</button>
+                </div>
+                <pre id="term-notify-code" class="sr-only">upy release latest</pre>
+                <div class="terminal-body">
+                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-step">-&gt; Deploying my-api-service v1.2.0...</span>
+<span class="t-ok">✓ Unit configuration validated</span>
+<span class="t-ok">✓ Switched unit to releases/1.2.0</span>
+<span class="t-ok">✓ Systemd service started (upy-my-api-service.service)</span>
+<span class="t-ok">✓ Healthcheck passed (HTTP 200 OK)</span>
+<span class="t-highlight">✓ current -&gt; releases/1.2.0</span>
+<span class="t-time">⏱ Elapsed: 3.2s</span>
+<span class="t-info">🔔 Dispatched 3 push notifications:</span>
+  <span class="t-ok">✓</span> Alice (https://api.day.app) [HTTP 200]
+  <span class="t-ok">✓</span> Bob (https://api.day.app) [HTTP 200]
+  <span class="t-ok">✓</span> DevOps On-Call (https://bark.mycorp.internal) [HTTP 200]</pre>
+                </div>
+              </div>
+
+              <!-- Command Grid -->
+              <div class="backup-cmd-grid">
+                <div class="backup-cmd-item">
+                  <code>deploy.yaml: notify.bark</code>
+                  <span>Project-level multi-recipient list</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>~/.upy/config.yaml: notify</code>
+                  <span>Host-wide fallback alert channels</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>notify.enabled: false</code>
+                  <span>Mute alerts for specific project</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>https://bark.day.app</code>
+                  <span>Official open-source Bark client</span>
                 </div>
               </div>
             </div>

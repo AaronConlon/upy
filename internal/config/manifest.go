@@ -54,6 +54,15 @@ type Manifest struct {
 	System      *ManifestSystem      `yaml:"system"`
 	Healthcheck *ManifestHealthcheck `yaml:"healthcheck"`
 	Backup      *ProjectBackup       `yaml:"backup"`
+	Notify      *ProjectNotify       `yaml:"notify,omitempty"`
+}
+
+// ActiveBarks 返回 bundle 清单中生效的 Bark 渠道
+func (m *Manifest) ActiveBarks() []UserBark {
+	if m == nil {
+		return nil
+	}
+	return m.Notify.ActiveBarks()
 }
 
 // ParseManifest 解析 bundle 内 deploy.yaml 内容并校验

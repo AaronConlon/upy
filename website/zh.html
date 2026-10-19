@@ -153,7 +153,7 @@
           ><b aria-hidden="true">/</b
           ><span><i aria-hidden="true">03</i> 约定备份</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">04</i> 极低内存占用</span>
+          ><span><i aria-hidden="true">04</i> Bark 多人推送</span>
         </div>
       </div>
       <section
@@ -195,8 +195,8 @@
       >
         <div class="section-heading">
           <p class="eyebrow">核心功能</p>
-          <h2 id="workflow-title">部署、清理与备份。</h2>
-          <p>覆盖应用发布、磁盘空间维护与关键数据备份，构建单机运维闭环。</p>
+          <h2 id="workflow-title">部署、清理、备份与告警。</h2>
+          <p>覆盖应用发布、磁盘空间维护、关键数据备份与多人移动端告警，构建单机运维闭环。</p>
         </div>
         <div class="workflow-track" aria-hidden="true">
           <span class="workflow-progress"></span>
@@ -620,7 +620,7 @@ upy clean --bundles
 upy clean --keep 3</code></pre>
           </div>
         </article>
-        <article class="step last" data-step>
+        <article class="step step-wide" data-step>
           <div class="step-copy">
             <span class="step-number">03 / 备份</span>
             <h3>约定式数据备份，全流程加锁防护。</h3>
@@ -733,6 +733,141 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
                 <div class="backup-cmd-item">
                   <code>upy backup --all -y</code>
                   <span>一键批量备份所有已登记项目</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="step step-wide last" data-step>
+          <div class="step-copy">
+            <span class="step-number">04 / 通知</span>
+            <h3>多接收人 Bark 移动端即时推送。</h3>
+            <div class="step-copy-desc">
+              <p>
+                部署与备份结果即时推送至 iOS 设备，底层基于 <a href="https://bark.day.app" target="_blank" rel="noopener noreferrer">Bark</a>。
+                无需第三方复杂机器人或臃肿 Webhook。支持在 <code>deploy.yaml</code> 中项目级独立配置、全局配置兜底、团队多人广播与智能自动去重。
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy/blob/main/README.zh-CN.md#多接收人-bark-实时通知"
+                class="text-link"
+                >查阅 Bark 通知文档 ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="notify-showcase">
+            <div class="showcase-steps">
+              <!-- Card 1: 项目级 deploy.yaml -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / 项目专属通知 <span>deploy.yaml</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
+                </div>
+                <pre><code><span class="comment"># 项目级独立配置多接收人推送</span>
+<span class="keyword">notify</span>:
+  <span class="string">bark</span>:
+    - <span class="string">"DEVICE_KEY_ALICE"</span>
+    - <span class="string">"https://api.day.app/DEVICE_KEY_BOB"</span>
+    - <span class="string">name</span>: <span class="string">"运维负责人"</span>
+      <span class="string">serverUrl</span>: <span class="string">https://bark.mycorp.internal</span>
+      <span class="string">token</span>: <span class="string">"DEVICE_KEY_OPS"</span>
+      <span class="string">sound</span>: <span class="string">"chime"</span>
+      <span class="string">level</span>: <span class="string">"timeSensitive"</span></code></pre>
+              </div>
+
+              <!-- Card 2: 机器级全局配置 ~/.upy/config.yaml -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / 全局兜底配置 <span>~/.upy/config.yaml</span></span>
+                  <span class="step-card-file">~/.upy/config.yaml</span>
+                </div>
+                <pre><code><span class="comment"># 机器级全局兜底通知（与项目配置自动合并去重）</span>
+<span class="keyword">notify</span>:
+  <span class="string">enabled</span>: <span class="keyword">true</span>
+  <span class="string">bark</span>:
+    - <span class="string">name</span>: <span class="string">"架构负责人"</span>
+      <span class="string">token</span>: <span class="string">"DEVICE_KEY_ARCH"</span>
+      <span class="string">sound</span>: <span class="string">"bell"</span></code></pre>
+              </div>
+
+              <!-- Card 3: 内核保障 -->
+              <div class="showcase-guarantees">
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>多人并行广播：</strong>支持单次发布或备份事件同时推送给全组研发、测试或值班工程师设备。</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>智能合并与去重：</strong>当项目级与全局配置包含相同接收人时，自动合并并仅推送一次，杜绝重复扰民。</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>纯粹零额外常驻：</strong>原生 Go HTTP 客户端直接与 Bark 通信，无 Redis、无中间网关、无后台守护进程。</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Bark 介绍卡片与终端日志 -->
+            <div class="showcase-terminal-col">
+              <!-- Bark 介绍卡片 -->
+              <div class="bark-callout">
+                <div class="bark-callout-header">
+                  <div class="bark-callout-title">
+                    <span class="bark-badge">开源利器</span>
+                    <span>什么是 Bark？</span>
+                  </div>
+                  <a class="bark-link" href="https://bark.day.app" target="_blank" rel="noopener noreferrer">bark.day.app ↗</a>
+                </div>
+                <p class="bark-callout-desc">
+                  <strong>Bark</strong> 是一款针对苹果 iOS / iPadOS 设备的轻量、开源即时通知推送服务。只需要发送简单的 HTTP 请求，即可秒级将自定义通知推送至设备。<code>upy</code> 原生内建 Bark，提供零运维、即时响应的发布与备份观测能力。
+                </p>
+              </div>
+
+              <!-- 终端日志窗口 -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots" aria-hidden="true">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">终端执行 — 移动端推送</span>
+                  <button type="button" class="btn-terminal-copy" data-copy="term-notify-code-zh">复制推送日志</button>
+                </div>
+                <pre id="term-notify-code-zh" class="sr-only">upy release latest</pre>
+                <div class="terminal-body">
+                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-step">-&gt; 正在发布项目 my-api-service v1.2.0...</span>
+<span class="t-ok">✓ 系统服务配置校验通过</span>
+<span class="t-ok">✓ 已更新 systemd unit 并指向 releases/1.2.0</span>
+<span class="t-ok">✓ 系统服务已启动 (upy-my-api-service.service)</span>
+<span class="t-ok">✓ 健康检查通过 (HTTP 200 OK)</span>
+<span class="t-highlight">✓ current -&gt; releases/1.2.0</span>
+<span class="t-time">⏱ 总耗时: 3.2s</span>
+<span class="t-info">🔔 已向 3 个 Bark 接收人推送通知:</span>
+  <span class="t-ok">✓</span> Alice (https://api.day.app) [HTTP 200]
+  <span class="t-ok">✓</span> Bob (https://api.day.app) [HTTP 200]
+  <span class="t-ok">✓</span> 运维负责人 (https://bark.mycorp.internal) [HTTP 200]</pre>
+                </div>
+              </div>
+
+              <!-- 快捷速查卡片 -->
+              <div class="backup-cmd-grid">
+                <div class="backup-cmd-item">
+                  <code>deploy.yaml: notify.bark</code>
+                  <span>项目专属多人通知接收人列表</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>~/.upy/config.yaml: notify</code>
+                  <span>机器级全局兜底告警渠道</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>notify.enabled: false</code>
+                  <span>独立关闭指定项目的所有通知</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>https://bark.day.app</code>
+                  <span>Bark 官方开源客户端与使用指南</span>
                 </div>
               </div>
             </div>

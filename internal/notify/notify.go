@@ -43,21 +43,55 @@ func nlJoin(parts []string) string {
 	return strings.Join(parts, string(rune(10)))
 }
 
-// Send 按用户配置发送通知。未配置渠道时静默返回。
+// Send 按用户及项目配置发送通知。未配置渠道时静默返回。
 func Send(evt Event) {
-	cfg, err := config.LoadUserConfig()
-	if err != nil {
-		log.Warn("读取通知配置失败: " + err.Error())
+	var projectBarks []config.UserBark
+	projectDisabled := false
+
+	root := strings.TrimSpace(evt.Root)
+	if root != "" {
+		if pcfg, err := config.ReadProjectConfig(root); err == nil && pcfg != nil {
+			if strings.TrimSpace(evt.Project) == "" && pcfg.Name != "" {
+				evt.Project = pcfg.Name
+			}
+			if pcfg.Notify != nil && pcfg.Notify.Enabled != nil && !*pcfg.Notify.Enabled {
+				projectDisabled = true
+			} else {
+				projectBarks = pcfg.ActiveBarks()
+			}
+		}
+	}
+
+	if projectDisabled {
 		return
 	}
-	barks := cfg.ActiveBarks()
-	if len(barks) == 0 {
+
+	var userBarks []config.UserBark
+	userCfg, err := config.LoadUserConfig()
+	if err != nil {
+		log.Warn("读取用户通知配置失败: " + err.Error())
+	} else if userCfg != nil {
+		userBarks = userCfg.ActiveBarks()
+	}
+
+	// 合并并去重 (相同 endpoint + key 仅发一次，项目级配置优先保留)
+	seen := make(map[string]bool)
+	var targets []config.UserBark
+	for _, b := range append(projectBarks, userBarks...) {
+		k := strings.ToLower(b.Endpoint()) + "/" + b.Key()
+		if !seen[k] {
+			seen[k] = true
+			targets = append(targets, b)
+		}
+	}
+
+	if len(targets) == 0 {
 		return
 	}
 
 	title, body, groupSuffix, level := formatEvent(evt)
 	sent := 0
-	for _, b := range barks {
+	for _, b := range targets {
 		if err := sendBark(b, title, body, groupSuffix, level); err != nil {
 			log.Warn("通知 " + b.Label() + " 发送失败: " + log.Redact(err.Error()))
 			continue
@@ -65,7 +99,11 @@ func Send(evt Event) {
 		sent++
 	}
 	if sent > 0 {
-		log.Info(fmt.Sprintf("已发送 %d 条部署通知", sent))
+		actionLabel := "部署"
+		if evt.Kind == KindBackupSuccess || evt.Kind == KindBackupFailure {
+			actionLabel = "备份"
+		}
+		log.Info(fmt.Sprintf("已发送 %d 条%s通知", sent, actionLabel))
 	}
 }
 

@@ -39,6 +39,7 @@ Paired with intelligent **disk space pruning and active version protection** (`u
     - [C. Native Systemd Services (Go Binary Web Services)](#c-native-systemd-services-go-binary-web-services)
 - [Disk Maintenance & Pruning](#disk-maintenance--pruning)
 - [Convention Backups](#convention-backups)
+- [Multi-Recipient Bark Notifications](#multi-recipient-bark-notifications)
 - [Self-Update](#self-update)
 - [Command Cheat Sheet](#command-cheat-sheet)
 - [License](#license)
@@ -63,7 +64,8 @@ Paired with intelligent **disk space pruning and active version protection** (`u
 - **Robust Failure Safety**: Strict pre-flight checks during `Prepare` (permissions, target architecture, binary validity, service user existence). Prepare failures never touch existing running services.
 - **Disk Analysis & Safe Pruning**: `upy clean` analyzes disk footprint and frees Bundle archives while strictly protecting both the current active version, the previous rollback version, and live unit references.
 - **Cross-Project Global Dispatching**: Run `upy` in any directory to interactively list and deploy across all managed projects on the host.
-- **Observability & Alerts**: Built-in accurate step-by-step elapsed time tracking and Bark mobile push notifications.
+- **Convention Backups**: Zero-config project discovery (`backup.sh`), exclusive concurrency locks, automatic retention rotation, and multi-project batch runs.
+- **Multi-Recipient Bark Push Alerts**: Instant mobile notifications for both deployments and backups powered by [Bark](https://bark.day.app/) (an open-source iOS push notification service). Supports project-level routing in `deploy.yaml`, global fallback in `~/.upy/config.yaml`, flexible multi-recipient broadcasting (tokens, full URLs, custom sounds/groups), and automatic deduplication.
 
 ---
 
@@ -126,11 +128,18 @@ github:
     AaronConlon: ghp_personal_xxx
 
 notify:
+  enabled: true # Optional master switch (defaults to true)
   bark:
-    - name: phone
+    # Format 1: Multi-recipient device tokens or full URLs
+    - your-bark-device-key-1
+    - https://api.day.app/your-bark-device-key-2
+
+    # Format 2: Detailed channels with custom sound, group, or self-hosted server
+    - name: DevOps On-Call
       serverUrl: https://api.day.app
-      token: your-bark-device-key
-      group: upy
+      token: on-call-device-key
+      group: upy.production
+      sound: chime
 ```
 
 ---
@@ -147,6 +156,15 @@ release:
   provider: github
   repository: owner/repo      # GitHub repo (owner/name)
   asset: bundle.zip          # Asset name (defaults to bundle.zip, supports regex/wildcard)
+
+# Optional: Project-level multi-recipient Bark notifications
+notify:
+  bark:
+    - alice-device-key
+    - https://api.day.app/bob-device-key
+    - name: Team SRE
+      token: sre-device-key
+      sound: bell
 
 # Optional for system native services: dedicated service account to prevent root escalation
 service:
@@ -394,6 +412,59 @@ upy backup --all -y
 > - **Mutual Exclusion Lock (`.deploy.lock`)**: `upy backup` acquires an exclusive project lock (`action: 备份中`), strictly preventing race conditions against concurrent deployments (`upy release`) or cleanup (`upy clean`).  
 > - **Automatic Retention Pruning**: Automatically rotates and cleans older snapshots beyond the retention threshold (default: 7), ensuring backup files never exhaust disk space.  
 > - **Alerting & Notifications**: Automatically reports elapsed time, archive file sizes, and failure reasons to Bark mobile notifications.
+
+---
+
+## Multi-Recipient Bark Notifications
+
+[Bark](https://bark.day.app/) is a lightweight, open-source push notification service for Apple iOS devices. By using simple HTTP requests, you can deliver instant push notifications directly to iPhones and iPads without setting up complex third-party bot frameworks, heavy webhook middleware, or message queues.
+
+`upy` integrates Bark natively into the deployment and backup lifecycles, enabling instant mobile alerts for developers and DevOps teams.
+
+### Highlights
+
+- **Dual-Level Merging & Smart Deduplication**: Configure team-wide channels in `~/.upy/config.yaml` and project-specific channels in `deploy.yaml`. `upy` merges both sources and automatically deduplicates overlapping recipients so no user receives duplicate alerts.
+- **Multi-Recipient Fan-Out**: Effortlessly notify multiple teammates or on-call engineers simultaneously with a single release or backup event.
+- **Flexible Syntax Formats**: Supports plain device tokens (`KEY`), full URLs (`https://api.day.app/KEY` or self-hosted Bark domains), string lists, or detailed channel objects with custom sounds, groups, and sensitivity levels.
+- **Independent Project Muting**: Silence notifications for a specific project at any time by declaring `notify: { enabled: false }` in its `deploy.yaml`.
+- **Rich Context & Diagnostics**: Notifications include project name, deployed version, stack type, elapsed execution time, and exact failure diagnostics if an error occurs.
+
+### Configuration Reference
+
+#### 1. Project-Level (`<projectRoot>/deploy.yaml`)
+
+```yaml
+name: my-api-service
+release:
+  provider: github
+  repository: owner/my-api-service
+
+# Project-specific notification recipients
+notify:
+  bark:
+    # Option A: Simple token string or full URL list
+    - "DEVICE_KEY_ALICE"
+    - "https://api.day.app/DEVICE_KEY_BOB"
+
+    # Option B: Advanced channel configuration
+    - name: "DevOps On-Call"
+      serverUrl: https://bark.mycorp.internal  # Self-hosted Bark server
+      token: "DEVICE_KEY_OPS"
+      group: "production-api"
+      sound: "chime"
+      level: "timeSensitive"
+```
+
+#### 2. Global Machine-Level (`~/.upy/config.yaml`)
+
+```yaml
+notify:
+  enabled: true
+  bark:
+    - name: "Lead SRE"
+      token: "DEVICE_KEY_SRE"
+      sound: "bell"
+```
 
 ---
 

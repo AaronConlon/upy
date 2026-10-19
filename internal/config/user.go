@@ -4,6 +4,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,11 +25,113 @@ type UserBark struct {
 	Enabled   *bool  `yaml:"enabled,omitempty"`
 }
 
-// UserNotify 通知总开关。渠道先做 Bark, 结构预留 webhook / 飞书 / 邮件。
-type UserNotify struct {
-	Enabled bool       `yaml:"enabled"`
-	Bark    []UserBark `yaml:"bark,omitempty"`
+// BarkChannels 支持单人、多人列表、对象映射等多种 YAML 配置形态的 Bark 渠道切片
+type BarkChannels []UserBark
+
+// UnmarshalYAML 灵活解析 Bark 渠道: 支持纯 token 字符串、字符串列表、对象列表以及带 tokens 数组的对象
+func (bc *BarkChannels) UnmarshalYAML(value *yaml.Node) error {
+	var list []UserBark
+	switch value.Kind {
+	case yaml.ScalarNode:
+		if val := strings.TrimSpace(value.Value); val != "" {
+			list = append(list, UserBark{Token: val})
+		}
+	case yaml.SequenceNode:
+		for _, child := range value.Content {
+			if child.Kind == yaml.ScalarNode {
+				if val := strings.TrimSpace(child.Value); val != "" {
+					list = append(list, UserBark{Token: val})
+				}
+			} else if child.Kind == yaml.MappingNode {
+				var item UserBark
+				if err := child.Decode(&item); err == nil {
+					list = append(list, item)
+				}
+			}
+		}
+	case yaml.MappingNode:
+		var helper struct {
+			Name       string     `yaml:"name"`
+			ServerURL  string     `yaml:"serverUrl"`
+			Token      string     `yaml:"token"`
+			DeviceKey  string     `yaml:"deviceKey"`
+			Tokens     []string   `yaml:"tokens"`
+			Keys       []string   `yaml:"keys"`
+			Recipients []UserBark `yaml:"recipients"`
+			Group      string     `yaml:"group"`
+			Sound      string     `yaml:"sound"`
+			Icon       string     `yaml:"icon"`
+			Level      string     `yaml:"level"`
+			Enabled    *bool      `yaml:"enabled"`
+		}
+		if err := value.Decode(&helper); err == nil {
+			if len(helper.Tokens) > 0 || len(helper.Keys) > 0 {
+				allKeys := append(helper.Tokens, helper.Keys...)
+				for _, k := range allKeys {
+					if strings.TrimSpace(k) != "" {
+						list = append(list, UserBark{
+							Name:      helper.Name,
+							ServerURL: helper.ServerURL,
+							Token:     strings.TrimSpace(k),
+							Group:     helper.Group,
+							Sound:     helper.Sound,
+							Icon:      helper.Icon,
+							Level:     helper.Level,
+							Enabled:   helper.Enabled,
+						})
+					}
+				}
+			} else if len(helper.Recipients) > 0 {
+				list = append(list, helper.Recipients...)
+			} else if helper.Token != "" || helper.DeviceKey != "" {
+				list = append(list, UserBark{
+					Name:      helper.Name,
+					ServerURL: helper.ServerURL,
+					Token:     helper.Token,
+					DeviceKey: helper.DeviceKey,
+					Group:     helper.Group,
+					Sound:     helper.Sound,
+					Icon:      helper.Icon,
+					Level:     helper.Level,
+					Enabled:   helper.Enabled,
+				})
+			}
+		}
+	}
+	*bc = list
+	return nil
 }
+
+// Active 过滤并返回当前启用的有效 Bark 渠道
+func (bc BarkChannels) Active() []UserBark {
+	out := make([]UserBark, 0, len(bc))
+	for _, b := range bc {
+		if b.active() {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
+// NotifyConfig 通知总开关及渠道配置。渠道先做 Bark, 结构预留 webhook / 飞书 / 邮件。
+type NotifyConfig struct {
+	Enabled *bool        `yaml:"enabled,omitempty"`
+	Bark    BarkChannels `yaml:"bark,omitempty"`
+}
+
+// ActiveBarks 返回当前生效的 Bark 渠道列表
+func (n *NotifyConfig) ActiveBarks() []UserBark {
+	if n == nil || (n.Enabled != nil && !*n.Enabled) {
+		return nil
+	}
+	return n.Bark.Active()
+}
+
+// UserNotify 用户级通知配置别名
+type UserNotify = NotifyConfig
+
+// ProjectNotify 项目级通知配置别名
+type ProjectNotify = NotifyConfig
 
 // UserGitHub GitHub 访问配置。支持单 token 及按组织/个人归属的多 token。
 type UserGitHub struct {
@@ -41,6 +144,14 @@ type UserConfig struct {
 	GitHub   UserGitHub     `yaml:"github"`
 	Notify   UserNotify     `yaml:"notify,omitempty"`
 	Projects []LocalProject `yaml:"projects,omitempty"`
+}
+
+// ActiveBarks 返回全局用户配置中生效的 Bark 渠道
+func (c *UserConfig) ActiveBarks() []UserBark {
+	if c == nil {
+		return nil
+	}
+	return c.Notify.ActiveBarks()
 }
 
 // LocalProject 一台机器上曾成功部署过的项目。Name 在注册表中唯一。
@@ -56,18 +167,43 @@ func (b UserBark) active() bool {
 	return strings.TrimSpace(b.Key()) != ""
 }
 
-// Key 返回 Bark device key / token
+// Key 返回 Bark device key / token，兼容纯 token、以斜杠分隔或完整 Bark 推送 URL
 func (b UserBark) Key() string {
-	if k := strings.TrimSpace(b.Token); k != "" {
-		return k
+	raw := strings.TrimSpace(b.Token)
+	if raw == "" {
+		raw = strings.TrimSpace(b.DeviceKey)
 	}
-	return strings.TrimSpace(b.DeviceKey)
+	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+		if u, err := url.Parse(raw); err == nil {
+			keyPath := strings.Trim(u.Path, "/")
+			if b.ServerURL != "" {
+				if su, err := url.Parse(b.ServerURL); err == nil {
+					basePath := strings.Trim(su.Path, "/")
+					if basePath != "" && strings.HasPrefix(keyPath, basePath) {
+						keyPath = strings.TrimPrefix(keyPath, basePath)
+						keyPath = strings.Trim(keyPath, "/")
+					}
+				}
+			}
+			return keyPath
+		}
+	}
+	return raw
 }
 
-// Endpoint 规范化 Bark 服务地址, 去掉末尾斜杠
+// Endpoint 规范化 Bark 服务地址, 去掉末尾斜杠，支持从 full URL token 中自动提取
 func (b UserBark) Endpoint() string {
 	s := strings.TrimSpace(b.ServerURL)
 	if s == "" {
+		raw := strings.TrimSpace(b.Token)
+		if raw == "" {
+			raw = strings.TrimSpace(b.DeviceKey)
+		}
+		if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+			if u, err := url.Parse(raw); err == nil && u.Scheme != "" && u.Host != "" {
+				return fmt.Sprintf("%s://%s", u.Scheme, u.Host)
+			}
+		}
 		s = "https://api.day.app"
 	}
 	return strings.TrimRight(s, "/")
@@ -132,20 +268,6 @@ func LoadUserConfig() (*UserConfig, error) {
 		return nil, fmt.Errorf("用户配置 YAML 无效: %s (%v)", path, err)
 	}
 	return &cfg, nil
-}
-
-// ActiveBarks 返回已启用且带 key 的 Bark 渠道
-func (c *UserConfig) ActiveBarks() []UserBark {
-	if c == nil {
-		return nil
-	}
-	out := make([]UserBark, 0, len(c.Notify.Bark))
-	for _, b := range c.Notify.Bark {
-		if b.active() {
-			out = append(out, b)
-		}
-	}
-	return out
 }
 
 // GitHubToken 返回配置文件里的默认 GitHub token

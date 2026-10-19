@@ -847,29 +847,36 @@ figcaption > span:last-child {
   font-family: var(--font-display);
 }
 @media (min-width: 701px) {
-  .step.last {
+  .step.last,
+  .step.step-wide {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
   }
-  .last .step-copy {
+  .last .step-copy,
+  .step-wide .step-copy {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 90px;
   }
-  .last .step-number {
+  .last .step-number,
+  .step-wide .step-number {
     grid-column: 1/-1;
   }
-  .last .step-copy h3 {
+  .last .step-copy h3,
+  .step-wide .step-copy h3 {
     margin-top: 14px;
   }
   .last .step-copy > p,
-  .last .step-copy-desc {
+  .last .step-copy-desc,
+  .step-wide .step-copy > p,
+  .step-wide .step-copy-desc {
     grid-column: 2;
     grid-row: 2;
     max-width: none;
     margin-top: 14px;
   }
-  .last .command-list {
+  .last .command-list,
+  .step-wide .command-list {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 60px;
@@ -1201,9 +1208,10 @@ figcaption > span:last-child {
 .t-time { color: #e5c07b; font-weight: 500; }
 
 /* ============================================================
-   约定备份展示模块 (Backup Showcase)
+   约定备份与通知展示模块 (Backup & Notify Showcase)
    ============================================================ */
-.backup-showcase {
+.backup-showcase,
+.notify-showcase {
   margin-top: 32px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1211,10 +1219,65 @@ figcaption > span:last-child {
   align-items: start;
 }
 @media (max-width: 980px) {
-  .backup-showcase {
+  .backup-showcase,
+  .notify-showcase {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
+}
+.bark-callout {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bark-callout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bark-callout-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+.bark-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bark-callout-desc {
+  font-size: 13px;
+  color: var(--color-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+.bark-callout-desc strong {
+  color: var(--color-ink);
+}
+.bark-link {
+  font-size: 13px;
+  color: var(--color-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.bark-link:hover {
+  opacity: 0.75;
 }
 .showcase-terminal-col {
   display: flex;

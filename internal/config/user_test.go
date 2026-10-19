@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestLoadUserConfigMissing(t *testing.T) {
@@ -255,5 +257,110 @@ func TestUnregisterLocalProject(t *testing.T) {
 	projects, _ = ListLocalProjects()
 	if len(projects) != 1 || projects[0].Name != "projectB" {
 		t.Fatalf("期望仅剩 projectB, 得到: %+v", projects)
+	}
+}
+
+func TestBarkChannelsFormats(t *testing.T) {
+	// 1. 单 token 标量
+	t.Run("ScalarToken", func(t *testing.T) {
+		var cfg UserConfig
+		raw := []byte(`notify:
+  bark: my-single-token
+`)
+		if err := yaml.Unmarshal(raw, &cfg); err != nil {
+			t.Fatal(err)
+		}
+		barks := cfg.ActiveBarks()
+		if len(barks) != 1 || barks[0].Key() != "my-single-token" {
+			t.Fatalf("期望 1 个 token, 得到: %+v", barks)
+		}
+	})
+
+	// 2. 字符串数组 (多用户 token)
+	t.Run("StringList", func(t *testing.T) {
+		var cfg UserConfig
+		raw := []byte(`notify:
+  bark:
+    - token_alice
+    - token_bob
+    - https://api.day.app/token_carol
+`)
+		if err := yaml.Unmarshal(raw, &cfg); err != nil {
+			t.Fatal(err)
+		}
+		barks := cfg.ActiveBarks()
+		if len(barks) != 3 {
+			t.Fatalf("期望 3 个 token, 得到: %d", len(barks))
+		}
+		if barks[0].Key() != "token_alice" || barks[1].Key() != "token_bob" || barks[2].Key() != "token_carol" {
+			t.Fatalf("tokens 不对: %+v", barks)
+		}
+		if barks[2].Endpoint() != "https://api.day.app" {
+			t.Fatalf("url endpoint 不对: %s", barks[2].Endpoint())
+		}
+	})
+
+	// 3. 带 tokens 数组的对象
+	t.Run("ObjectWithTokensList", func(t *testing.T) {
+		var cfg UserConfig
+		raw := []byte(`notify:
+  bark:
+    serverUrl: https://bark.example.com
+    group: my-cluster
+    sound: chime
+    tokens:
+      - dev1_token
+      - dev2_token
+`)
+		if err := yaml.Unmarshal(raw, &cfg); err != nil {
+			t.Fatal(err)
+		}
+		barks := cfg.ActiveBarks()
+		if len(barks) != 2 {
+			t.Fatalf("期望 2 个 token, 得到: %d", len(barks))
+		}
+		for _, b := range barks {
+			if b.Endpoint() != "https://bark.example.com" {
+				t.Fatalf("endpoint 不对: %s", b.Endpoint())
+			}
+			if b.Group != "my-cluster" || b.Sound != "chime" {
+				t.Fatalf("属性未继承: %+v", b)
+			}
+		}
+		if barks[0].Key() != "dev1_token" || barks[1].Key() != "dev2_token" {
+			t.Fatalf("keys 不对: %+v", barks)
+		}
+	})
+}
+
+func TestBarkUrlParsing(t *testing.T) {
+	b1 := UserBark{Token: "https://api.day.app/abc123xyz"}
+	if b1.Endpoint() != "https://api.day.app" {
+		t.Fatalf("b1 endpoint=%s", b1.Endpoint())
+	}
+	if b1.Key() != "abc123xyz" {
+		t.Fatalf("b1 key=%s", b1.Key())
+	}
+
+	b2 := UserBark{
+		ServerURL: "https://custom.bark.net",
+		Token:     "https://custom.bark.net/subpath/device_key_888",
+	}
+	if b2.Endpoint() != "https://custom.bark.net" {
+		t.Fatalf("b2 endpoint=%s", b2.Endpoint())
+	}
+	if b2.Key() != "subpath/device_key_888" {
+		t.Fatalf("b2 key=%s", b2.Key())
+	}
+
+	b3 := UserBark{
+		ServerURL: "https://custom.bark.net/subpath",
+		Token:     "https://custom.bark.net/subpath/device_key_999",
+	}
+	if b3.Endpoint() != "https://custom.bark.net/subpath" {
+		t.Fatalf("b3 endpoint=%s", b3.Endpoint())
+	}
+	if b3.Key() != "device_key_999" {
+		t.Fatalf("b3 key=%s", b3.Key())
 	}
 }
