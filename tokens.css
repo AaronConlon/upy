@@ -1,16 +1,17 @@
 /* upy · 工程制图 · shared website tokens */
 :root {
-  --color-paper: #f5f7f6;
-  --color-surface: #edf1f0;
-  --color-ink: #172b33;
-  --color-muted: #4d626c;
-  --color-rule: #becbce;
-  --color-grid: #dce4e4;
-  --color-cyan: #e4f2f3;
-  --color-accent: #006e87;
-  --color-code: #18323c;
-  --color-code-text: #edf5f4;
-  --color-code-comment: #b7cdcd;
+  --color-paper: #ffffff;
+  --color-surface: #f6f8fa;
+  --color-ink: #111215;
+  --color-muted: #57606a;
+  --color-rule: #e1e4e8;
+  --color-grid: #eff2f5;
+  --color-cyan: #f2f4f7;
+  --color-accent: #111215;
+  --color-accent-hover: #2d3039;
+  --color-code: #121316;
+  --color-code-text: #f0f3f6;
+  --color-code-comment: #767e8a;
   --font-display: "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-body: "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

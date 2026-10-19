@@ -117,7 +117,7 @@ pre code {
   font-size: 28px;
   display: inline-block;
   margin-left: 8px;
-  color: var(--color-accent);
+  color: var(--color-ink);
 }
 .brand-caption {
   font-size: 13px;
@@ -140,6 +140,7 @@ nav a,
   min-height: 44px;
   font-size: 14px;
   font-weight: 500;
+  color: var(--color-muted);
 }
 .lang-switch {
   padding: 4px 10px;
@@ -152,18 +153,26 @@ nav a,
   transition: all var(--dur-fast) var(--ease-out);
 }
 .lang-switch:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-ink);
+  color: var(--color-ink);
   background: var(--color-surface);
 }
 nav a,
+.footer a,
 .text-link {
   transition: color var(--dur-fast) var(--ease-out);
 }
 nav a:hover,
 .footer a:hover,
 .text-link:hover {
-  color: var(--color-accent);
+  color: var(--color-ink);
+}
+.text-link {
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-rule);
+}
+.text-link:hover {
+  border-bottom-color: var(--color-ink);
 }
 .hero {
   position: relative;
@@ -197,7 +206,7 @@ h1 > span {
   display: block;
 }
 .period {
-  color: var(--color-accent);
+  color: var(--color-ink);
 }
 .intro {
   font-size: 18px;
@@ -225,10 +234,12 @@ h1 > span {
   font-weight: 500;
   transition:
     background var(--dur-fast),
+    border-color var(--dur-fast),
     transform var(--dur-fast);
 }
 .button:hover {
-  background: var(--color-accent);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
   transform: translateY(-2px);
 }
 .button:active {
@@ -273,7 +284,7 @@ h1 > span {
   overflow: visible;
 }
 .draft-lines .crosses {
-  stroke: var(--color-accent);
+  stroke: var(--color-ink);
   stroke-width: 1.4;
 }
 .draft-lines .dimension {
@@ -287,7 +298,7 @@ h1 > span {
   height: auto;
   max-height: 88%;
   object-fit: contain;
-  filter: drop-shadow(0 14px 28px rgba(0, 110, 135, 0.12));
+  filter: drop-shadow(0 14px 28px rgba(17, 18, 21, 0.12));
   will-change: transform;
 }
 .drawing-note {
@@ -312,13 +323,14 @@ figcaption {
 }
 figcaption > span:last-child {
   margin-left: auto;
-  color: var(--color-accent);
+  color: var(--color-ink);
+  font-weight: 500;
 }
 .drawing-dot {
   width: 5px;
   height: 5px;
   flex: none;
-  background: var(--color-accent);
+  background: var(--color-ink);
 }
 .hero-baseline {
   display: flex;
@@ -357,7 +369,7 @@ figcaption > span:last-child {
   font-style: normal;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--color-accent);
+  color: var(--color-muted);
 }
 .installation {
   display: grid;
@@ -367,7 +379,9 @@ figcaption > span:last-child {
 }
 .eyebrow {
   font-size: 12px;
-  color: var(--color-accent);
+  color: var(--color-ink);
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 .installation h2 {
   margin: 14px 0 20px;
@@ -402,10 +416,11 @@ figcaption > span:last-child {
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;
-  transition: background var(--dur-fast);
+  transition: background var(--dur-fast), border-color var(--dur-fast);
 }
 .code-label button:hover {
-  background: var(--color-accent);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--color-code-text);
 }
 .code-label button:active {
   transform: translateY(1px);
@@ -443,7 +458,7 @@ figcaption > span:last-child {
 .workflow-progress {
   position: absolute;
   inset: 0;
-  background: var(--color-accent);
+  background: var(--color-ink);
   transform-origin: top;
 }
 .step {
@@ -463,14 +478,15 @@ figcaption > span:last-child {
   width: 9px;
   height: 9px;
   background: var(--color-paper);
-  border: 1px solid var(--color-accent);
+  border: 1px solid var(--color-ink);
 }
 .step.is-active::before {
-  background: var(--color-accent);
+  background: var(--color-ink);
 }
 .step-number {
   font-size: 12px;
-  color: var(--color-accent);
+  color: var(--color-ink);
+  font-weight: 600;
 }
 .step h3 {
   margin: 16px 0;
@@ -498,7 +514,7 @@ figcaption > span:last-child {
   right: -5px;
   bottom: -15px;
   font: 20px var(--font-mono);
-  color: var(--color-accent);
+  color: var(--color-ink);
 }
 .file-label {
   font-size: 12px;
@@ -826,7 +842,7 @@ figcaption > span:last-child {
   color: var(--color-muted);
 }
 .deployment-route strong {
-  color: var(--color-accent);
+  color: var(--color-ink);
   font-size: 18px;
   font-family: var(--font-display);
 }
