@@ -20,6 +20,7 @@ var completionCommands = []completionCommand{
 	{Name: "deploy", Description: "部署已登记项目的最新版本"},
 	{Name: "clean", Description: "清理项目数据 (缓存/旧版本/临时文件)"},
 	{Name: "backup", Description: "执行项目约定备份 (运行 backup.sh)"},
+	{Name: "analysis", Description: "分析已部署项目与磁盘空间开销"},
 	{Name: "bundle", Description: "部署本地 bundle"},
 	{Name: "version", Description: "查看当前版本"},
 	{Name: "update", Description: "更新 upy"},

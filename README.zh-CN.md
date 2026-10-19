@@ -62,9 +62,10 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
 - **GitHub Release 驱动**：支持公开与私有仓库，多组织/个人 Token 自动路由匹配，断点续传与 SHA-256 完整性强校验。
 - **多重安全防线**：静态准备阶段与激活回滚正交隔离，跨根目录 unit 归属校验，外部已有 unit 防串扰保护。
 - **磁盘分析与安全清理**：`upy clean` 支持空间分析、Bundle 缓存清理与旧版本安全裁剪，双版本保护（当前活跃与最近回滚版本）与 live unit 引用保护。
+- **全机项目与磁盘分析**：`upy analysis` 实时盘点全机部署项目，以最大占用项目为 100% 基准绘制直观条形图，置顶聚焦最近一次部署动态，支持 `--detail` 深度展开与 `--json` 数据导出。
 - **约定式数据备份**：零配置项目自动探测（`backup.sh`）、跨进程互斥锁防护、智能多版本轮转与全量一键批处理。
 - **本地项目快速调度**：在任意路径直接运行 `upy`，即可列出本机已纳管的项目并交互式选择部署。
-- **多接收人 Bark 移动端推送**：部署与备份结果即时推送至 iOS 设备，底层基于 [Bark](https://bark.day.app/)（一款开源的 iOS 实时推送服务）。支持在 `deploy.yaml` 中进行项目级独立配置、在 `~/.upy/config.yaml` 中进行全局兜底配置、多接收人并行广播（纯 token、完整 URL 或高级对象格式）与智能自动去重。
+- **多接收人 Bark 移动端推送与项目专属 Webhook**：部署与备份结果即时推送至 iOS 设备与团队业务系统。底层基于 [Bark](https://bark.day.app/) 移动端即时推送与项目专属 Webhook（自带 HMAC-SHA256 签名校验，支持企微、飞书、钉钉机器人）。支持全局/项目双层配置、多人广播、智能去重与跨量级智能耗时展示（秒、分、时）。
 
 ---
 
@@ -222,21 +223,24 @@ upy bundle ./bundle.zip
 
 ### 3. 三大项目打包规范 (bundle.zip)
 
-在 CI/CD（如 GitHub Actions）构建产物并打包发布时，压缩包内部需包含应用文件以及一份描述清单 `deploy.yaml`：
+在 CI/CD（如 GitHub Actions）构建产物并打包发布时，压缩包内部需包含应用文件以及一份描述清单 `upy.yaml`：
+
+> 💡 **包内清单与服务器部署配置解耦**：  
+> 为了与服务器项目根目录的配置 `deploy.yaml`（负责 Release 源、系统服务账号等部署策略）严格解耦，Bundle 压缩包内的清单文件统一推荐命名为 `upy.yaml`（`upy` 部署引擎仍向前兼容历史 `deploy.yaml`）。两者职责分明，彻底杜绝同名文件覆盖与概念混淆。
 
 #### A. 前端静态应用 (SPA)
 
 压缩包内结构：
 ```text
 bundle.zip
-├── deploy.yaml
+├── upy.yaml
 └── dist/
     ├── index.html
     ├── assets/
     └── ...
 ```
 
-清单 `deploy.yaml` 格式：
+清单 `upy.yaml` 格式：
 ```yaml
 name: my-spa-app
 version: 1.0.0
@@ -250,12 +254,12 @@ static:
 压缩包内结构：
 ```text
 bundle.zip
-├── deploy.yaml
+├── upy.yaml
 ├── docker-compose.yml
 └── ...
 ```
 
-清单 `deploy.yaml` 格式：
+清单 `upy.yaml` 格式：
 ```yaml
 name: my-api-service
 version: 1.0.0
@@ -275,12 +279,12 @@ healthcheck:
 压缩包内结构：
 ```text
 bundle.zip
-├── deploy.yaml
+├── upy.yaml
 └── bin/
     └── my-api
 ```
 
-清单 `deploy.yaml` 格式：
+清单 `upy.yaml` 格式：
 ```yaml
 name: my-api
 version: 1.0.0
@@ -412,70 +416,173 @@ upy backup --all -y
 > **安全保护机制**：  
 > - **跨进程排他锁（`.deploy.lock`）**：`upy backup` 执行时自动获取项目排他锁（`action: 备份中`），严格互斥正在进行的部署（`upy release`）或磁盘清理（`upy clean`），杜绝备份产生半更新脏数据。  
 > - **自动轮转防爆盘**：内置基于修改时间的智能轮转清理，自动保留最近 N 份备份（默认 7 份），防止历史备份文件无限膨胀撑爆服务器磁盘。  
-> - **通知联动推送**：备份完成后自动汇总耗时、产物文件体积，并通过 Bark 等渠道实时推送备份结果与告警。
-
 ---
 
-## 多接收人 Bark 实时通知
+## 客户端项目与磁盘分析 (upy analysis)
 
-[Bark](https://bark.day.app/) 是一款针对苹果 iOS / iPadOS 设备的轻量、开源即时通知推送服务。只需要发送简单的 HTTP 请求，即可秒级将自定义通知推送至你的手机设备，完全摆脱重型机器人、第三方中转平台以及繁琐 Webhook 中间件的羁绊。
-
-`upy` 将 Bark 原生内建于发布与备份的全生命周期中，打造极简、快速、可靠的团队移动端观测闭环。
+随着服务器纳管的应用与历史发布逐渐增多，运维需要一个全局直观的视角洞察各项目占用的磁盘空间，并快速追踪最新部署状态。`upy analysis` 提供工业级排版的终端可视化分析看板：
 
 ### 核心亮点
 
+- **全机项目动态盘点**：自动发现本机所有通过 `upy` 纳管的项目，综合呈现**运行状态**、**部署类型**（SPA / Docker / Systemd）、**当前版本号**与**磁盘占用**。
+- **最大空间 100% 基准对比**：以占用磁盘最大的项目为 **100.0% 基准**，自动绘制等宽 ANSI 横向百分比条形图（如 `[████████░░░░░░░░░░░░] 40.0%`），一眼识别存储大户。
+- **最近一次部署动态置顶**：在顶栏 Spotlight 卡片中高亮显示最近一次部署的项目名称、版本号、部署类型、相对时间（如“22分钟前”）及运行状态。
+- **杜绝软链双重计数**：精准排除 `current` 软链接对版本目录的重复深度遍历，保障磁盘统计真实可靠。
+- **深度子模块展开 (`--detail`)**：细分各项目 `releases/`（活跃版本与历史旧版）、`bundles/` 缓存、`backups/` 备份归档与共享存储的体积分布。
+- **结构化输出 (`--json`)**：支持输出标准 JSON 格式，方便与监控大屏、定时巡检脚本或 CI/CD 流程无缝集成。
+
+### 终端效果展示
+
+```text
+upy analysis — 客户端项目与磁盘分析
+
+━ 最近一次部署动态 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📦 项目: my-api-service (v1.2.0)
+  🧩 类型: Systemd 系统服务 (system) · upy-my-api-service.service
+  ⏱  时间: 22分钟前 (2026-10-19 19:40:02)
+  🟢 状态: 正常运行 (active)
+
+━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)
+1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     [████████████████████] 100.0%
+2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    [███████░░░░░░░░░░░░░]  32.5%
+3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    [█░░░░░░░░░░░░░░░░░░░]   5.8%
+4   demo-spa            ⚪ undeployed  static   -            14.2 MB    [▏░░░░░░░░░░░░░░░░░░░]   0.9%
+
+━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📊 纳管项目: 4 个
+  💾 累计占用: 2.03 GB (平均每个项目 519.6 MB)
+  👑 空间首位: my-compose-app (1.45 GB, 占全机 upy 项目的 71.4%)
+  💡 提示: 可使用 upy analysis --detail 查看各子目录详细空间分布
+```
+
+### 常用命令示例
+
+```bash
+# 1. 默认展示全机项目状态、版本、磁盘占用基准图与最近一次部署
+upy analysis
+
+# 2. 展开各项目 releases、bundles、backups 等子目录明细
+upy analysis --detail
+
+# 3. 查看指定单项目的空间占用与内部结构
+upy analysis my-api-service
+
+# 4. 指定排序规则（可选 size、time、name，默认按 size 降序）
+upy analysis --sort time
+
+# 5. 输出 JSON 结构化数据供自动化脚本处理
+upy analysis --json
+```
+
+---
+
+## 🔔 通知服务 (Bark 移动端推送 & 项目专属 Webhook)
+
+`upy` 将实时通知内建于发布与备份的全生命周期中，提供极简、快速、可靠的团队运维观测闭环。
+
+---
+
+### 一、多接收人 Bark 实时通知
+
+[Bark](https://bark.day.app/) 是一款针对苹果 iOS / iPadOS 设备的轻量、开源即时通知推送服务。只需要发送简单的 HTTP 请求，即可秒级将自定义通知推送至手机设备，完全摆脱重型机器人或第三方中转平台的羁绊。
+
+#### 核心亮点
+
+- **统一标准配置模型**：采用「通用属性 + 按人分列用户（`users:`）」的统一结构。通用属性对所有成员默认生效，用户级字段支持独立定制且优先级高于通用属性，未设置项自动继承通用属性。
 - **项目与全局双层配置，智能合并去重**：支持在项目目录的 `deploy.yaml` 中配置项目专属通知人，并在 `~/.upy/config.yaml` 中配置机器级兜底通知人。`upy` 会在通知触发时自动聚合两处配置，并基于服务端与 Token 进行智能去重，杜绝单人收到多条重复告警。
-- **多人协同广播**：支持同时配置多位研发、运维或测试人员的 Device Token，单次部署或备份事件并行推送到全体相关人员设备。
-- **多形态灵活配置**：既支持纯 Token 字符串、完整推送 URL 数组（兼容官方 `https://api.day.app` 及自建 Bark 节点），也支持携带独立音效（`sound`）、自定义分组（`group`）和敏感等级（`level`）的高级对象定义。
+- **多人协同广播**：支持同时配置多位研发、运维或测试人员，单次部署或备份事件并行推送到全体相关人员设备。
 - **项目级静音开关**：如果某个内部项目无需推送通知，只需在项目的 `deploy.yaml` 中声明 `notify: { enabled: false }`，即可独立关闭该项目的所有通知。
 - **全方位运维上下文**：推送卡片自动携带项目名称、目标版本、部署类型、执行耗时；若发生异常失败，还会自动附带精准的排障失败原因。
 
-### 最常用的 3 种配置写法
+#### 标准统一配置写法
 
-#### 1. 极简字符串列表（推荐多人团队使用）
-直接把每个人的 Device Key 或 Bark App 里复制的完整链接填成列表：
-
-```yaml
-notify:
-  bark:
-    - "DEVICE_KEY_ALICE"
-    - "DEVICE_KEY_BOB"
-    - "https://api.day.app/DEVICE_KEY_CAROL" # 粘贴完整 URL 也会自动解析
-```
-
-#### 2. 统一分组与铃声，指定多个 Token
-如果所有人共用同一分组、通知铃声或自建 Bark 节点，可以用 `tokens:` 批量指定：
+`upy` 的 Bark 配置统一采用 **通用属性**（外层全局默认）配合 **`users` 列表**（按 `- name` 区分具体接收人）的标准格式：
 
 ```yaml
 notify:
   bark:
-    serverUrl: "https://api.day.app" # 默认为官方地址，自建节点可填私有域名
-    group: "payment-api"             # 推送分组
-    sound: "chime"                   # 自定义铃声 (如 bell, chime, glass, minuet 等)
-    tokens:
-      - "DEVICE_KEY_ALICE"
-      - "DEVICE_KEY_BOB"
+    # 1. 通用属性 (对全体成员生效 / 默认继承)
+    serverUrl: "https://api.day.app" # 默认为官方地址，自建私有节点可填私有域名
+    group: "payment-api"             # 通用推送分组
+    sound: "chime"                   # 通用提示音 (如 bell, chime, glass, minuet 等)
+    level: "active"                  # 通用时效等级 (active / timeSensitive / critical)
+
+    # 2. 用户级属性 (按 - name 分多用户，字段优先级高于外层通用属性)
+    users:
+      - name: "前端负责人"
+        token: "DEVICE_KEY_ALICE"
+        sound: "glass"                 # 用户专属覆盖：使用专属提示音 glass
+      - name: "值班运维"
+        token: "DEVICE_KEY_BOB"
+        serverUrl: "https://bark.ops.internal" # 用户专属覆盖：推送到内部自建 Bark 节点
+        level: "timeSensitive"
+      - name: "测试工程师"
+        token: "DEVICE_KEY_CAROL"      # 未指定独立属性，无缝继承外层通用配置
 ```
 
-#### 3. 详细对象列表（按人定制独立属性）
-如果不同成员需要定制不同的标签、铃声或不同的私有 Bark 服务端：
+> **字段优先级与继承规则**：  
+> `users[i]` 内部字段（如 `sound`, `serverUrl`, `group`, `level`, `icon`）具有最高优先级；若用户未显式指定某字段，则自动回退继承外层通用属性；若外层亦未填写，则使用系统默认值。
 
-```yaml
-notify:
-  bark:
-    - name: "前端负责人"
-      token: "DEVICE_KEY_FRONTEND"
-      sound: "glass"
-    - name: "值班运维"
-      serverUrl: "https://bark.mycorp.internal" # 支持私有自建 Bark 服务
-      token: "DEVICE_KEY_OPS"
-      sound: "minuet"
-      level: "timeSensitive"                     # 敏感等级 (active / timeSensitive / critical)
-```
+> **单人极简配置**：  
+> 若当前环境仅需通知单人，亦可省略 `users` 列表，直接在 `bark` 下声明 `token` 即可开箱即用：
+> ```yaml
+> notify:
+>   bark:
+>     serverUrl: "https://api.day.app"
+>     group: "my-service"
+>     sound: "bell"
+>     token: "DEVICE_KEY_SINGLE"
+> ```
 
-### 配置放置位置
+#### 推送内容与卡片示例 (Title & Body 详解)
 
-#### 位置 1：项目级专属配置（`<项目根目录>/deploy.yaml`）
+`upy` 在部署或备份完成时，会自动将全方位的运维上下文（项目名称、版本号、部署类型、项目根目录、执行耗时、失败排障原因）规范组装为结构化的 **标题 (Title)** 与 **正文 (Body)** 推送至 Bark，**无需任何手动模板拼接**。
+
+##### 1. 部署成功通知示例
+- **标题 (Title)**: `upy 部署成功 · my-api-service`
+- **正文 (Body)**:
+  ```text
+  项目: my-api-service
+  版本: v1.2.0
+  类型: Systemd 系统服务
+  目录: /opt/my-api-service
+  耗时: 3.2s
+  ```
+
+##### 2. 部署失败告警示例 (敏感等级自动升级为 `timeSensitive`)
+- **标题 (Title)**: `upy 部署失败 · my-compose-stack`
+- **正文 (Body)**:
+  ```text
+  项目: my-compose-stack
+  版本: v1.1.0
+  类型: Docker Compose 集成项目
+  目录: /opt/my-compose-stack
+  原因: healthcheck probe http://127.0.0.1:8080/health failed (timeout 30s)
+  ```
+
+##### 3. 备份成功通知示例
+- **标题 (Title)**: `upy 备份成功 · my-api-service`
+- **正文 (Body)**:
+  ```text
+  项目: my-api-service
+  归档: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+  目录: /opt/my-api-service
+  耗时: 2.4s
+  ```
+
+##### 4. 备份失败告警示例
+- **标题 (Title)**: `upy 备份失败 · my-api-service`
+- **正文 (Body)**:
+  ```text
+  项目: my-api-service
+  目录: /opt/my-api-service
+  原因: exit status 1: mysqldump: Got error: 2003: Can't connect to MySQL server
+  ```
+
+#### 配置放置位置
+
+##### 位置 1：项目级专属配置（`<项目根目录>/deploy.yaml`）
 只接收该项目的部署与备份通知。建议将关注该项目的研发/测试人员配置在此处：
 
 ```yaml
@@ -484,16 +591,22 @@ release:
   provider: github
   repository: owner/my-api-service
 
-# 项目专属通知人
+# 项目专属通知配置
 notify:
   bark:
-    - "DEV_TOKEN_1"
-    - "DEV_TOKEN_2"
+    group: "my-api-service"
+    sound: "chime"
+    users:
+      - name: "开发同学"
+        token: "DEV_TOKEN_1"
+      - name: "测试同学"
+        token: "DEV_TOKEN_2"
+        sound: "glass"
 ```
 
 > **项目独立静音**：如果某个测试项目无需推送，配置 `notify: { enabled: false }` 即可屏蔽该项目的所有通知。
 
-#### 位置 2：机器全局兜底配置（`~/.upy/config.yaml`）
+##### 位置 2：机器全局兜底配置（`~/.upy/config.yaml`）
 整台服务器通用的通知渠道（例如运维大群或 SRE 负责人），对这台机器上所有纳管项目默认生效：
 
 ```yaml
@@ -504,15 +617,76 @@ github:
 notify:
   enabled: true
   bark:
-    - name: "SRE Lead"
-      token: "SRE_DEVICE_KEY"
-      sound: "bell"
+    serverUrl: "https://api.day.app"
+    group: "Host-Alerts"
+    sound: "bell"
+    users:
+      - name: "SRE Lead"
+        token: "SRE_DEVICE_KEY"
+        level: "timeSensitive"
 ```
 
-### 智能合并与去重机制
+#### 智能合并与去重机制
 
 - **自动合并**：触发部署或备份时，`upy` 会同时收集 **当前项目的 `deploy.yaml`** 与 **机器全局的 `~/.upy/config.yaml`**。
 - **智能去重**：如果同一个 Token（或相同服务端 + Token）在项目配置和全局配置中同时存在，`upy` 会**自动去重仅推送一次**，并以项目级的自定义配置优先。
+
+---
+
+### 二、项目专属 Webhook 通知
+
+不同项目通常对接不同的群机器人或团队服务（如企业微信机器人、飞书机器人、钉钉机器人或内部监控服务），**每个项目都不一样，无需也不应该在全局配置文件中进行统一配置**。`upy` 支持在项目根目录的 `deploy.yaml` 中配置项目专属 Webhook。
+
+#### 1. 配置写法示例（`<项目根目录>/deploy.yaml`）
+
+```yaml
+name: my-api-service
+release:
+  provider: github
+  repository: owner/my-api-service
+
+# 项目专属通知配置（仅对当前项目生效，不污染全局配置）
+notify:
+  # 方式 A：单一 URL 极简直配
+  webhook: "https://ops.example.com/api/deploy-webhook"
+
+  # 方式 B：多端点配置、自定义 Header 与 HMAC-SHA256 签名防伪
+  # webhook:
+  #   - url: "https://ops.example.com/api/deploy-webhook"
+  #     secret: "SEC_KEY_FOR_HMAC_SHA256"      # 自动在 Header 附带 X-Upy-Signature
+  #     headers:
+  #       X-Environment: "production"
+  #   - url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
+```
+
+#### 2. 安全签名与请求头规范
+
+当配置了 `secret` 时，`upy` 会基于该密钥对请求正文计算 HMAC-SHA256 签名，并在 HTTP POST 请求头中注入标准元数据：
+- `Content-Type: application/json; charset=utf-8`
+- `User-Agent: upy/<version>`
+- `X-Upy-Event`: 事件类型（`deploy.success`, `deploy.failure`, `backup.success`, `backup.failure`）
+- `X-Upy-Delivery`: 每次请求唯一的 UUIDv4 标识符，方便接收方去重与链路追踪
+- `X-Upy-Signature`: 签名值，格式为 `sha256=<hex_hmac>`，接收方可用相同的 `secret` 校验来源真实性
+
+#### 3. Webhook JSON 请求体 Payload
+
+```json
+{
+  "event": "deploy.success",
+  "project": "my-api-service",
+  "status": "success",
+  "action": "deploy",
+  "version": "v1.2.0",
+  "type": "system",
+  "directory": "/opt/my-api-service",
+  "elapsed": "3.2s",
+  "elapsed_seconds": 3.2,
+  "timestamp": "2026-10-19T12:00:00Z"
+}
+```
+
+> 💡 **智能跨量级耗时换算**：  
+> 在 Bark 推送、Webhook Payload 及终端输出中，耗时严谨按阶梯智能换算——小于 60s 格式化为秒（如 `3.2s`），超过 60s 换算为分钟（如 `1m15s`），超过 60m 自动以小时开头（如 `1h2m30s`），拒绝机械输出全秒。
 
 ---
 
@@ -546,6 +720,7 @@ upy version
 | `upy deploy <项目名>` | 快捷为已登记的本地项目部署最新正式版本 |
 | `upy clean [项目名]` | 可视化分析并清理项目数据 (Bundle 缓存、旧版本、临时目录或注销) |
 | `upy backup [项目名]` | 执行项目约定备份 (`backup.sh`)，管理归档轮转并推送通知 |
+| `upy analysis [项目名]` | 分析全机已部署项目，以最大占用为 100% 基准展示磁盘分布与最近部署 |
 | `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
 | `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |
 | `upy update [版本]` | 自更新到最新版本或切换至指定版本 |

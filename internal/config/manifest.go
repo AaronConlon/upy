@@ -65,6 +65,14 @@ func (m *Manifest) ActiveBarks() []UserBark {
 	return m.Notify.ActiveBarks()
 }
 
+// ActiveWebhooks 返回 bundle 清单中生效的 Webhook 渠道
+func (m *Manifest) ActiveWebhooks() []ProjectWebhook {
+	if m == nil {
+		return nil
+	}
+	return m.Notify.ActiveWebhooks()
+}
+
 // ParseManifest 解析 bundle 内 deploy.yaml 内容并校验
 func ParseManifest(content []byte) (*Manifest, error) {
 	var m Manifest

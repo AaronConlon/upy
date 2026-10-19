@@ -19,7 +19,7 @@ description: 为应用项目接入 upy 部署，生成服务器配置、bundle d
 - Linux 原生常驻服务，尤其 Go binary：`system`，由 systemd 托管。先核对目标 upy 与系统能力。
 - Java JAR、Python 可以通过 system 调用服务器已有 runtime，但必须明确 Java/Python 版本与依赖交付方式；venv 不跨机器打包。依赖复杂时建议 Docker 并说明取舍。
 
-读取 [配置契约](references/contracts.md)，再按需读取 [静态与容器](references/static-docker.md)、[system](references/system.md)、[Release 流程](references/release.md)。契约基于 upy v0.2.0 和 2026-10-19 源码；目标版本的实现优先于本文。不要把工作区未发布功能写成已发布能力。
+读取 [配置契约](references/contracts.md)，再按需读取 [静态与容器](references/static-docker.md)、[system](references/system.md)、[Release 流程](references/release.md)。契约基于 upy v0.3.0 和 2026-10-20 源码；目标版本的实现优先于本文。不要把工作区未发布功能写成已发布能力。
 
 ## 2. 生成接入文件
 
@@ -31,11 +31,11 @@ scripts/upy/pack_bundle.py            # 从本 Skill scripts 复制
 .github/workflows/upy-release.yml
 docs/upy-deployment.md
 ```
-Bundle manifest 在 staging 根目录生成 `deploy.yaml`；不得将 server 配置误放 ZIP。不要提交真实 token、service.env、数据库或整个工作目录。构建 staging 只复制已列明的产物和运行必需文件。
+Bundle manifest 在 staging 根目录生成 `upy.yaml`（兼容旧版 `deploy.yaml`）；不得将 server 配置误放 ZIP。不要提交真实 token、service.env、数据库或整个工作目录。构建 staging 只复制已列明的产物和运行必需文件。
 
 可参考 [完整接入示例](assets/examples/README.md) 中的配置、构建脚本和 workflow。使用 assets 中 server 和 manifest 样例作结构参考，必须替换项目名、仓库、目录、端口、入口等。生成 workflow 时遵循 references/release.md，不能只交付未替换的模板。
 
-打包工具用标准库读取 **JSON 格式** manifest（命名仍为 deploy.yaml，upy 的 YAML parser 可读取 JSON）。调用方式：
+打包工具用标准库读取 **JSON 格式** manifest（命名为 upy.yaml 或 deploy.yaml，upy 的 YAML parser 可读取 JSON）。调用方式：
 ```
 python3 scripts/upy/pack_bundle.py --stage .upy-stage --output artifacts/bundle.zip
 ```

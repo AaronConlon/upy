@@ -28,6 +28,7 @@ func printHelp() {
 		"  deploy [项目名称]              部署已登记项目的最新正式版本",
 		"  clean [项目名称]               清理项目数据 (Bundle 缓存、旧版本、临时目录、注销或清空)",
 		"  backup [项目名称]              执行项目约定备份 (执行 backup.sh 并管理 backups/ 归档)",
+		"  analysis [项目名称]            分析客户端项目、磁盘空间占用与最近一次部署",
 		"  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)",
 		"  version                        查看当前版本并检查更新",
 		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
@@ -36,6 +37,9 @@ func printHelp() {
 		"选项:",
 		"  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载",
 		"  --root <目录>                  项目目录 (默认当前目录)",
+		"  --detail                       analysis 专用: 展开子目录 (releases/bundles/backups) 空间明细",
+		"  --json                         analysis 专用: 输出 JSON 结构化分析数据",
+		"  --sort <size|time|name>        analysis 专用: 指定排序规则 (默认按磁盘占用 size 降序)",
 		"  --bundles                      clean 专用: 仅清理 Bundle 缓存压缩包",
 		"  --old-releases                 clean 专用: 仅清理历史旧版本与残留临时目录",
 		"  --all                          clean / backup 通用: 批量处理所有已登记项目",
@@ -69,6 +73,10 @@ func printHelp() {
 		"  upy backup codia              执行指定项目 codia 的约定备份",
 		"  upy backup codia --list       查看 codia 项目的历史备份列表",
 		"  upy backup --all -y           一键批量备份所有已登记项目",
+		"  upy analysis                  分析全机所有已部署项目及磁盘占用柱状图",
+		"  upy analysis --detail         查看全机项目各子目录细分空间分布",
+		"  upy analysis codia            查看指定项目的磁盘占用与子模块分布",
+		"  upy analysis --json           以 JSON 格式输出分析报表",
 		"  upy bundle ./bundle.zip       部署本地 bundle",
 		"  upy init ghp_xxx              设置默认全局 GitHub token",
 		"  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token",
@@ -92,6 +100,9 @@ type parsedArgs struct {
 	list        bool
 	prune       int
 	script      string
+	detail      bool
+	json        bool
+	sort        string
 	showVersion bool
 	showHelp    bool
 }
@@ -100,7 +111,7 @@ func parseArgs(argv []string) parsedArgs {
 	var p parsedArgs
 	known := map[string]bool{
 		"release": true, "deploy": true, "clean": true, "backup": true,
-		"bundle": true, "version": true, "update": true, "init": true,
+		"analysis": true, "bundle": true, "version": true, "update": true, "init": true,
 	}
 	for i := 0; i < len(argv); i++ {
 		a := argv[i]
@@ -111,6 +122,17 @@ func parseArgs(argv []string) parsedArgs {
 			p.showVersion = true
 		case a == "--force":
 			p.force = true
+		case a == "--detail":
+			p.detail = true
+		case a == "--json":
+			p.json = true
+		case a == "--sort":
+			if i+1 < len(argv) {
+				i++
+				p.sort = argv[i]
+			}
+		case strings.HasPrefix(a, "--sort="):
+			p.sort = strings.TrimPrefix(a, "--sort=")
 		case a == "--bundles":
 			p.bundles = true
 		case a == "--old-releases":
@@ -243,6 +265,18 @@ func main() {
 			Prune:       p.prune,
 			All:         p.all,
 			Yes:         p.yes,
+		})
+	case "analysis":
+		projectName := ""
+		if len(p.positional) > 0 {
+			projectName = p.positional[0]
+		}
+		err = commands.Analysis(commands.AnalysisArgs{
+			ProjectName: projectName,
+			Root:        p.root,
+			Detail:      p.detail,
+			JSON:        p.json,
+			Sort:        p.sort,
 		})
 	case "bundle":
 		file := ""

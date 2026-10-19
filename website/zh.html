@@ -153,7 +153,9 @@
           ><b aria-hidden="true">/</b
           ><span><i aria-hidden="true">03</i> 约定备份</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">04</i> Bark 多人推送</span>
+          ><span><i aria-hidden="true">04</i> 项目分析</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">05</i> Bark / Webhook</span>
         </div>
       </div>
       <section
@@ -288,36 +290,35 @@ upy bundle ./bundle.zip</code></pre>
 
           <!-- Panel 1: SPA 静态站点 -->
           <div class="showcase-panel is-active" id="panel-spa" role="tabpanel" aria-labelledby="tab-spa">
-            <div class="showcase-grid">
-              <div class="showcase-steps">
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>01</span> CI/CD 自动化打包</div>
-                    <div class="step-card-file">.github/workflows/deploy.yml</div>
-                  </div>
-                  <pre><code><span class="comment"># 1. 构建前端产物</span>
+            <div class="showcase-cards">
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>01</span> CI/CD 自动化打包</div>
+                  <div class="step-card-file">.github/workflows/deploy.yml</div>
+                </div>
+                <pre><code><span class="comment"># 1. 构建前端产物</span>
 - name: Build frontend
   run: npm ci && npm run build
 
 <span class="comment"># 2. 写入清单并打成 bundle.zip</span>
 - name: Package bundle
   run: |
-    cat &lt;&lt; 'EOF' &gt; dist/deploy.yaml
+    cat &lt;&lt; 'EOF' &gt; dist/upy.yaml
     name: my-spa-app
     version: ${{ github.ref_name }}
     type: static
     static:
       directory: dist
     EOF
-    cd dist &amp;&amp; zip -r ../bundle.zip . deploy.yaml</code></pre>
-                </div>
+    cd dist &amp;&amp; zip -r ../bundle.zip . upy.yaml</code></pre>
+              </div>
 
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>02</span> 服务器端配置与目录布局</div>
-                    <div class="step-card-file">/var/www/my-spa-app/deploy.yaml</div>
-                  </div>
-                  <pre><code><span class="comment"># 服务器端项目配置</span>
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>02</span> 服务器端配置与目录布局</div>
+                  <div class="step-card-file">/var/www/my-spa-app/deploy.yaml</div>
+                </div>
+                <pre><code><span class="comment"># 服务器端项目配置</span>
 name: my-spa-app
 release:
   provider: github
@@ -325,37 +326,22 @@ release:
   asset: bundle.zip
 
 <span class="comment"># Nginx 配置指向软链: root /var/www/my-spa-app/current;</span></code></pre>
-                </div>
-
-                <div class="showcase-guarantees">
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>彻底杜绝 403 Forbidden</strong>：递归自动规整目录权限为 <code>0755</code>，静态文件权限为 <code>0644</code>。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>微秒级原子软链切换</strong>：通过 POSIX 原子重命名切换 <code>current -&gt; releases/1.0.0/dist</code>，发布过程零中断。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>双版本保护与秒级回滚</strong>：安全保留当前与上一版本，健康探测异常时软链瞬间切回上一成功版本。</div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">host: /var/www/my-spa-app</span>
-                  <button type="button" class="terminal-copy" data-copy="term-spa-code-zh">复制日志</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="terminal-body">
-                  <pre id="term-spa-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+                <span class="terminal-title">host: /var/www/my-spa-app</span>
+                <button type="button" class="terminal-copy" data-copy="term-spa-code-zh">复制日志</button>
+              </div>
+              <div class="terminal-body">
+                <pre id="term-spa-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   <span class="t-info">📦 项目:</span> my-spa-app
   <span class="t-info">📁 目录:</span> /var/www/my-spa-app
@@ -376,21 +362,35 @@ release:
   <span class="t-highlight">✓ current -&gt; releases/1.0.0/dist</span>
   <span class="t-ok">✓ 部署完成: my-spa-app 1.0.0</span>
   <span class="t-time">⏱ 部署耗时: 0.8s</span></pre>
-                </div>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>彻底杜绝 403 Forbidden</strong>：递归自动规整目录权限为 <code>0755</code>，静态文件权限为 <code>0644</code>。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>微秒级原子软链切换</strong>：通过 POSIX 原子重命名切换 <code>current -&gt; releases/1.0.0/dist</code>，发布过程零中断。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>双版本保护与秒级回滚</strong>：安全保留当前与上一版本，健康探测异常时软链瞬间切回上一成功版本。</div>
               </div>
             </div>
           </div>
 
           <!-- Panel 2: Systemd 原生服务 -->
           <div class="showcase-panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
-            <div class="showcase-grid">
-              <div class="showcase-steps">
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>01</span> CI/CD 打包流水线 (源自 upy-test)</div>
-                    <div class="step-card-file">.github/workflows/system.yml</div>
-                  </div>
-                  <pre><code><span class="comment"># 1. 交叉编译 Linux 纯静态二进制</span>
+            <div class="showcase-cards">
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>01</span> CI/CD 打包流水线 (源自 upy-test)</div>
+                  <div class="step-card-file">.github/workflows/system.yml</div>
+                </div>
+                <pre><code><span class="comment"># 1. 交叉编译 Linux 纯静态二进制</span>
 - name: Build Go binary
   env:
     CGO_ENABLED: '0'
@@ -401,7 +401,7 @@ release:
 <span class="comment"># 2. 打包清单与可执行文件</span>
 - name: Package bundle
   run: |
-    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    cat &lt;&lt; 'EOF' &gt; upy.yaml
     name: my-api
     version: ${{ github.ref_name }}
     type: system
@@ -412,15 +412,15 @@ release:
       url: http://127.0.0.1:8080/health
       timeout: 15s
     EOF
-    zip -r bundle-linux-amd64.zip deploy.yaml bin/web</code></pre>
-                </div>
+    zip -r bundle-linux-amd64.zip upy.yaml bin/web</code></pre>
+              </div>
 
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>02</span> 服务器端配置与数据隔离</div>
-                    <div class="step-card-file">/opt/my-api/deploy.yaml</div>
-                  </div>
-                  <pre><code>name: my-api
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>02</span> 服务器端配置与数据隔离</div>
+                  <div class="step-card-file">/opt/my-api/deploy.yaml</div>
+                </div>
+                <pre><code>name: my-api
 release:
   provider: github
   repository: owner/my-api
@@ -432,41 +432,22 @@ service:
 
 <span class="comment"># 业务持久化数据隔离在 /opt/my-api/shared/data/</span>
 <span class="comment"># 环境变量与配置位于 /opt/my-api/shared/service.env</span></code></pre>
-                </div>
-
-                <div class="showcase-guarantees">
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>拒绝静默提权</strong>：显式预检 <code>service.user</code> 与用户组存在性，不存在时立即阻断，杜绝以 root 提权运行。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>端口与 PID 严密防伪</strong>：结合 <code>/proc/&lt;pid&gt;/fd</code> 与 socket 校验本地监听者归属，防止被假冒进程欺骗。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>有界确定性回滚</strong>：新服务失败时，先还原置换前二进制再拉起旧服务，并进行真实 HTTP 存活性验证。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Live Unit 保护</strong>：<code>clean</code> 动态解析 live systemd unit 引用，严防清理误删正在运行的活跃二进制。</div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">host: /opt/my-api (systemd)</span>
-                  <button type="button" class="terminal-copy" data-copy="term-system-code-zh">复制日志</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="terminal-body">
-                  <pre id="term-system-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+                <span class="terminal-title">host: /opt/my-api (systemd)</span>
+                <button type="button" class="terminal-copy" data-copy="term-system-code-zh">复制日志</button>
+              </div>
+              <div class="terminal-body">
+                <pre id="term-system-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   <span class="t-info">📦 项目:</span> my-api
   <span class="t-info">📁 目录:</span> /opt/my-api
@@ -489,24 +470,42 @@ service:
   <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
   <span class="t-ok">✓ 部署完成: my-api 1.1.0</span>
   <span class="t-time">⏱ 部署耗时: 3.2s</span></pre>
-                </div>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>拒绝静默提权</strong>：显式预检 <code>service.user</code> 与用户组存在性，不存在时立即阻断，杜绝以 root 提权运行。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>端口与 PID 严密防伪</strong>：结合 <code>/proc/&lt;pid&gt;/fd</code> 与 socket 校验本地监听者归属，防止被假冒进程欺骗。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>有界确定性回滚</strong>：新服务失败时，先还原置换前二进制再拉起旧服务，并进行真实 HTTP 存活性验证。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Live Unit 保护</strong>：<code>clean</code> 动态解析 live systemd unit 引用，严防清理误删正在运行的活跃二进制。</div>
               </div>
             </div>
           </div>
 
           <!-- Panel 3: Docker / Compose 容器项目 -->
           <div class="showcase-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
-            <div class="showcase-grid">
-              <div class="showcase-steps">
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>01</span> CI/CD 自动化打包</div>
-                    <div class="step-card-file">.github/workflows/deploy.yml</div>
-                  </div>
-                  <pre><code><span class="comment"># 打包 Compose 文件与应用制品</span>
+            <div class="showcase-cards">
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>01</span> CI/CD 自动化打包</div>
+                  <div class="step-card-file">.github/workflows/deploy.yml</div>
+                </div>
+                <pre><code><span class="comment"># 打包 Compose 文件与应用制品</span>
 - name: Package Compose bundle
   run: |
-    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    cat &lt;&lt; 'EOF' &gt; upy.yaml
     name: my-compose-stack
     version: ${{ github.ref_name }}
     type: docker
@@ -517,15 +516,15 @@ service:
       url: http://127.0.0.1:8080/health
       timeout: 30s
     EOF
-    zip -r bundle.zip deploy.yaml docker-compose.yml Dockerfile src/</code></pre>
-                </div>
+    zip -r bundle.zip upy.yaml docker-compose.yml Dockerfile src/</code></pre>
+              </div>
 
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>02</span> 服务器端配置与密钥隔离</div>
-                    <div class="step-card-file">/opt/my-compose-stack/deploy.yaml</div>
-                  </div>
-                  <pre><code>name: my-compose-stack
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>02</span> 服务器端配置与密钥隔离</div>
+                  <div class="step-card-file">/opt/my-compose-stack/deploy.yaml</div>
+                </div>
+                <pre><code>name: my-compose-stack
 release:
   provider: github
   repository: owner/my-compose-stack
@@ -533,37 +532,22 @@ release:
 
 <span class="comment"># 生产环境私密配置放于 shared/.env</span>
 <span class="comment"># 数据库与持久化数据卷挂载至 shared/data/</span></code></pre>
-                </div>
-
-                <div class="showcase-guarantees">
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>零端口绑定冲突</strong>：新镜像先在后台 build 就绪，旧容器平滑停止并清理孤儿后立即启动新栈。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>分层环境变量合并</strong>：制品默认配置按 Compose 优先级被宿主机 <code>shared/.env</code> 生产密钥覆盖。</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>容器故障自动回滚</strong>：健康探测失败或容器异常崩溃时，自动停止故障容器并无损重启上一可用版本。</div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">host: /opt/my-compose-stack (docker)</span>
-                  <button type="button" class="terminal-copy" data-copy="term-docker-code-zh">复制日志</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="terminal-body">
-                  <pre id="term-docker-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+                <span class="terminal-title">host: /opt/my-compose-stack (docker)</span>
+                <button type="button" class="terminal-copy" data-copy="term-docker-code-zh">复制日志</button>
+              </div>
+              <div class="terminal-body">
+                <pre id="term-docker-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   <span class="t-info">📦 项目:</span> my-compose-stack
   <span class="t-info">📁 目录:</span> /opt/my-compose-stack
@@ -588,7 +572,22 @@ release:
   <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
   <span class="t-ok">✓ 部署完成: my-compose-stack 1.1.0</span>
   <span class="t-time">⏱ 部署耗时: 12.3s</span></pre>
-                </div>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>零端口绑定冲突</strong>：新镜像先在后台 build 就绪，旧容器平滑停止并清理孤儿后立即启动新栈。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>分层环境变量合并</strong>：制品默认配置按 Compose 优先级被宿主机 <code>shared/.env</code> 生产密钥覆盖。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>容器故障自动回滚</strong>：健康探测失败或容器异常崩溃时，自动停止故障容器并无损重启上一可用版本。</div>
               </div>
             </div>
           </div>
@@ -638,7 +637,7 @@ upy clean --keep 3</code></pre>
           </div>
 
           <div class="backup-showcase">
-            <div class="showcase-steps">
+            <div class="showcase-cards">
               <!-- Card 1: 约定脚本 -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
@@ -667,39 +666,22 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
   <span class="string">retention</span>: 7                 <span class="comment"># 自动轮转保留的最大备份份数（默认 7）</span>
   <span class="string">timeout</span>: <span class="string">15m</span>                 <span class="comment"># 备份最大超时时间（默认 15m，支持 30s, 5m, 1h）</span></code></pre>
               </div>
-
-              <!-- Card 3: 内核保障 -->
-              <div class="showcase-guarantees">
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>跨进程排他互斥（.deploy.lock）：</strong>备份期间获取排他锁（<code>action: 备份中</code>），严格互斥正在进行的部署或磁盘清理，杜绝产生半更新脏数据。</div>
-                </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>智能自动轮转防爆盘：</strong>按修改时间排序自动剔除超出保留阈值的旧备份（默认 7 份），防止历史备份文件无限膨胀撑爆服务器磁盘。</div>
-                </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>通知告警实时推送：</strong>备份完成后自动汇总耗时、产物文件体积，并通过 Bark 等渠道实时推送备份结果与告警。</div>
-                </div>
-              </div>
             </div>
 
-            <!-- Right Column: 终端日志与命令速查 -->
-            <div class="showcase-terminal-col">
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots" aria-hidden="true">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">终端执行 — upy backup</span>
-                  <button type="button" class="btn-terminal-copy" data-copy="term-backup-code-zh">复制执行命令</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <pre id="term-backup-code-zh" class="sr-only">upy backup</pre>
-                <div class="terminal-body">
-                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy backup</span>
+                <span class="terminal-title">终端执行 — upy backup</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-backup-code-zh">复制执行命令</button>
+              </div>
+              <pre id="term-backup-code-zh" class="sr-only">upy backup</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy backup</span>
 <span class="t-step">-&gt; 正在对项目 <span class="t-highlight">my-api-service</span> 执行约定备份...</span>
 <span class="t-ok">✓ 发现约定脚本: backup.sh (chmod 0755)</span>
 <span class="t-ok">✓ 已获取项目排他锁 (.deploy.lock)</span>
@@ -713,140 +695,288 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
   <span class="t-highlight">🛡️  自动轮转:</span> 保留最近 7 份（已清理 1 份历史旧备份）
   <span class="t-time">⏱  总耗时:</span>   2.4s
   <span class="t-info">🔔 已向 Bark 渠道推送备份完成通知</span></pre>
+              </div>
+            </div>
+
+            <!-- 快捷命令卡片列表 -->
+            <div class="backup-cmd-grid">
+              <div class="backup-cmd-item">
+                <code>upy backup</code>
+                <span>交互式选择已登记项目执行备份</span>
+              </div>
+              <div class="backup-cmd-item">
+                <code>upy backup my-app --list</code>
+                <span>查看项目历史备份列表与占用体积</span>
+              </div>
+              <div class="backup-cmd-item">
+                <code>upy backup my-app --prune 5</code>
+                <span>手动触发轮转，保留最近 5 份备份</span>
+              </div>
+              <div class="backup-cmd-item">
+                <code>upy backup --all -y</code>
+                <span>一键批量备份所有已登记项目</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>跨进程排他互斥（.deploy.lock）：</strong>备份期间获取排他锁（<code>action: 备份中</code>），严格互斥正在进行的部署或磁盘清理，杜绝产生半更新脏数据。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>智能自动轮转防爆盘：</strong>按修改时间排序自动剔除超出保留阈值的旧备份（默认 7 份），防止历史备份文件无限膨胀撑爆服务器磁盘。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>通知告警实时推送：</strong>备份完成后自动汇总耗时、产物文件体积，并通过 Bark 等渠道实时推送备份结果与告警。</div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="step step-wide" data-step>
+          <div class="step-copy">
+            <span class="step-number">04 / 分析</span>
+            <h3>客户端项目全景分析，以最大空间为 100% 基准。</h3>
+            <div class="step-copy-desc">
+              <p>
+                全机纳管项目动态盘点，以占用空间最大的项目为 100% 基准绘制等宽横向柱状条形图；
+                顶栏置顶聚焦最近一次部署动态（项目、版本、部署类型、相对时间与健康状态）。严格杜绝软链双重计数，支持 <code>--detail</code> 深度展开与 <code>--json</code> 格式化导出。
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy/blob/main/README.zh-CN.md#客户端项目与磁盘分析-upy-analysis"
+                class="text-link"
+                >查阅分析命令文档 ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="analysis-showcase">
+            <div class="showcase-cards">
+              <!-- Card 1: 100% 相对基准对比 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / 100% 相对基准条形图 <span>直观凸显大户</span></span>
+                  <span class="step-card-file">Max Benchmark Bar</span>
                 </div>
+                <pre><code><span class="comment"># 算法：以占用最高的项目 maxBytes 为 100% 基准换算比例</span>
+1  my-compose-app  docker  1.45 GB  [<span class="keyword">████████████████████</span>] 100.0%
+2  my-api-service  system  482 MB   [<span class="keyword">███████</span>░░░░░░░░░░░░░]  32.5%
+3  portal-frontend static   86 MB   [<span class="keyword">█</span>░░░░░░░░░░░░░░░░░░░]   5.8%</code></pre>
               </div>
 
-              <!-- 快捷命令卡片列表 -->
-              <div class="backup-cmd-grid">
-                <div class="backup-cmd-item">
-                  <code>upy backup</code>
-                  <span>交互式选择已登记项目执行备份</span>
+              <!-- Card 2: 最近部署 Spotlight -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / 最近部署置顶卡片 <span>实时动态追踪</span></span>
+                  <span class="step-card-file">Spotlight Focus</span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>upy backup my-app --list</code>
-                  <span>查看项目历史备份列表与占用体积</span>
+                <pre><code><span class="comment"># 甄选 state.json 中时间戳最新的项目置顶高亮</span>
+📦 项目: my-api-service (v1.2.0)
+🧩 类型: Systemd 系统服务 (system) · upy-my-api-service.service
+⏱  时间: 22分钟前 (2026-10-19 19:40:02)
+🟢 状态: 正常运行 (active)</code></pre>
+              </div>
+            </div>
+
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>upy backup my-app --prune 5</code>
-                  <span>手动触发轮转，保留最近 5 份备份</span>
-                </div>
-                <div class="backup-cmd-item">
-                  <code>upy backup --all -y</code>
-                  <span>一键批量备份所有已登记项目</span>
-                </div>
+                <span class="terminal-title">终端执行 — upy analysis</span>
+              </div>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy analysis</span>
+<span class="t-bold">upy analysis — 客户端项目与磁盘分析</span>
+
+<span class="t-highlight">━ 最近一次部署动态 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-ok">📦 项目:</span> my-api-service (<span class="t-highlight">v1.2.0</span>)
+  <span class="t-dim">🧩 类型:</span> Systemd 系统服务 (system) · upy-my-api-service.service
+  <span class="t-time">⏱  时间:</span> <span class="t-bold">22分钟前</span> (2026-10-19 19:40:02)
+  <span class="t-ok">🟢 状态: 正常运行 (active)</span>
+
+<span class="t-highlight">━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━</span>
+<span class="t-dim">#   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)</span>
+1   <span class="t-bold">my-compose-app</span>      <span class="t-ok">🟢 active</span>      docker   <span class="t-highlight">v2.1.0</span>      1.45 GB     [<span class="t-highlight">████████████████████</span>] 100.0%
+2   <span class="t-bold">my-api-service</span>      <span class="t-ok">🟢 active</span>      system   <span class="t-highlight">v1.2.0</span>      482.3 MB    [<span class="t-ok">███████░░░░░░░░░░░░░</span>]  32.5%
+3   <span class="t-bold">portal-frontend</span>     <span class="t-ok">🟢 active</span>      static   <span class="t-highlight">v0.9.4</span>       86.1 MB    [<span class="t-dim">█░░░░░░░░░░░░░░░░░░░</span>]   5.8%
+4   <span class="t-bold">demo-spa</span>            <span class="t-dim">⚪ undeployed</span>  static   -            14.2 MB    [<span class="t-dim">▏░░░░░░░░░░░░░░░░░░░</span>]   0.9%
+
+<span class="t-highlight">━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  📊 纳管项目: 4 个
+  💾 累计占用: <span class="t-bold">2.03 GB</span> (平均每个项目 519.6 MB)
+  👑 空间首位: <span class="t-bold">my-compose-app</span> (<span class="t-highlight">1.45 GB</span>, 占全机 upy 空间的 71.4%)
+  💡 <span class="t-dim">提示: 可使用 upy analysis --detail 查看各子目录详细空间分布</span></pre>
+              </div>
+            </div>
+
+            <!-- 快捷命令卡片列表 -->
+            <div class="analysis-cmd-grid">
+              <div class="analysis-cmd-item">
+                <code>upy analysis</code>
+                <span>全机项目磁盘占用基准图与最近部署</span>
+              </div>
+              <div class="analysis-cmd-item">
+                <code>upy analysis --detail</code>
+                <span>展开 releases/bundles/backups 子目录细分</span>
+              </div>
+              <div class="analysis-cmd-item">
+                <code>upy analysis &lt;name&gt;</code>
+                <span>针对指定项目深入查看占用与目录树</span>
+              </div>
+              <div class="analysis-cmd-item">
+                <code>upy analysis --json</code>
+                <span>以 JSON 结构化数据输出供监控解析</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>杜绝软链穿透双计：</strong>测算空间时严格仅计入 <code>current</code> 符号链接本身字节，不递归穿透目标版本目录，杜绝活跃版本重复计算。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>子目录明细展开（--detail）：</strong>清晰列出 releases（活跃与旧版）、bundles 缓存、backups 归档及 shared 目录的独立占用。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>结构化导出（--json）：</strong>直接输出标准 JSON，方便接入主机监控大屏、定时巡检警报或自动化审计脚本。</div>
               </div>
             </div>
           </div>
         </article>
         <article class="step step-wide last" data-step>
           <div class="step-copy">
-            <span class="step-number">04 / 通知</span>
-            <h3>多接收人 Bark 移动端即时推送。</h3>
+            <span class="step-number">05 / 通知</span>
+            <h3>多接收人 Bark 移动端推送与项目专属 Webhook。</h3>
             <div class="step-copy-desc">
               <p>
-                部署与备份结果即时推送至 iOS 设备，底层基于 <a href="https://bark.day.app" target="_blank" rel="noopener noreferrer">Bark</a>。
-                无需第三方复杂机器人或臃肿 Webhook。支持在 <code>deploy.yaml</code> 中项目级独立配置、全局配置兜底、团队多人广播与智能自动去重。
+                部署与备份结果即时推送至 iOS 设备与团队业务系统。底层基于开源 <a href="https://bark.day.app" target="_blank" rel="noopener noreferrer">Bark</a> 移动端推送与项目级专属 Webhook。
+                无需第三方复杂配置，支持在 <code>deploy.yaml</code> 中项目级独立配置、全局配置兜底、团队多人广播、HMAC-SHA256 签名防伪与智能自动去重。
               </p>
               <a
-                href="https://github.com/AaronConlon/upy/blob/main/README.zh-CN.md#多接收人-bark-实时通知"
+                href="https://github.com/AaronConlon/upy/blob/main/README.zh-CN.md#通知服务-bark-移动端推送--项目专属-webhook"
                 class="text-link"
-                >查阅 Bark 通知文档 ↗</a
+                >查阅通知配置文档 ↗</a
               >
             </div>
           </div>
 
           <div class="notify-showcase">
-            <div class="showcase-steps">
-              <!-- Card 1: 写法一与写法二 -->
+            <!-- Bark 介绍卡片 -->
+            <div class="bark-callout">
+              <div class="bark-callout-header">
+                <div class="bark-callout-title">
+                  <span class="bark-badge">开源利器</span>
+                  <span>什么是 Bark？</span>
+                </div>
+                <a class="bark-link" href="https://bark.day.app" target="_blank" rel="noopener noreferrer">bark.day.app ↗</a>
+              </div>
+              <p class="bark-callout-desc">
+                <strong>Bark</strong> 是一款针对苹果 iOS / iPadOS 设备的轻量、开源即时通知推送服务。只需要发送简单的 HTTP 请求，即可秒级将自定义通知推送至设备。<code>upy</code> 原生内建 Bark，提供零运维、即时响应的发布与备份观测能力。
+              </p>
+            </div>
+
+            <!-- 配置卡片 2x2 网格 -->
+            <div class="showcase-cards">
+              <!-- Card 1: 统一配置结构 -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">01 / 写法一与写法二 <span>极简列表与批量指定</span></span>
-                  <span class="step-card-file">deploy.yaml</span>
+                  <span class="step-card-title">01 / 统一配置结构 <span>通用属性与多用户定义</span></span>
+                  <span class="step-card-file">deploy.yaml / ~/.upy/config.yaml</span>
                 </div>
-                <pre><code><span class="comment"># 写法一：极简字符串列表（直接填 Token 或完整 URL）</span>
+                <pre><code><span class="comment"># 统一写法：通用属性（对所有成员生效） + 用户级列表（按 - name 区分多用户）</span>
 <span class="keyword">notify</span>:
   <span class="string">bark</span>:
-    - <span class="string">"DEVICE_KEY_ALICE"</span>
-    - <span class="string">"DEVICE_KEY_BOB"</span>
-    - <span class="string">"https://api.day.app/DEVICE_KEY_CAROL"</span>
+    <span class="comment"># 1. 通用属性 (全局/项目默认继承)</span>
+    <span class="string">serverUrl</span>: <span class="string">https://api.day.app</span>     <span class="comment"># 通用服务端节点 (可填自建私有域名)</span>
+    <span class="string">group</span>: <span class="string">"payment-api"</span>               <span class="comment"># 通用推送分组</span>
+    <span class="string">sound</span>: <span class="string">"chime"</span>                     <span class="comment"># 通用提示音 (如 bell, chime, glass 等)</span>
+    <span class="string">level</span>: <span class="string">"active"</span>                    <span class="comment"># 通用时效级别 (active / timeSensitive)</span>
 
-<span class="comment"># 写法二：统一分组与铃声，指定多个 Token</span>
+    <span class="comment"># 2. 用户级属性 (按 - name 区分多用户，字段优先级高于通用字段)</span>
+    <span class="string">users</span>:
+      - <span class="string">name</span>: <span class="string">"前端负责人"</span>
+        <span class="string">token</span>: <span class="string">"DEVICE_KEY_ALICE"</span>
+        <span class="string">sound</span>: <span class="string">"glass"</span>                 <span class="comment"># 用户级覆盖通用 sound</span>
+      - <span class="string">name</span>: <span class="string">"值班运维"</span>
+        <span class="string">token</span>: <span class="string">"DEVICE_KEY_BOB"</span>
+        <span class="string">serverUrl</span>: <span class="string">https://bark.ops.internal</span> <span class="comment"># 覆盖通用 serverUrl</span>
+        <span class="string">level</span>: <span class="string">"timeSensitive"</span>
+      - <span class="string">name</span>: <span class="string">"测试工程师"</span>
+        <span class="string">token</span>: <span class="string">"DEVICE_KEY_CAROL"</span>      <span class="comment"># 未指定独立属性，完全继承通用配置</span></code></pre>
+              </div>
+
+              <!-- Card 2: 单人极简配置 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / 单人直配模式 <span>极简开箱即用</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
+                </div>
+                <pre><code><span class="comment"># 单人极简直配：直接在 bark 下声明 token 即可，完全继承通用设置</span>
 <span class="keyword">notify</span>:
   <span class="string">bark</span>:
     <span class="string">serverUrl</span>: <span class="string">https://api.day.app</span>
-    <span class="string">group</span>: <span class="string">"payment-api"</span>
-    <span class="string">sound</span>: <span class="string">"chime"</span>
-    <span class="string">tokens</span>:
-      - <span class="string">"DEVICE_KEY_ALICE"</span>
-      - <span class="string">"DEVICE_KEY_BOB"</span></code></pre>
+    <span class="string">group</span>: <span class="string">"my-service"</span>
+    <span class="string">sound</span>: <span class="string">"bell"</span>
+    <span class="string">token</span>: <span class="string">"DEVICE_KEY_SINGLE_USER"</span></code></pre>
               </div>
 
-              <!-- Card 2: 写法三 详细对象列表 -->
+              <!-- Card 3: 项目专属 Webhook -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">02 / 写法三 <span>按人定制独立属性与自建节点</span></span>
-                  <span class="step-card-file">deploy.yaml / ~/.upy/config.yaml</span>
+                  <span class="step-card-title">03 / 项目专属 Webhook <span>每个项目独立配置 · 无需全局配置</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
                 </div>
-                <pre><code><span class="comment"># 写法三：详细对象列表（按人定制独立标签、铃声或私有节点）</span>
+                <pre><code><span class="comment"># 项目级独立 Webhook（不污染全局，支持单 URL、多端点与 HMAC 签名）</span>
 <span class="keyword">notify</span>:
-  <span class="string">bark</span>:
-    - <span class="string">name</span>: <span class="string">"前端负责人"</span>
-      <span class="string">token</span>: <span class="string">"DEVICE_KEY_FRONTEND"</span>
-      <span class="string">sound</span>: <span class="string">"glass"</span>
-    - <span class="string">name</span>: <span class="string">"值班运维"</span>
-      <span class="string">serverUrl</span>: <span class="string">https://bark.mycorp.internal</span>
-      <span class="string">token</span>: <span class="string">"DEVICE_KEY_OPS"</span>
-      <span class="string">sound</span>: <span class="string">"minuet"</span>
-      <span class="string">level</span>: <span class="string">"timeSensitive"</span></code></pre>
+  <span class="string">webhook</span>:
+    - <span class="string">url</span>: <span class="string">"https://ops.example.com/api/deploy-webhook"</span>
+      <span class="string">secret</span>: <span class="string">"SEC_KEY_FOR_HMAC_SHA256"</span>  <span class="comment"># 附带 X-Upy-Signature 防伪签名</span>
+      <span class="string">headers</span>:
+        <span class="string">X-Environment</span>: <span class="string">"production"</span>
+    - <span class="string">url</span>: <span class="string">"https://qyapi.weixin.qq.com/.../send"</span> <span class="comment"># 企微/飞书/钉钉群机器人</span></code></pre>
               </div>
 
-              <!-- Card 3: 双层范围与内核保障 -->
-              <div class="showcase-guarantees">
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>项目与全局双层配置：</strong>项目专属配置（<code>deploy.yaml</code>）与机器全局兜底（<code>~/.upy/config.yaml</code>）协同运作。</div>
+              <!-- Card 4: 自动生成 Title 与 Body -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">04 / 推送内容规范 <span>全方位上下文自动组装</span></span>
+                  <span class="step-card-file">Title &amp; Body 结构</span>
                 </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>智能合并与自动去重：</strong>两处配置重叠的同一个 Token 自动去重仅推送一次，杜绝多条重复报警打扰。</div>
-                </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>项目独立静音开关：</strong>在项目的 <code>deploy.yaml</code> 中声明 <code>notify: { enabled: false }</code> 即可完全静音该项目。</div>
-                </div>
+                <pre><code><span class="comment"># Title 与 Body 无需手动拼写，upy 自动从运行时状态组装：</span>
+<span class="string">Title:</span> upy 部署成功 · my-api-service
+<span class="string">Body:</span>
+  项目: my-api-service
+  版本: v1.2.0
+  类型: Systemd 系统服务
+  目录: /opt/my-api-service
+  耗时: 3.2s
+  <span class="comment"># 若部署或备份异常，Body 自动附带「原因: &lt;详细报错&gt;」</span></code></pre>
               </div>
             </div>
 
-            <!-- Right Column: Bark 介绍卡片与终端日志 -->
-            <div class="showcase-terminal-col">
-              <!-- Bark 介绍卡片 -->
-              <div class="bark-callout">
-                <div class="bark-callout-header">
-                  <div class="bark-callout-title">
-                    <span class="bark-badge">开源利器</span>
-                    <span>什么是 Bark？</span>
-                  </div>
-                  <a class="bark-link" href="https://bark.day.app" target="_blank" rel="noopener noreferrer">bark.day.app ↗</a>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <p class="bark-callout-desc">
-                  <strong>Bark</strong> 是一款针对苹果 iOS / iPadOS 设备的轻量、开源即时通知推送服务。只需要发送简单的 HTTP 请求，即可秒级将自定义通知推送至设备。<code>upy</code> 原生内建 Bark，提供零运维、即时响应的发布与备份观测能力。
-                </p>
+                <span class="terminal-title">终端执行 — 移动端推送</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-notify-code-zh">复制推送日志</button>
               </div>
-
-              <!-- 终端日志窗口 -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots" aria-hidden="true">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">终端执行 — 移动端推送</span>
-                  <button type="button" class="btn-terminal-copy" data-copy="term-notify-code-zh">复制推送日志</button>
-                </div>
-                <pre id="term-notify-code-zh" class="sr-only">upy release latest</pre>
-                <div class="terminal-body">
-                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+              <pre id="term-notify-code-zh" class="sr-only">upy release latest</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-step">-&gt; 正在发布项目 my-api-service v1.2.0...</span>
 <span class="t-ok">✓ 系统服务配置校验通过</span>
 <span class="t-ok">✓ 已更新 systemd unit 并指向 releases/1.2.0</span>
@@ -854,31 +984,77 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
 <span class="t-ok">✓ 健康检查通过 (HTTP 200 OK)</span>
 <span class="t-highlight">✓ current -&gt; releases/1.2.0</span>
 <span class="t-time">⏱ 总耗时: 3.2s</span>
-<span class="t-info">🔔 已向 3 个 Bark 接收人推送通知:</span>
+<span class="t-info">🔔 已向 3 个 Bark 接收人与 1 个项目 Webhook 推送通知:</span>
   <span class="t-ok">✓</span> Alice (https://api.day.app) [HTTP 200]
   <span class="t-ok">✓</span> Bob (https://api.day.app) [HTTP 200]
-  <span class="t-ok">✓</span> 运维负责人 (https://bark.mycorp.internal) [HTTP 200]</pre>
+  <span class="t-ok">✓</span> 运维负责人 (https://bark.mycorp.internal) [HTTP 200]
+  <span class="t-ok">✓</span> Webhook: https://ops.example.com/api/deploy-webhook [HTTP 200]</pre>
+              </div>
+            </div>
+
+            <!-- 移动端推送实收预览 (Title & Body 示例) -->
+            <div class="bark-push-preview">
+              <!-- 推送卡片 1: 部署成功 -->
+              <div class="push-card">
+                <div class="push-card-header">
+                  <div class="push-card-app">
+                    <span class="app-icon">🔔</span>
+                    <span>Bark · 刚刚</span>
+                  </div>
+                  <span class="push-card-tag push-tag-success">部署成功</span>
                 </div>
+                <div class="push-card-title">
+                  <span class="field-label">Title:</span>
+                  <span>upy 部署成功 · my-api-service</span>
+                </div>
+                <pre class="push-card-body">项目: my-api-service
+版本: v1.2.0
+类型: Systemd 系统服务
+目录: /opt/my-api-service
+耗时: 3.2s</pre>
               </div>
 
-              <!-- 快捷速查卡片 -->
-              <div class="backup-cmd-grid">
-                <div class="backup-cmd-item">
-                  <code>写法一: [KEY1, KEY2]</code>
-                  <span>极简设备 Token / URL 列表</span>
+              <!-- 推送卡片 2: 备份归档成功 -->
+              <div class="push-card">
+                <div class="push-card-header">
+                  <div class="push-card-app">
+                    <span class="app-icon">💾</span>
+                    <span>Bark · 2分钟前</span>
+                  </div>
+                  <span class="push-card-tag push-tag-success">备份归档</span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>写法二: tokens: [...]</code>
-                  <span>统一分组、铃声与批量 Token</span>
+                <div class="push-card-title">
+                  <span class="field-label">Title:</span>
+                  <span>upy 备份成功 · my-api-service</span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>写法三: [{name, token...}]</code>
-                  <span>按人定制独立属性与自建节点</span>
-                </div>
-                <div class="backup-cmd-item">
-                  <code>notify.enabled: false</code>
-                  <span>项目级独立静音屏蔽</span>
-                </div>
+                <pre class="push-card-body">项目: my-api-service
+归档: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+目录: /opt/my-api-service
+耗时: 2.4s</pre>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>项目专属 Webhook 隔离：</strong>Webhook 仅在项目的 <code>deploy.yaml</code> 中生效，独立配置不污染全局；支持 HMAC-SHA256 防伪签名 (<code>X-Upy-Signature</code>) 与投递跟踪标识。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>用户级字段优先覆盖：</strong>按 <code>- name</code> 分多个用户，用户专属配置（如独立 sound 或私有 serverUrl）优先级高于外层通用字段，未指定字段自动回退继承通用配置。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>项目与全局双层配置：</strong>项目专属配置（<code>deploy.yaml</code>）与机器全局兜底（<code>~/.upy/config.yaml</code>）协同运作，智能合并通知渠道。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>智能跨量级耗时换算：</strong>严格遵守层级单位换算——小于 60s 展示秒数（<code>3.2s</code>），超过 60s 换算为分钟（<code>1m15s</code>），超过 60m 自动以小时开头（<code>1h2m</code>），告别机械全秒输出。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>智能去重与独立静音：</strong>重叠 Token 自动去重仅推送一次；声明 <code>notify: { enabled: false }</code> 可随时独立静音该项目。</div>
               </div>
             </div>
           </div>

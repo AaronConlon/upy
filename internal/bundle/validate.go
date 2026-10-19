@@ -1,4 +1,4 @@
-// 从解压后的 bundle 目录读取 deploy.yaml 并校验为 Manifest
+// 从解压后的 bundle 目录读取 upy.yaml 并校验为 Manifest (兼容 deploy.yaml)
 package bundle
 
 import (
@@ -9,12 +9,14 @@ import (
 	"github.com/AaronConlon/upy/internal/config"
 )
 
-// ReadManifest 读取解压目录根部的 deploy.yaml 并解析校验
+// ReadManifest 读取解压目录根部的清单文件并解析校验 (优先 upy.yaml, 兼容 deploy.yaml)
 func ReadManifest(extractedDir string) (*config.Manifest, error) {
-	path := filepath.Join(extractedDir, "deploy.yaml")
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("bundle 根目录缺少 deploy.yaml 清单文件")
+	for _, name := range []string{"upy.yaml", "manifest.yaml", "bundle.yaml", "deploy.yaml"} {
+		path := filepath.Join(extractedDir, name)
+		data, err := os.ReadFile(path)
+		if err == nil {
+			return config.ParseManifest(data)
+		}
 	}
-	return config.ParseManifest(data)
+	return nil, fmt.Errorf("bundle 根目录缺少 upy.yaml 清单文件")
 }

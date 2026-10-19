@@ -15,6 +15,7 @@ import (
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/platform"
 	"github.com/AaronConlon/upy/internal/semver"
+	"github.com/AaronConlon/upy/internal/ui"
 	"github.com/AaronConlon/upy/internal/version"
 )
 
@@ -34,8 +35,7 @@ func UpdateCmd(target string, force bool) error {
 		if !force && !semver.Newer(release.Tag, version.Value) {
 			log.Info(fmt.Sprintf("当前已是最新版本 (%s)。可使用 --force 重新安装。", version.String()))
 			reportCompletionInstall()
-			elapsed := time.Since(startedAt).Seconds()
-			log.Info("⏱ 耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
+			log.Info("⏱ 耗时: " + log.Green(log.Bold(ui.FormatDuration(time.Since(startedAt)))))
 			return nil
 		}
 		log.Info(fmt.Sprintf("发现新版本: %s (当前版本: %s)", release.Tag, version.String()))
@@ -58,8 +58,7 @@ func UpdateCmd(target string, force bool) error {
 		if !force && release.Tag == version.Value {
 			log.Info(fmt.Sprintf("当前已是目标版本 (%s)。可使用 --force 重新安装。", version.String()))
 			reportCompletionInstall()
-			elapsed := time.Since(startedAt).Seconds()
-			log.Info("⏱ 耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
+			log.Info("⏱ 耗时: " + log.Green(log.Bold(ui.FormatDuration(time.Since(startedAt)))))
 			return nil
 		}
 		log.Info(fmt.Sprintf("准备切换到版本: %s (当前版本: %s)", release.Tag, version.String()))
@@ -137,8 +136,7 @@ func UpdateCmd(target string, force bool) error {
 	if err := completion.Run(); err != nil {
 		log.Warn("Tab 命令补全同步失败: " + err.Error())
 	}
-	elapsed := time.Since(startedAt).Seconds()
-	log.Info("⏱ 耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
+	log.Info("⏱ 耗时: " + log.Green(log.Bold(ui.FormatDuration(time.Since(startedAt)))))
 	log.Info("请重新运行 upy 以使用新版本。")
 	return nil
 }

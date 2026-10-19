@@ -153,7 +153,9 @@
           ><b aria-hidden="true">/</b
           ><span><i aria-hidden="true">03</i> Convention Backup</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">04</i> Bark Multi-Alerts</span>
+          ><span><i aria-hidden="true">04</i> Project Analysis</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">05</i> Bark / Webhook</span>
         </div>
       </div>
       <section
@@ -288,36 +290,35 @@ upy bundle ./bundle.zip</code></pre>
 
           <!-- Panel 1: SPA Static Sites -->
           <div class="showcase-panel is-active" id="panel-spa" role="tabpanel" aria-labelledby="tab-spa">
-            <div class="showcase-grid">
-              <div class="showcase-steps">
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>01</span> CI/CD Packaging</div>
-                    <div class="step-card-file">.github/workflows/deploy.yml</div>
-                  </div>
-                  <pre><code><span class="comment"># 1. Build frontend artifacts</span>
+            <div class="showcase-cards">
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>01</span> CI/CD Packaging</div>
+                  <div class="step-card-file">.github/workflows/deploy.yml</div>
+                </div>
+                <pre><code><span class="comment"># 1. Build frontend artifacts</span>
 - name: Build frontend
   run: npm ci && npm run build
 
 <span class="comment"># 2. Inject manifest & package bundle.zip</span>
 - name: Package bundle
   run: |
-    cat &lt;&lt; 'EOF' &gt; dist/deploy.yaml
+    cat &lt;&lt; 'EOF' &gt; dist/upy.yaml
     name: my-spa-app
     version: ${{ github.ref_name }}
     type: static
     static:
       directory: dist
     EOF
-    cd dist &amp;&amp; zip -r ../bundle.zip . deploy.yaml</code></pre>
-                </div>
+    cd dist &amp;&amp; zip -r ../bundle.zip . upy.yaml</code></pre>
+              </div>
 
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>02</span> Server Configuration &amp; Layout</div>
-                    <div class="step-card-file">/var/www/my-spa-app/deploy.yaml</div>
-                  </div>
-                  <pre><code><span class="comment"># Server project declaration</span>
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>02</span> Server Configuration &amp; Layout</div>
+                  <div class="step-card-file">/var/www/my-spa-app/deploy.yaml</div>
+                </div>
+                <pre><code><span class="comment"># Server project declaration</span>
 name: my-spa-app
 release:
   provider: github
@@ -325,37 +326,22 @@ release:
   asset: bundle.zip
 
 <span class="comment"># Nginx config: root /var/www/my-spa-app/current;</span></code></pre>
-                </div>
-
-                <div class="showcase-guarantees">
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Zero 403 Forbidden Errors</strong>: Recursively resets directory permissions to <code>0755</code> and file permissions to <code>0644</code>.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Atomic Symlink Swap</strong>: Points <code>current -&gt; releases/1.0.0/dist</code> in microseconds using POSIX atomic rename.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Dual-Version Rollback</strong>: Keeps active and previous release intact; rollback immediately swaps symlink back.</div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">host: /var/www/my-spa-app</span>
-                  <button type="button" class="terminal-copy" data-copy="term-spa-code">Copy Log</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="terminal-body">
-                  <pre id="term-spa-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+                <span class="terminal-title">host: /var/www/my-spa-app</span>
+                <button type="button" class="terminal-copy" data-copy="term-spa-code">Copy Log</button>
+              </div>
+              <div class="terminal-body">
+                <pre id="term-spa-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   <span class="t-info">📦 Project:</span> my-spa-app
   <span class="t-info">📁 Root:</span>    /var/www/my-spa-app
@@ -376,21 +362,35 @@ release:
   <span class="t-highlight">✓ current -&gt; releases/1.0.0/dist</span>
   <span class="t-ok">✓ Deployment complete: my-spa-app 1.0.0</span>
   <span class="t-time">⏱ Elapsed: 0.8s</span></pre>
-                </div>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Zero 403 Forbidden Errors</strong>: Recursively resets directory permissions to <code>0755</code> and file permissions to <code>0644</code>.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Atomic Symlink Swap</strong>: Points <code>current -&gt; releases/1.0.0/dist</code> in microseconds using POSIX atomic rename.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Dual-Version Rollback</strong>: Keeps active and previous release intact; rollback immediately swaps symlink back.</div>
               </div>
             </div>
           </div>
 
           <!-- Panel 2: Native Systemd Services -->
           <div class="showcase-panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
-            <div class="showcase-grid">
-              <div class="showcase-steps">
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>01</span> CI/CD Packaging (from upy-test)</div>
-                    <div class="step-card-file">.github/workflows/system.yml</div>
-                  </div>
-                  <pre><code><span class="comment"># 1. Compile static Linux binary</span>
+            <div class="showcase-cards">
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>01</span> CI/CD Packaging (from upy-test)</div>
+                  <div class="step-card-file">.github/workflows/system.yml</div>
+                </div>
+                <pre><code><span class="comment"># 1. Compile static Linux binary</span>
 - name: Build Go binary
   env:
     CGO_ENABLED: '0'
@@ -401,7 +401,7 @@ release:
 <span class="comment"># 2. Package manifest + executable</span>
 - name: Package bundle
   run: |
-    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    cat &lt;&lt; 'EOF' &gt; upy.yaml
     name: my-api
     version: ${{ github.ref_name }}
     type: system
@@ -412,15 +412,15 @@ release:
       url: http://127.0.0.1:8080/health
       timeout: 15s
     EOF
-    zip -r bundle-linux-amd64.zip deploy.yaml bin/web</code></pre>
-                </div>
+    zip -r bundle-linux-amd64.zip upy.yaml bin/web</code></pre>
+              </div>
 
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>02</span> Server Configuration &amp; Isolation</div>
-                    <div class="step-card-file">/opt/my-api/deploy.yaml</div>
-                  </div>
-                  <pre><code>name: my-api
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>02</span> Server Configuration &amp; Isolation</div>
+                  <div class="step-card-file">/opt/my-api/deploy.yaml</div>
+                </div>
+                <pre><code>name: my-api
 release:
   provider: github
   repository: owner/my-api
@@ -432,41 +432,22 @@ service:
 
 <span class="comment"># Shared data in /opt/my-api/shared/data/</span>
 <span class="comment"># Environment in /opt/my-api/shared/service.env</span></code></pre>
-                </div>
-
-                <div class="showcase-guarantees">
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Zero Privilege Creep</strong>: Explicitly verifies <code>service.user</code> exists; refuses silent root fallback.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Port &amp; PID Spoofing Defense</strong>: Cross-checks <code>/proc/&lt;pid&gt;/fd</code> against TCP sockets to verify listener PID.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Bounded Rollback</strong>: On failure, restores unit &amp; binary, restarts previous process, and verifies real HTTP health.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Live Unit Protection</strong>: <code>clean</code> dynamically parses systemd unit references to prevent deleting active binaries.</div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">host: /opt/my-api (systemd)</span>
-                  <button type="button" class="terminal-copy" data-copy="term-system-code">Copy Log</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="terminal-body">
-                  <pre id="term-system-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+                <span class="terminal-title">host: /opt/my-api (systemd)</span>
+                <button type="button" class="terminal-copy" data-copy="term-system-code">Copy Log</button>
+              </div>
+              <div class="terminal-body">
+                <pre id="term-system-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   <span class="t-info">📦 Project:</span> my-api
   <span class="t-info">📁 Root:</span>    /opt/my-api
@@ -491,24 +472,42 @@ service:
   <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
   <span class="t-ok">✓ Deployment complete: my-api 1.1.0</span>
   <span class="t-time">⏱ Elapsed: 3.2s</span></pre>
-                </div>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Zero Privilege Creep</strong>: Explicitly verifies <code>service.user</code> exists; refuses silent root fallback.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Port &amp; PID Spoofing Defense</strong>: Cross-checks <code>/proc/&lt;pid&gt;/fd</code> against TCP sockets to verify listener PID.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Bounded Rollback</strong>: On failure, restores unit &amp; binary, restarts previous process, and verifies real HTTP health.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Live Unit Protection</strong>: <code>clean</code> dynamically parses systemd unit references to prevent deleting active binaries.</div>
               </div>
             </div>
           </div>
 
           <!-- Panel 3: Docker / Compose Containers -->
           <div class="showcase-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
-            <div class="showcase-grid">
-              <div class="showcase-steps">
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>01</span> CI/CD Packaging</div>
-                    <div class="step-card-file">.github/workflows/deploy.yml</div>
-                  </div>
-                  <pre><code><span class="comment"># Package Compose file and app bundle</span>
+            <div class="showcase-cards">
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>01</span> CI/CD Packaging</div>
+                  <div class="step-card-file">.github/workflows/deploy.yml</div>
+                </div>
+                <pre><code><span class="comment"># Package Compose file and app bundle</span>
 - name: Package Compose bundle
   run: |
-    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    cat &lt;&lt; 'EOF' &gt; upy.yaml
     name: my-compose-stack
     version: ${{ github.ref_name }}
     type: docker
@@ -519,15 +518,15 @@ service:
       url: http://127.0.0.1:8080/health
       timeout: 30s
     EOF
-    zip -r bundle.zip deploy.yaml docker-compose.yml Dockerfile src/</code></pre>
-                </div>
+    zip -r bundle.zip upy.yaml docker-compose.yml Dockerfile src/</code></pre>
+              </div>
 
-                <div class="showcase-step-card">
-                  <div class="step-card-header">
-                    <div class="step-card-title"><span>02</span> Server Configuration &amp; Secrets</div>
-                    <div class="step-card-file">/opt/my-compose-stack/deploy.yaml</div>
-                  </div>
-                  <pre><code>name: my-compose-stack
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <div class="step-card-title"><span>02</span> Server Configuration &amp; Secrets</div>
+                  <div class="step-card-file">/opt/my-compose-stack/deploy.yaml</div>
+                </div>
+                <pre><code>name: my-compose-stack
 release:
   provider: github
   repository: owner/my-compose-stack
@@ -535,37 +534,22 @@ release:
 
 <span class="comment"># Server persistent secrets in shared/.env</span>
 <span class="comment"># Database volumes mapped to shared/data/</span></code></pre>
-                </div>
-
-                <div class="showcase-guarantees">
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Zero Port Collisions</strong>: Pre-builds new images before stopping old containers; frees ports cleanly with <code>down --remove-orphans</code>.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Hierarchical Env Merging</strong>: Bundle defaults are cleanly overridden by host <code>shared/.env</code> credentials.</div>
-                  </div>
-                  <div class="guarantee-item">
-                    <span class="guarantee-icon">✓</span>
-                    <div><strong>Automated Container Rollback</strong>: On probe failure or container crash, tears down broken stack and restarts previous working version.</div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">host: /opt/my-compose-stack (docker)</span>
-                  <button type="button" class="terminal-copy" data-copy="term-docker-code">Copy Log</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="terminal-body">
-                  <pre id="term-docker-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+                <span class="terminal-title">host: /opt/my-compose-stack (docker)</span>
+                <button type="button" class="terminal-copy" data-copy="term-docker-code">Copy Log</button>
+              </div>
+              <div class="terminal-body">
+                <pre id="term-docker-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   <span class="t-info">📦 Project:</span> my-compose-stack
   <span class="t-info">📁 Root:</span>    /opt/my-compose-stack
@@ -590,7 +574,22 @@ release:
   <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
   <span class="t-ok">✓ Deployment complete: my-compose-stack 1.1.0</span>
   <span class="t-time">⏱ Elapsed: 12.3s</span></pre>
-                </div>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Zero Port Collisions</strong>: Pre-builds new images before stopping old containers; frees ports cleanly with <code>down --remove-orphans</code>.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Hierarchical Env Merging</strong>: Bundle defaults are cleanly overridden by host <code>shared/.env</code> credentials.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Automated Container Rollback</strong>: On probe failure or container crash, tears down broken stack and restarts previous working version.</div>
               </div>
             </div>
           </div>
@@ -640,7 +639,7 @@ upy clean --keep 3</code></pre>
           </div>
 
           <div class="backup-showcase">
-            <div class="showcase-steps">
+            <div class="showcase-cards">
               <!-- Card 1: Convention Script -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
@@ -669,39 +668,22 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
   <span class="string">retention</span>: 7                 <span class="comment"># Keep latest 7 archives, auto-prune older</span>
   <span class="string">timeout</span>: <span class="string">15m</span>                 <span class="comment"># Safety timeout (supports 30s, 5m, 1h)</span></code></pre>
               </div>
-
-              <!-- Card 3: Guarantees -->
-              <div class="showcase-guarantees">
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Cross-Process Mutual Exclusion:</strong> Acquires exclusive <code>.deploy.lock</code> (<code>action: 备份中</code>), strictly preventing dirty snapshots from concurrent releases or cleanups.</div>
-                </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Automatic Retention Rotation:</strong> Automatically scans archive modification times and cleans snapshots past the threshold, keeping server disk usage bounded.</div>
-                </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Observability &amp; Mobile Alerts:</strong> Pushes instant alerts with elapsed execution times, archive file sizes, and failure reasons to Bark mobile channels.</div>
-                </div>
-              </div>
             </div>
 
-            <!-- Right Column: Terminal Window & Command Grid -->
-            <div class="showcase-terminal-col">
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots" aria-hidden="true">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">Terminal — upy backup</span>
-                  <button type="button" class="btn-terminal-copy" data-copy="term-backup-code">Copy Command</button>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <pre id="term-backup-code" class="sr-only">upy backup</pre>
-                <div class="terminal-body">
-                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy backup</span>
+                <span class="terminal-title">Terminal — upy backup</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-backup-code">Copy Command</button>
+              </div>
+              <pre id="term-backup-code" class="sr-only">upy backup</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy backup</span>
 <span class="t-step">-&gt; Preparing convention backup for project <span class="t-highlight">my-api-service</span>...</span>
 <span class="t-ok">✓ Discovered convention script: backup.sh (chmod 0755)</span>
 <span class="t-ok">✓ Acquired project exclusive lock (.deploy.lock)</span>
@@ -715,39 +697,171 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
   <span class="t-highlight">🛡️  Rotation:</span> Kept latest 7 archives (cleaned 1 older file)
   <span class="t-time">⏱  Elapsed:</span>   2.4s
   <span class="t-info">🔔 Pushed notification to Bark channel</span></pre>
+              </div>
+            </div>
+
+            <!-- Quick Command Reference Grid -->
+            <div class="backup-cmd-grid">
+              <div class="backup-cmd-item">
+                <code>upy backup</code>
+                <span>Interactive project backup</span>
+              </div>
+              <div class="backup-cmd-item">
+                <code>upy backup my-app --list</code>
+                <span>View archive history &amp; file sizes</span>
+              </div>
+              <div class="backup-cmd-item">
+                <code>upy backup my-app --prune 5</code>
+                <span>Retain latest 5 archives &amp; clean older</span>
+              </div>
+              <div class="backup-cmd-item">
+                <code>upy backup --all -y</code>
+                <span>Batch backup all registered projects</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Cross-Process Mutual Exclusion:</strong> Acquires exclusive <code>.deploy.lock</code> (<code>action: 备份中</code>), strictly preventing dirty snapshots from concurrent releases or cleanups.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Automatic Retention Rotation:</strong> Automatically scans archive modification times and cleans snapshots past the threshold, keeping server disk usage bounded.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Observability &amp; Mobile Alerts:</strong> Pushes instant alerts with elapsed execution times, archive file sizes, and failure reasons to Bark mobile channels.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="step step-wide" data-step>
+          <div class="step-copy">
+            <span class="step-number">04 / Analysis</span>
+            <h3>Host project catalog with 100% benchmark bars.</h3>
+            <div class="step-copy-desc">
+              <p>
+                Dynamic host-wide project cataloging with proportional horizontal benchmark bars using the largest project as the 100% baseline.
+                Spotlights recent releases at the top with version, stack type, relative duration, and service health. Strictly avoids symlink double-counting, with <code>--detail</code> breakdowns and <code>--json</code> export.
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#host-wide-project--disk-analysis-upy-analysis"
+                class="text-link"
+                >View analysis docs ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="analysis-showcase">
+            <div class="showcase-cards">
+              <!-- Card 1: 100% Benchmark Bar -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / 100% Benchmark Bars <span>Spot Storage Hogs</span></span>
+                  <span class="step-card-file">Max Benchmark Bar</span>
                 </div>
+                <pre><code><span class="comment"># Largest project serves as 100% baseline reference</span>
+1  my-compose-app  docker  1.45 GB  [<span class="keyword">████████████████████</span>] 100.0%
+2  my-api-service  system  482 MB   [<span class="keyword">███████</span>░░░░░░░░░░░░░]  32.5%
+3  portal-frontend static   86 MB   [<span class="keyword">█</span>░░░░░░░░░░░░░░░░░░░]   5.8%</code></pre>
               </div>
 
-              <!-- Quick Command Reference Grid -->
-              <div class="backup-cmd-grid">
-                <div class="backup-cmd-item">
-                  <code>upy backup</code>
-                  <span>Interactive project backup</span>
+              <!-- Card 2: Latest Deployment Spotlight -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / Latest Release Spotlight <span>Real-Time Pulse</span></span>
+                  <span class="step-card-file">Spotlight Focus</span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>upy backup my-app --list</code>
-                  <span>View archive history &amp; file sizes</span>
+                <pre><code><span class="comment"># Top card spotlighting the most recent release</span>
+📦 Project: my-api-service (v1.2.0)
+🧩 Stack:   Systemd Native Service (system) · upy-my-api-service.service
+⏱  Time:    22 minutes ago (2026-10-19 19:40:02)
+🟢 Status:  Active &amp; Running (active)</code></pre>
+              </div>
+            </div>
+
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>upy backup my-app --prune 5</code>
-                  <span>Retain latest 5 archives &amp; clean older</span>
-                </div>
-                <div class="backup-cmd-item">
-                  <code>upy backup --all -y</code>
-                  <span>Batch backup all registered projects</span>
-                </div>
+                <span class="terminal-title">Terminal — upy analysis</span>
+              </div>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy analysis</span>
+<span class="t-bold">upy analysis — Host Project &amp; Disk Analysis</span>
+
+<span class="t-highlight">━ Recent Deployment Activity ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-ok">📦 Project:</span> my-api-service (<span class="t-highlight">v1.2.0</span>)
+  <span class="t-dim">🧩 Stack:</span>   Systemd Native Service (system) · upy-my-api-service.service
+  <span class="t-time">⏱  Time:</span>    <span class="t-bold">22 minutes ago</span> (2026-10-19 19:40:02)
+  <span class="t-ok">🟢 Status:  Active &amp; Running (active)</span>
+
+<span class="t-highlight">━ Project Analysis (Status · Space Benchmark · Stack · Version) ━━━━━━━━━</span>
+<span class="t-dim">#   Project             Status         Stack    Version     Disk Space  Benchmark (Max)</span>
+1   <span class="t-bold">my-compose-app</span>      <span class="t-ok">🟢 active</span>      docker   <span class="t-highlight">v2.1.0</span>      1.45 GB     [<span class="t-highlight">████████████████████</span>] 100.0%
+2   <span class="t-bold">my-api-service</span>      <span class="t-ok">🟢 active</span>      system   <span class="t-highlight">v1.2.0</span>      482.3 MB    [<span class="t-ok">███████░░░░░░░░░░░░░</span>]  32.5%
+3   <span class="t-bold">portal-frontend</span>     <span class="t-ok">🟢 active</span>      static   <span class="t-highlight">v0.9.4</span>       86.1 MB    [<span class="t-dim">█░░░░░░░░░░░░░░░░░░░</span>]   5.8%
+4   <span class="t-bold">demo-spa</span>            <span class="t-dim">⚪ undeployed</span>  static   -            14.2 MB    [<span class="t-dim">▏░░░░░░░░░░░░░░░░░░░</span>]   0.9%
+
+<span class="t-highlight">━ Storage Summary ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  📊 Projects:    4 registered
+  💾 Total Space: <span class="t-bold">2.03 GB</span> (Average 519.6 MB per project)
+  👑 Top Hog:     <span class="t-bold">my-compose-app</span> (<span class="t-highlight">1.45 GB</span>, 71.4% of total host upy space)
+  💡 <span class="t-dim">Tip: Run upy analysis --detail to view subdirectory breakdowns</span></pre>
+              </div>
+            </div>
+
+            <!-- Quick Command Cards -->
+            <div class="analysis-cmd-grid">
+              <div class="analysis-cmd-item">
+                <code>upy analysis</code>
+                <span>Host-wide project space bars &amp; latest release</span>
+              </div>
+              <div class="analysis-cmd-item">
+                <code>upy analysis --detail</code>
+                <span>Subdirectory breakdowns (releases, bundles, backups)</span>
+              </div>
+              <div class="analysis-cmd-item">
+                <code>upy analysis &lt;name&gt;</code>
+                <span>Detailed breakdown for a specific project</span>
+              </div>
+              <div class="analysis-cmd-item">
+                <code>upy analysis --json</code>
+                <span>Structured JSON output for monitoring &amp; CI</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Symlink Double-Count Prevention:</strong> Never recurses into <code>current</code> symlinks; active releases are counted only once.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Subdirectory Breakdown (--detail):</strong> Separates active releases, historical versions, bundle cache, and backups.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Structured JSON Export (--json):</strong> Emits standard JSON for automated health checks, CI/CD audits, and monitoring.</div>
               </div>
             </div>
           </div>
         </article>
         <article class="step step-wide last" data-step>
           <div class="step-copy">
-            <span class="step-number">04 / Notify</span>
-            <h3>Multi-recipient Bark mobile push alerts.</h3>
+            <span class="step-number">05 / Notify</span>
+            <h3>Multi-recipient Bark mobile push &amp; project-specific Webhooks.</h3>
             <div class="step-copy-desc">
               <p>
-                Real-time push notifications for deployments and backups delivered directly to iOS devices via <a href="https://bark.day.app" target="_blank" rel="noopener noreferrer">Bark</a>.
-                Zero third-party bots, zero heavy webhooks. Features project-level routing in <code>deploy.yaml</code>, global fallback in <code>~/.upy/config.yaml</code>, multi-recipient broadcasting, and smart deduplication.
+                Real-time delivery alerts directly to iOS devices and team messaging bots. Powered natively by <a href="https://bark.day.app" target="_blank" rel="noopener noreferrer">Bark</a> mobile push and project-isolated Webhooks.
+                Zero third-party middleware, project-specific routing in <code>deploy.yaml</code>, global fallback in <code>~/.upy/config.yaml</code>, HMAC-SHA256 request verification, and smart deduplication.
               </p>
               <a
                 href="https://github.com/AaronConlon/upy#multi-recipient-bark-notifications"
@@ -758,97 +872,113 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
           </div>
 
           <div class="notify-showcase">
-            <div class="showcase-steps">
-              <!-- Card 1: Pattern 1 & Pattern 2 -->
+            <!-- Bark What-Is Card -->
+            <div class="bark-callout">
+              <div class="bark-callout-header">
+                <div class="bark-callout-title">
+                  <span class="bark-badge">Open Source</span>
+                  <span>What is Bark?</span>
+                </div>
+                <a class="bark-link" href="https://bark.day.app" target="_blank" rel="noopener noreferrer">bark.day.app ↗</a>
+              </div>
+              <p class="bark-callout-desc">
+                <strong>Bark</strong> is a lightweight, open-source push notification service for iOS. It allows developers to send custom push notifications to Apple devices via simple HTTP GET/POST requests. <code>upy</code> integrates Bark natively to give you instant, zero-middleware deployment and backup observability.
+              </p>
+            </div>
+
+            <!-- Configuration Cards 2x2 Grid -->
+            <div class="showcase-cards">
+              <!-- Card 1: Unified Structure -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">01 / Pattern 1 &amp; 2 <span>Minimal List &amp; Shared Tokens</span></span>
-                  <span class="step-card-file">deploy.yaml</span>
+                  <span class="step-card-title">01 / Unified Structure <span>Common Defaults &amp; Multi-User Scope</span></span>
+                  <span class="step-card-file">deploy.yaml / ~/.upy/config.yaml</span>
                 </div>
-                <pre><code><span class="comment"># Pattern 1: Minimal string list (tokens or URLs)</span>
+                <pre><code><span class="comment"># Unified format: Common properties + user list with precedence</span>
 <span class="keyword">notify</span>:
   <span class="string">bark</span>:
-    - <span class="string">"DEVICE_KEY_ALICE"</span>
-    - <span class="string">"DEVICE_KEY_BOB"</span>
-    - <span class="string">"https://api.day.app/DEVICE_KEY_CAROL"</span>
+    <span class="comment"># 1. Common attributes (inherited by all recipients)</span>
+    <span class="string">serverUrl</span>: <span class="string">https://api.day.app</span>     <span class="comment"># Default official API or private domain</span>
+    <span class="string">group</span>: <span class="string">"payment-api"</span>               <span class="comment"># Push group header</span>
+    <span class="string">sound</span>: <span class="string">"chime"</span>                     <span class="comment"># Default ringtone (bell, chime, glass, etc.)</span>
+    <span class="string">level</span>: <span class="string">"active"</span>                    <span class="comment"># Default priority level</span>
 
-<span class="comment"># Pattern 2: Shared group &amp; sound with batch tokens</span>
+    <span class="comment"># 2. Per-user attributes (precedence over common attributes)</span>
+    <span class="string">users</span>:
+      - <span class="string">name</span>: <span class="string">"Frontend Lead"</span>
+        <span class="string">token</span>: <span class="string">"DEVICE_KEY_ALICE"</span>
+        <span class="string">sound</span>: <span class="string">"glass"</span>                 <span class="comment"># Overrides common sound</span>
+      - <span class="string">name</span>: <span class="string">"DevOps On-Call"</span>
+        <span class="string">token</span>: <span class="string">"DEVICE_KEY_BOB"</span>
+        <span class="string">serverUrl</span>: <span class="string">https://bark.ops.internal</span> <span class="comment"># Overrides common serverUrl</span>
+        <span class="string">level</span>: <span class="string">"timeSensitive"</span>
+      - <span class="string">name</span>: <span class="string">"QA Tester"</span>
+        <span class="string">token</span>: <span class="string">"DEVICE_KEY_CAROL"</span>      <span class="comment"># Fully inherits common attributes</span></code></pre>
+              </div>
+
+              <!-- Card 2: Single-User Direct Mode -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / Single-User Direct Mode <span>Zero Boilerplate</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
+                </div>
+                <pre><code><span class="comment"># Minimal single-user mode: Declare token directly under bark</span>
 <span class="keyword">notify</span>:
   <span class="string">bark</span>:
     <span class="string">serverUrl</span>: <span class="string">https://api.day.app</span>
-    <span class="string">group</span>: <span class="string">"payment-api"</span>
-    <span class="string">sound</span>: <span class="string">"chime"</span>
-    <span class="string">tokens</span>:
-      - <span class="string">"DEVICE_KEY_ALICE"</span>
-      - <span class="string">"DEVICE_KEY_BOB"</span></code></pre>
+    <span class="string">group</span>: <span class="string">"my-service"</span>
+    <span class="string">sound</span>: <span class="string">"bell"</span>
+    <span class="string">token</span>: <span class="string">"DEVICE_KEY_SINGLE_USER"</span></code></pre>
               </div>
 
-              <!-- Card 2: Pattern 3 Detailed Channel Objects -->
+              <!-- Card 3: Project-Specific Webhook -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">02 / Pattern 3 <span>Detailed Per-Recipient Customization</span></span>
-                  <span class="step-card-file">deploy.yaml / ~/.upy/config.yaml</span>
+                  <span class="step-card-title">03 / Project-Specific Webhook <span>Zero Global Pollution · HMAC Verified</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
                 </div>
-                <pre><code><span class="comment"># Pattern 3: Custom labels, ringtones &amp; private nodes</span>
+                <pre><code><span class="comment"># Project-scoped webhook (single endpoint, multiple URLs, or HMAC signature)</span>
 <span class="keyword">notify</span>:
-  <span class="string">bark</span>:
-    - <span class="string">name</span>: <span class="string">"Frontend Lead"</span>
-      <span class="string">token</span>: <span class="string">"DEVICE_KEY_FRONTEND"</span>
-      <span class="string">sound</span>: <span class="string">"glass"</span>
-    - <span class="string">name</span>: <span class="string">"DevOps On-Call"</span>
-      <span class="string">serverUrl</span>: <span class="string">https://bark.mycorp.internal</span>
-      <span class="string">token</span>: <span class="string">"DEVICE_KEY_OPS"</span>
-      <span class="string">sound</span>: <span class="string">"minuet"</span>
-      <span class="string">level</span>: <span class="string">"timeSensitive"</span></code></pre>
+  <span class="string">webhook</span>:
+    - <span class="string">url</span>: <span class="string">"https://ops.example.com/api/deploy-webhook"</span>
+      <span class="string">secret</span>: <span class="string">"SEC_KEY_FOR_HMAC_SHA256"</span>  <span class="comment"># Injects X-Upy-Signature (HMAC-SHA256)</span>
+      <span class="string">headers</span>:
+        <span class="string">X-Environment</span>: <span class="string">"production"</span>
+    - <span class="string">url</span>: <span class="string">"https://qyapi.weixin.qq.com/.../send"</span> <span class="comment"># Slack, Lark, DingTalk bots</span></code></pre>
               </div>
 
-              <!-- Card 3: Dual Scopes & Guarantees -->
-              <div class="showcase-guarantees">
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Dual Configuration Scopes:</strong> Project-specific routing in <code>deploy.yaml</code> and host-wide on-call fallback in <code>~/.upy/config.yaml</code>.</div>
+              <!-- Card 4: Auto-Generated Title & Body -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">04 / Payload Standards <span>Rich Context Generated Automatically</span></span>
+                  <span class="step-card-file">Title &amp; Body Structure</span>
                 </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Smart Merge &amp; Deduplication:</strong> Overlapping recipients between project and global configs are merged and dispatched once.</div>
-                </div>
-                <div class="guarantee-item">
-                  <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Independent Project Muting:</strong> Set <code>notify: { enabled: false }</code> in <code>deploy.yaml</code> to silence alerts for a specific project.</div>
-                </div>
+                <pre><code><span class="comment"># Title and Body are assembled automatically from deployment state:</span>
+<span class="string">Title:</span> upy 部署成功 · my-api-service
+<span class="string">Body:</span>
+  项目: my-api-service
+  版本: v1.2.0
+  类型: Systemd 系统服务
+  目录: /opt/my-api-service
+  耗时: 3.2s
+  <span class="comment"># Failure alerts automatically append "原因: &lt;diagnostic error&gt;"</span></code></pre>
               </div>
             </div>
 
-            <!-- Right Column: Bark Introduction Card & Terminal Log -->
-            <div class="showcase-terminal-col">
-              <!-- Bark What-Is Card -->
-              <div class="bark-callout">
-                <div class="bark-callout-header">
-                  <div class="bark-callout-title">
-                    <span class="bark-badge">Open Source</span>
-                    <span>What is Bark?</span>
-                  </div>
-                  <a class="bark-link" href="https://bark.day.app" target="_blank" rel="noopener noreferrer">bark.day.app ↗</a>
+            <!-- Terminal Window (独占一行) -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
                 </div>
-                <p class="bark-callout-desc">
-                  <strong>Bark</strong> is a lightweight, open-source push notification service for iOS. It allows developers to send custom push notifications to Apple devices via simple HTTP GET/POST requests. <code>upy</code> integrates Bark natively to give you instant, zero-middleware deployment and backup observability.
-                </p>
+                <span class="terminal-title">Terminal — Mobile Push</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-notify-code">Copy Log</button>
               </div>
-
-              <!-- Terminal Window -->
-              <div class="terminal-window">
-                <div class="terminal-bar">
-                  <div class="terminal-dots" aria-hidden="true">
-                    <span class="dot-red"></span>
-                    <span class="dot-yellow"></span>
-                    <span class="dot-green"></span>
-                  </div>
-                  <span class="terminal-title">Terminal — Mobile Push</span>
-                  <button type="button" class="btn-terminal-copy" data-copy="term-notify-code">Copy Log</button>
-                </div>
-                <pre id="term-notify-code" class="sr-only">upy release latest</pre>
-                <div class="terminal-body">
-                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+              <pre id="term-notify-code" class="sr-only">upy release latest</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
 <span class="t-step">-&gt; Deploying my-api-service v1.2.0...</span>
 <span class="t-ok">✓ Unit configuration validated</span>
 <span class="t-ok">✓ Switched unit to releases/1.2.0</span>
@@ -856,31 +986,77 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
 <span class="t-ok">✓ Healthcheck passed (HTTP 200 OK)</span>
 <span class="t-highlight">✓ current -&gt; releases/1.2.0</span>
 <span class="t-time">⏱ Elapsed: 3.2s</span>
-<span class="t-info">🔔 Dispatched 3 push notifications:</span>
+<span class="t-info">🔔 Dispatched 3 push notifications &amp; 1 project webhook:</span>
   <span class="t-ok">✓</span> Alice (https://api.day.app) [HTTP 200]
   <span class="t-ok">✓</span> Bob (https://api.day.app) [HTTP 200]
-  <span class="t-ok">✓</span> DevOps On-Call (https://bark.mycorp.internal) [HTTP 200]</pre>
+  <span class="t-ok">✓</span> DevOps On-Call (https://bark.mycorp.internal) [HTTP 200]
+  <span class="t-ok">✓</span> Webhook: https://ops.example.com/api/deploy-webhook [HTTP 200]</pre>
+              </div>
+            </div>
+
+            <!-- Push Notification Preview Cards (Title & Body) -->
+            <div class="bark-push-preview">
+              <!-- Push Card 1: Deploy Success -->
+              <div class="push-card">
+                <div class="push-card-header">
+                  <div class="push-card-app">
+                    <span class="app-icon">🔔</span>
+                    <span>Bark · Just now</span>
+                  </div>
+                  <span class="push-card-tag push-tag-success">Deploy Success</span>
                 </div>
+                <div class="push-card-title">
+                  <span class="field-label">Title:</span>
+                  <span>upy 部署成功 · my-api-service</span>
+                </div>
+                <pre class="push-card-body">项目: my-api-service
+版本: v1.2.0
+类型: Systemd 系统服务
+目录: /opt/my-api-service
+耗时: 3.2s</pre>
               </div>
 
-              <!-- Command Grid -->
-              <div class="backup-cmd-grid">
-                <div class="backup-cmd-item">
-                  <code>Pattern 1: [KEY1, KEY2]</code>
-                  <span>Minimal token / URL list</span>
+              <!-- Push Card 2: Backup Success -->
+              <div class="push-card">
+                <div class="push-card-header">
+                  <div class="push-card-app">
+                    <span class="app-icon">💾</span>
+                    <span>Bark · 2m ago</span>
+                  </div>
+                  <span class="push-card-tag push-tag-success">Backup Success</span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>Pattern 2: tokens: [...]</code>
-                  <span>Shared group, sound &amp; server</span>
+                <div class="push-card-title">
+                  <span class="field-label">Title:</span>
+                  <span>upy 备份成功 · my-api-service</span>
                 </div>
-                <div class="backup-cmd-item">
-                  <code>Pattern 3: [{name, token...}]</code>
-                  <span>Per-recipient custom settings</span>
-                </div>
-                <div class="backup-cmd-item">
-                  <code>notify.enabled: false</code>
-                  <span>Independent project muting</span>
-                </div>
+                <pre class="push-card-body">项目: my-api-service
+归档: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+目录: /opt/my-api-service
+耗时: 2.4s</pre>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Project-Isolated Webhooks:</strong> Webhooks reside exclusively in project <code>deploy.yaml</code> files without polluting global configurations. Features HMAC-SHA256 signature verification (<code>X-Upy-Signature</code>) and idempotency IDs.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Per-User Attribute Precedence:</strong> When splitting recipients via <code>- name</code>, user-level fields override common defaults while unset properties inherit automatically.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Dual Configuration Scopes:</strong> Project-specific routing in <code>deploy.yaml</code> and host-wide on-call fallback in <code>~/.upy/config.yaml</code>.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Smart Multi-Scale Duration:</strong> Execution time automatically shifts units — seconds below 60s (<code>3.2s</code>), minutes above 60s (<code>1m15s</code>), and hours above 60m (<code>1h2m</code>).</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Smart Merge &amp; Deduplication:</strong> Overlapping recipients between project and global configs are merged and dispatched once.</div>
               </div>
             </div>
           </div>

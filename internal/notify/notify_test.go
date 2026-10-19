@@ -1,7 +1,9 @@
 package notify
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -19,7 +21,7 @@ func TestFormatEventSuccess(t *testing.T) {
 		Type:    "static",
 		Elapsed: "3.2s",
 	})
-	if title != "Uply 部署成功 · test-deploy-website" {
+	if title != "upy 部署成功 · test-deploy-website" {
 		t.Fatalf("title=%s", title)
 	}
 	if group != "success" || level != "active" {
@@ -42,7 +44,7 @@ func TestFormatEventFailureCompose(t *testing.T) {
 		Mode:    "compose",
 		Error:   "docker compose build failed",
 	})
-	if title != "Uply 部署失败 · app" {
+	if title != "upy 部署失败 · app" {
 		t.Fatalf("title=%s", title)
 	}
 	if group != "failure" || level != "timeSensitive" {
@@ -157,5 +159,71 @@ notify:
 
 	if receivedCount != 0 {
 		t.Fatalf("项目已显式禁用通知，但收到了 %d 条推送", receivedCount)
+	}
+}
+
+func TestSendWithProjectWebhook(t *testing.T) {
+	var receivedBody []byte
+	var receivedHeaders http.Header
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedHeaders = r.Header.Clone()
+		var err error
+		receivedBody, err = io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("read body err: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	}))
+	defer ts.Close()
+
+	projectDir := t.TempDir()
+	projectDeployYAML := fmt.Sprintf(`name: webhook-demo
+release:
+  provider: github
+  repository: owner/webhook-demo
+notify:
+  webhook:
+    url: %s
+    secret: "test-secret"
+    headers:
+      X-Custom-Env: "production"
+`, ts.URL)
+	_ = os.WriteFile(filepath.Join(projectDir, "deploy.yaml"), []byte(projectDeployYAML), 0o644)
+
+	Send(Event{
+		Kind:    KindSuccess,
+		Project: "webhook-demo",
+		Version: "v1.5.0",
+		Root:    projectDir,
+		Type:    "docker",
+		Mode:    "compose",
+		Elapsed: "1m15s",
+	})
+
+	if len(receivedBody) == 0 {
+		t.Fatalf("未收到 Webhook 请求")
+	}
+
+	var payload WebhookPayload
+	if err := json.Unmarshal(receivedBody, &payload); err != nil {
+		t.Fatalf("解析 Webhook payload 失败: %v", err)
+	}
+
+	if payload.Project != "webhook-demo" || payload.Version != "v1.5.0" || payload.Elapsed != "1m15s" || payload.Status != "success" {
+		t.Fatalf("payload 内容不符合预期: %+v", payload)
+	}
+
+	// 验证签名
+	sig := receivedHeaders.Get("X-Upy-Signature")
+	if !strings.HasPrefix(sig, "sha256=") {
+		t.Fatalf("缺少 X-Upy-Signature 签名或前缀不正确: %s", sig)
+	}
+	if receivedHeaders.Get("X-Custom-Env") != "production" {
+		t.Fatalf("缺少自定义请求头 X-Custom-Env: %s", receivedHeaders.Get("X-Custom-Env"))
+	}
+	if receivedHeaders.Get("X-Upy-Event") != "success" {
+		t.Fatalf("X-Upy-Event 不匹配: %s", receivedHeaders.Get("X-Upy-Event"))
 	}
 }

@@ -1,6 +1,6 @@
 # 配置契约
 
-依据：AaronConlon/upy v0.2.0，internal/config/{manifest,project,user}.go 与 internal/deployer。升级后核对目标版本。
+依据：AaronConlon/upy v0.3.0，internal/config/{manifest,project,user}.go 与 internal/deployer。升级后核对目标版本。
 
 ## 服务器 <root>/deploy.yaml
 ```yaml
@@ -14,11 +14,11 @@ service: # 仅 system，预先创建用户/组，确认部署目录可读、数�
   group: example-app
   unit: example-app.service
 ```
-static/docker 删除 service。asset 必须与 Release 中文件名完全一致；多架构不能统一用模糊名字。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；v0.2.0 自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。
+static/docker 删除 service。asset 必须与 Release 中文件名完全一致；多架构不能统一用模糊名字。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。
 
 私有仓库 token 保存在用户级 `~/.upy/config.yaml` 的 github.token / github.tokens，或使用 `DEPLOY_GITHUB_TOKEN` 环境变量；不要假定普通 GITHUB_TOKEN 是 upy 的读取入口。只按目标仓库授予读取 Release 所需权限。CI 发布使用 github.token 是另一条认证链，不能拿它当服务器长期 token。不要打印、提交或打包 token。
 
-## Bundle ZIP 根目录 deploy.yaml
+## Bundle ZIP 根目录 upy.yaml (兼容 deploy.yaml)
 公共字段：name、version、type；仅选择 static/docker/system 中一个配置块。version 必须非空且安全作为目录名，建议严格 SemVer；发布新版本使用新 tag/version，不默认 --force 覆盖。
 
 ```yaml

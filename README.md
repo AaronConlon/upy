@@ -63,9 +63,10 @@ Paired with intelligent **disk space pruning and active version protection** (`u
 - **GitHub Release Driven**: Supports both public and private repositories, multi-org/user token routing, resumable chunked downloads, and SHA-256 checksum verification.
 - **Robust Failure Safety**: Strict pre-flight checks during `Prepare` (permissions, target architecture, binary validity, service user existence). Prepare failures never touch existing running services.
 - **Disk Analysis & Safe Pruning**: `upy clean` analyzes disk footprint and frees Bundle archives while strictly protecting both the current active version, the previous rollback version, and live unit references.
+- **Host-Wide Project & Disk Analysis**: `upy analysis` catalogs all managed projects on the machine, plots proportional horizontal benchmark bars using the largest project as the 100% baseline, spotlights the most recent deployment, and supports `--detail` breakdowns and `--json` exports.
 - **Cross-Project Global Dispatching**: Run `upy` in any directory to interactively list and deploy across all managed projects on the host.
 - **Convention Backups**: Zero-config project discovery (`backup.sh`), exclusive concurrency locks, automatic retention rotation, and multi-project batch runs.
-- **Multi-Recipient Bark Push Alerts**: Instant mobile notifications for both deployments and backups powered by [Bark](https://bark.day.app/) (an open-source iOS push notification service). Supports project-level routing in `deploy.yaml`, global fallback in `~/.upy/config.yaml`, flexible multi-recipient broadcasting (tokens, full URLs, custom sounds/groups), and automatic deduplication.
+- **Multi-Recipient Bark Push Alerts & Project Webhooks**: Instant mobile alerts powered by [Bark](https://bark.day.app/) and project-isolated Webhooks (with HMAC-SHA256 signature verification for WeChat Work, Feishu/Lark, DingTalk, and custom endpoints). Features dual-level configuration, team fan-out, smart deduplication, and intelligent multi-scale duration formatting (seconds, minutes, hours).
 
 ---
 
@@ -221,21 +222,24 @@ upy bundle ./bundle.zip
 
 ### 3. Packaging Specifications (bundle.zip)
 
-When building artifacts in CI/CD (e.g., GitHub Actions), package your application along with a manifest `deploy.yaml` inside `bundle.zip`:
+When building artifacts in CI/CD (e.g., GitHub Actions), package your application along with a manifest `upy.yaml` inside `bundle.zip`:
+
+> 💡 **Bundle Manifest vs Server Configuration Decoupling**:  
+> To prevent naming collisions and conceptual confusion with the server-side project configuration `deploy.yaml` (which configures Release sources, system service user accounts, etc.), the manifest inside `bundle.zip` is now officially standardized as `upy.yaml` (the `upy` engine maintains backward compatibility with legacy `deploy.yaml`).
 
 #### A. Frontend Static Applications (SPA)
 
 Bundle structure:
 ```text
 bundle.zip
-├── deploy.yaml
+├── upy.yaml
 └── dist/
     ├── index.html
     ├── assets/
     └── ...
 ```
 
-Manifest `deploy.yaml`:
+Manifest `upy.yaml`:
 ```yaml
 name: my-spa-app
 version: 1.0.0
@@ -249,12 +253,12 @@ static:
 Bundle structure:
 ```text
 bundle.zip
-├── deploy.yaml
+├── upy.yaml
 ├── docker-compose.yml
 └── ...
 ```
 
-Manifest `deploy.yaml`:
+Manifest `upy.yaml`:
 ```yaml
 name: my-api-service
 version: 1.0.0
@@ -274,12 +278,12 @@ Best suited for lightweight single-binary or daemon Web applications (Go, Rust, 
 Bundle structure:
 ```text
 bundle.zip
-├── deploy.yaml
+├── upy.yaml
 └── bin/
     └── my-api
 ```
 
-Manifest `deploy.yaml`:
+Manifest `upy.yaml`:
 ```yaml
 name: my-api
 version: 1.0.0
@@ -415,66 +419,171 @@ upy backup --all -y
 
 ---
 
-## Multi-Recipient Bark Notifications
+## Host-Wide Project & Disk Analysis (upy analysis)
 
-[Bark](https://bark.day.app/) is a lightweight, open-source push notification service for Apple iOS devices. By using simple HTTP requests, you can deliver instant push notifications directly to iPhones and iPads without setting up complex third-party bot frameworks, heavy webhook middleware, or message queues.
-
-`upy` integrates Bark natively into the deployment and backup lifecycles, enabling instant mobile alerts for developers and DevOps teams.
+As servers accumulate more web applications, container stacks, and release histories, operators need a quick, unified terminal cockpit to assess total disk space consumption and inspect recent release activity. `upy analysis` delivers an industrial-grade terminal analysis dashboard:
 
 ### Highlights
 
+- **Complete Host Project Catalog**: Automatically discovers all projects deployed via `upy`, synthesizing their **running status**, **deployment type** (SPA / Docker / Systemd), **active version**, and **disk space**.
+- **100% Benchmark Relative Comparison**: Uses the project with the largest disk footprint as the **100.0% baseline reference**, rendering uniform ANSI horizontal bar charts (e.g. `[████████░░░░░░░░░░░░]  40.0%`) to immediately spot storage hogs.
+- **Top Spotlight for Latest Deployment**: Prominently spotlights the most recently deployed project at the top card, showing its name, version, stack type, humanized relative duration (e.g. `22 minutes ago`), and service status.
+- **Strict Symlink Protection**: Does not recurse into `current` symlinks, guaranteeing that active releases are never double-counted in disk space calculations.
+- **Deep Subdirectory Breakdowns (`--detail`)**: Visualizes individual subdirectories including `releases/` (active vs historical old versions), `bundles/` download cache, `backups/` archives, and `shared/` persistence.
+- **Structured JSON Export (`--json`)**: Emits standard JSON for automated SRE monitoring dashboards, audit pipelines, or scheduled health checks.
+
+### Terminal Demonstration
+
+```text
+upy analysis — 客户端项目与磁盘分析
+
+━ 最近一次部署动态 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📦 项目: my-api-service (v1.2.0)
+  🧩 类型: Systemd 系统服务 (system) · upy-my-api-service.service
+  ⏱  时间: 22分钟前 (2026-10-19 19:40:02)
+  🟢 状态: 正常运行 (active)
+
+━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)
+1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     [████████████████████] 100.0%
+2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    [███████░░░░░░░░░░░░░]  32.5%
+3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    [█░░░░░░░░░░░░░░░░░░░]   5.8%
+4   demo-spa            ⚪ undeployed  static   -            14.2 MB    [▏░░░░░░░░░░░░░░░░░░░]   0.9%
+
+━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📊 纳管项目: 4 个
+  💾 累计占用: 2.03 GB (平均每个项目 519.6 MB)
+  👑 空间首位: my-compose-app (1.45 GB, 占全机 upy 项目的 71.4%)
+  💡 提示: 可使用 upy analysis --detail 查看各子目录详细空间分布
+```
+
+### Common Usage
+
+```bash
+# 1. Default host-wide project catalog, status, version, 100% benchmark bars & latest deployment
+upy analysis
+
+# 2. Expand detailed breakdown of releases, bundles, and backups
+upy analysis --detail
+
+# 3. Analyze a specific target project
+upy analysis my-api-service
+
+# 4. Sort by size, time, or name (defaults to size descending)
+upy analysis --sort time
+
+# 5. Output structured JSON for scripts or monitoring
+upy analysis --json
+```
+
+---
+
+## 🔔 Notification Services (Bark & Project Webhooks)
+
+`upy` builds instant delivery alerts directly into the release and backup lifecycles, ensuring a lightweight and observable operations loop.
+
+---
+
+### 1. Multi-Recipient Bark Notifications
+
+[Bark](https://bark.day.app/) is a lightweight, open-source push notification service for Apple iOS devices. By using simple HTTP requests, you can deliver instant push notifications directly to iPhones and iPads without setting up complex third-party bot frameworks or heavy webhook middleware.
+
+#### Highlights
+
+- **Unified Standard Configuration**: Structured as shared attributes (outer defaults) plus a `users:` list differentiated by `- name`. Shared settings apply by default, per-user fields override shared settings with highest priority, and omitted fields seamlessly inherit defaults.
 - **Dual-Level Merging & Smart Deduplication**: Configure team-wide channels in `~/.upy/config.yaml` and project-specific channels in `deploy.yaml`. `upy` merges both sources and automatically deduplicates overlapping recipients so no user receives duplicate alerts.
 - **Multi-Recipient Fan-Out**: Effortlessly notify multiple teammates or on-call engineers simultaneously with a single release or backup event.
-- **Flexible Syntax Formats**: Supports plain device tokens (`KEY`), full URLs (`https://api.day.app/KEY` or self-hosted Bark domains), string lists, or detailed channel objects with custom sounds, groups, and sensitivity levels.
 - **Independent Project Muting**: Silence notifications for a specific project at any time by declaring `notify: { enabled: false }` in its `deploy.yaml`.
 - **Rich Context & Diagnostics**: Notifications include project name, deployed version, stack type, elapsed execution time, and exact failure diagnostics if an error occurs.
 
-### Three Common Configuration Patterns
+#### Standard Unified Configuration Format
 
-#### 1. Minimal String List (Recommended for Teams)
-Directly list individual Device Keys or full URLs copied from the Bark app:
-
-```yaml
-notify:
-  bark:
-    - "DEVICE_KEY_ALICE"
-    - "DEVICE_KEY_BOB"
-    - "https://api.day.app/DEVICE_KEY_CAROL" # Full URL is automatically parsed
-```
-
-#### 2. Shared Group & Sound with Batch Tokens
-When all teammates share the same notification sound, group name, or self-hosted server:
+`upy` standardizes Bark notification configuration using **shared attributes** (outer defaults) combined with a **`users` list** (distinguished per recipient with `- name`):
 
 ```yaml
 notify:
   bark:
-    serverUrl: "https://api.day.app" # Default official API, or private self-hosted URL
-    group: "payment-api"             # Push group title
-    sound: "chime"                   # Custom ringtone (bell, chime, glass, minuet, etc.)
-    tokens:
-      - "DEVICE_KEY_ALICE"
-      - "DEVICE_KEY_BOB"
+    # 1. Shared / Global defaults (inherited by all recipients)
+    serverUrl: "https://api.day.app" # Default official API, or private self-hosted domain
+    group: "payment-api"             # Shared notification group
+    sound: "chime"                   # Shared ringtone (bell, chime, glass, minuet, etc.)
+    level: "active"                  # Shared sensitivity level (active / timeSensitive / critical)
+
+    # 2. Per-user settings (per-recipient overrides, prioritized over shared settings)
+    users:
+      - name: "Frontend Lead"
+        token: "DEVICE_KEY_ALICE"
+        sound: "glass"                 # Overrides shared sound
+      - name: "DevOps On-Call"
+        token: "DEVICE_KEY_BOB"
+        serverUrl: "https://bark.ops.internal" # Overrides shared serverUrl
+        level: "timeSensitive"
+      - name: "QA Engineer"
+        token: "DEVICE_KEY_CAROL"      # Inherits all shared attributes seamlessly
 ```
 
-#### 3. Detailed Channel Objects (Per-Recipient Customization)
-When individual members prefer custom tags, ringtones, or self-hosted Bark instances:
+> **Attribute Priority & Inheritance**:  
+> Recipient fields under `users[i]` (e.g. `sound`, `serverUrl`, `group`, `level`, `icon`) take highest precedence. When a field is omitted, it automatically falls back to the outer shared attribute, and ultimately to built-in system defaults.
 
-```yaml
-notify:
-  bark:
-    - name: "Frontend Lead"
-      token: "DEVICE_KEY_FRONTEND"
-      sound: "glass"
-    - name: "DevOps On-Call"
-      serverUrl: "https://bark.mycorp.internal" # Private self-hosted Bark instance
-      token: "DEVICE_KEY_OPS"
-      sound: "minuet"
-      level: "timeSensitive"                     # Alert level (active / timeSensitive / critical)
-```
+> **Minimal Single-User Mode**:  
+> For single-user environments, you can also omit the `users` list and directly specify `token` under `bark`:
+> ```yaml
+> notify:
+>   bark:
+>     serverUrl: "https://api.day.app"
+>     group: "my-service"
+>     sound: "bell"
+>     token: "DEVICE_KEY_SINGLE"
+> ```
 
-### Configuration Scopes
+#### Notification Message Examples (Title & Body Breakdown)
 
-#### Scope 1: Project-Level (`<projectRoot>/deploy.yaml`)
+Upon completing a deployment or backup, `upy` automatically extracts runtime context and generates standardized, diagnostic-rich **Title** and **Body** messages pushed directly to Bark with zero template configuration needed:
+
+##### 1. Deployment Success Notification
+- **Title**: `upy 部署成功 · my-api-service`
+- **Body**:
+  ```text
+  项目: my-api-service
+  版本: v1.2.0
+  类型: Systemd 系统服务
+  目录: /opt/my-api-service
+  耗时: 3.2s
+  ```
+
+##### 2. Deployment Failure Alert (Automatic `timeSensitive` escalation)
+- **Title**: `upy 部署失败 · my-compose-stack`
+- **Body**:
+  ```text
+  项目: my-compose-stack
+  版本: v1.1.0
+  类型: Docker Compose 集成项目
+  目录: /opt/my-compose-stack
+  原因: healthcheck probe http://127.0.0.1:8080/health failed (timeout 30s)
+  ```
+
+##### 3. Backup Success Notification
+- **Title**: `upy 备份成功 · my-api-service`
+- **Body**:
+  ```text
+  项目: my-api-service
+  归档: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+  目录: /opt/my-api-service
+  耗时: 2.4s
+  ```
+
+##### 4. Backup Failure Alert
+- **Title**: `upy 备份失败 · my-api-service`
+- **Body**:
+  ```text
+  项目: my-api-service
+  目录: /opt/my-api-service
+  原因: exit status 1: mysqldump: Got error: 2003: Can't connect to MySQL server
+  ```
+
+#### Configuration Scopes
+
+##### Scope 1: Project-Level (`<projectRoot>/deploy.yaml`)
 Receives notifications solely for this project. Recommended for project-specific developers and testers:
 
 ```yaml
@@ -486,13 +595,19 @@ release:
 # Project-specific notification recipients
 notify:
   bark:
-    - "DEV_TOKEN_1"
-    - "DEV_TOKEN_2"
+    group: "my-api-service"
+    sound: "chime"
+    users:
+      - name: "Frontend Developer"
+        token: "DEV_TOKEN_1"
+      - name: "QA Engineer"
+        token: "DEV_TOKEN_2"
+        sound: "glass"
 ```
 
 > **Independent Project Muting**: If an internal test project does not require alerts, declare `notify: { enabled: false }` to silence all notifications for that project.
 
-#### Scope 2: Machine Global Fallback (`~/.upy/config.yaml`)
+##### Scope 2: Machine Global Fallback (`~/.upy/config.yaml`)
 Host-wide notification channels (e.g. SRE / DevOps on-call) active by default across all managed projects on the machine:
 
 ```yaml
@@ -503,15 +618,76 @@ github:
 notify:
   enabled: true
   bark:
-    - name: "SRE Lead"
-      token: "SRE_DEVICE_KEY"
-      sound: "bell"
+    serverUrl: "https://api.day.app"
+    group: "Host-Alerts"
+    sound: "bell"
+    users:
+      - name: "SRE Lead"
+        token: "SRE_DEVICE_KEY"
+        level: "timeSensitive"
 ```
 
-### Automatic Merging & Deduplication
+#### Automatic Merging & Deduplication
 
 - **Automatic Merging**: On deployment or backup completion, `upy` gathers channels from both the **current project's `deploy.yaml`** and the **global `~/.upy/config.yaml`**.
 - **Smart Deduplication**: If the same recipient (Server URL + Device Key) is configured in both scopes, `upy` **deduplicates and sends only 1 notification**, prioritizing project-level custom attributes.
+
+---
+
+### 2. Project-Specific Webhook Notifications
+
+Different projects often route notifications to distinct team bots (WeChat Work, Feishu/Lark, DingTalk, Slack, or internal event ingestion endpoints). **Because each project has unique destinations, Webhooks reside strictly in each project's `deploy.yaml` and do not belong in global host-wide configuration.**
+
+#### 1. Configuration Example (`<projectRoot>/deploy.yaml`)
+
+```yaml
+name: my-api-service
+release:
+  provider: github
+  repository: owner/my-api-service
+
+# Project-scoped webhook (independent per project, zero global pollution)
+notify:
+  # Option A: Single URL direct declaration
+  webhook: "https://ops.example.com/api/deploy-webhook"
+
+  # Option B: Multi-endpoint array with HMAC-SHA256 signature and custom headers
+  # webhook:
+  #   - url: "https://ops.example.com/api/deploy-webhook"
+  #     secret: "SEC_KEY_FOR_HMAC_SHA256"      # Computes X-Upy-Signature header
+  #     headers:
+  #       X-Environment: "production"
+  #   - url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
+```
+
+#### 2. Request Headers & HMAC-SHA256 Verification
+
+When `secret` is provided, `upy` calculates an HMAC-SHA256 signature of the JSON payload and attaches it to the HTTP POST request:
+- `Content-Type: application/json; charset=utf-8`
+- `User-Agent: upy/<version>`
+- `X-Upy-Event`: Event identifier (`deploy.success`, `deploy.failure`, `backup.success`, `backup.failure`)
+- `X-Upy-Delivery`: Unique UUIDv4 generated per dispatch for idempotency & tracing
+- `X-Upy-Signature`: Formatted as `sha256=<hex_hmac>` for cryptographic source verification
+
+#### 3. Standard JSON Payload
+
+```json
+{
+  "event": "deploy.success",
+  "project": "my-api-service",
+  "status": "success",
+  "action": "deploy",
+  "version": "v1.2.0",
+  "type": "system",
+  "directory": "/opt/my-api-service",
+  "elapsed": "3.2s",
+  "elapsed_seconds": 3.2,
+  "timestamp": "2026-10-19T12:00:00Z"
+}
+```
+
+> 💡 **Multi-Scale Elapsed Time Formatting**:  
+> Across Bark notifications, Webhook payloads, and terminal outputs, elapsed durations are intelligently scaled: under 60 seconds displays as seconds (e.g. `3.2s`), over 60 seconds converts to minutes (e.g. `1m15s`), and over 60 minutes automatically starts with hours (e.g. `1h2m30s`).
 
 ---
 
@@ -545,6 +721,7 @@ upy version
 | `upy deploy <project>` | Quickly deploy the latest release of a registered local project |
 | `upy clean [project]` | Visually analyze and clean project data (bundles, old releases, or purge) |
 | `upy backup [project]` | Run convention project backup (`backup.sh`), prune archives, and push alerts |
+| `upy analysis [project]` | Analyze host projects, plot disk usage with 100% benchmark, and spotlight recent release |
 | `upy bundle <file>` | Deploy a local `.zip` bundle directly (offline mode, no GitHub connection) |
 | `upy init [owner] <token>` | Initialize or configure GitHub personal/organization access tokens |
 | `upy update [version]` | Self-update to latest release or switch to a target version |

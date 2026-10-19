@@ -57,6 +57,7 @@ func (bc *BarkChannels) UnmarshalYAML(value *yaml.Node) error {
 			DeviceKey  string     `yaml:"deviceKey"`
 			Tokens     []string   `yaml:"tokens"`
 			Keys       []string   `yaml:"keys"`
+			Users      []UserBark `yaml:"users"`
 			Recipients []UserBark `yaml:"recipients"`
 			Group      string     `yaml:"group"`
 			Sound      string     `yaml:"sound"`
@@ -65,7 +66,45 @@ func (bc *BarkChannels) UnmarshalYAML(value *yaml.Node) error {
 			Enabled    *bool      `yaml:"enabled"`
 		}
 		if err := value.Decode(&helper); err == nil {
-			if len(helper.Tokens) > 0 || len(helper.Keys) > 0 {
+			userList := append(helper.Users, helper.Recipients...)
+			if len(userList) > 0 {
+				for _, u := range userList {
+					merged := UserBark{
+						Name:      u.Name,
+						ServerURL: u.ServerURL,
+						Token:     u.Token,
+						DeviceKey: u.DeviceKey,
+						Group:     u.Group,
+						Sound:     u.Sound,
+						Icon:      u.Icon,
+						Level:     u.Level,
+						Enabled:   u.Enabled,
+					}
+					// 用户级未定义时，回退继承通用字段（用户级字段优先级高于通用字段）
+					if strings.TrimSpace(merged.ServerURL) == "" {
+						merged.ServerURL = helper.ServerURL
+					}
+					if strings.TrimSpace(merged.Group) == "" {
+						merged.Group = helper.Group
+					}
+					if strings.TrimSpace(merged.Sound) == "" {
+						merged.Sound = helper.Sound
+					}
+					if strings.TrimSpace(merged.Icon) == "" {
+						merged.Icon = helper.Icon
+					}
+					if strings.TrimSpace(merged.Level) == "" {
+						merged.Level = helper.Level
+					}
+					if merged.Enabled == nil {
+						merged.Enabled = helper.Enabled
+					}
+					if strings.TrimSpace(merged.Name) == "" {
+						merged.Name = helper.Name
+					}
+					list = append(list, merged)
+				}
+			} else if len(helper.Tokens) > 0 || len(helper.Keys) > 0 {
 				allKeys := append(helper.Tokens, helper.Keys...)
 				for _, k := range allKeys {
 					if strings.TrimSpace(k) != "" {
@@ -81,8 +120,6 @@ func (bc *BarkChannels) UnmarshalYAML(value *yaml.Node) error {
 						})
 					}
 				}
-			} else if len(helper.Recipients) > 0 {
-				list = append(list, helper.Recipients...)
 			} else if helper.Token != "" || helper.DeviceKey != "" {
 				list = append(list, UserBark{
 					Name:      helper.Name,
@@ -113,10 +150,11 @@ func (bc BarkChannels) Active() []UserBark {
 	return out
 }
 
-// NotifyConfig 通知总开关及渠道配置。渠道先做 Bark, 结构预留 webhook / 飞书 / 邮件。
+// NotifyConfig 通知总开关及渠道配置。
 type NotifyConfig struct {
-	Enabled *bool        `yaml:"enabled,omitempty"`
-	Bark    BarkChannels `yaml:"bark,omitempty"`
+	Enabled *bool           `yaml:"enabled,omitempty"`
+	Bark    BarkChannels    `yaml:"bark,omitempty"`
+	Webhook WebhookChannels `yaml:"webhook,omitempty"`
 }
 
 // ActiveBarks 返回当前生效的 Bark 渠道列表
@@ -125,6 +163,14 @@ func (n *NotifyConfig) ActiveBarks() []UserBark {
 		return nil
 	}
 	return n.Bark.Active()
+}
+
+// ActiveWebhooks 返回当前生效的项目 Webhook 渠道列表
+func (n *NotifyConfig) ActiveWebhooks() []ProjectWebhook {
+	if n == nil || (n.Enabled != nil && !*n.Enabled) {
+		return nil
+	}
+	return n.Webhook.Active()
 }
 
 // UserNotify 用户级通知配置别名

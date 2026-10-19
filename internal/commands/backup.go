@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/AaronConlon/upy/internal/backup"
 	"github.com/AaronConlon/upy/internal/config"
@@ -288,14 +287,14 @@ func backupSingleProject(target backupTarget, args BackupArgs) error {
 		fmt.Printf("  🛡️  自动轮转: 清理了 %d 份历史备份\n", len(result.PrunedFiles))
 	}
 
-	fmt.Printf("  ⏱  总耗时:   %s\n", result.Duration.Round(time.Millisecond))
+	fmt.Printf("  ⏱  总耗时:   %s\n", ui.FormatDuration(result.Duration))
 
 	notify.Send(notify.Event{
 		Kind:    notify.KindBackupSuccess,
 		Project: target.Name,
 		Root:    target.Root,
 		Version: summarizeFiles(result.CreatedFiles),
-		Elapsed: result.Duration.Round(time.Millisecond).String(),
+		Elapsed: ui.FormatDuration(result.Duration),
 	})
 
 	return nil
@@ -338,14 +337,14 @@ func backupAllProjects(targets []backupTarget, args BackupArgs) error {
 		} else {
 			outName = "完成"
 		}
-		log.Ok(fmt.Sprintf("项目 %s 备份成功 (%s, 耗时 %s)", target.Name, outName, res.Duration.Round(time.Millisecond)))
+		log.Ok(fmt.Sprintf("项目 %s 备份成功 (%s, 耗时 %s)", target.Name, outName, ui.FormatDuration(res.Duration)))
 
 		notify.Send(notify.Event{
 			Kind:    notify.KindBackupSuccess,
 			Project: target.Name,
 			Root:    target.Root,
 			Version: summarizeFiles(res.CreatedFiles),
-			Elapsed: res.Duration.Round(time.Millisecond).String(),
+			Elapsed: ui.FormatDuration(res.Duration),
 		})
 	}
 

@@ -259,3 +259,35 @@ func TestDeployBundleRefusesWhenLocked(t *testing.T) {
 		t.Fatal("期望 DeployBundle 报错拒绝（锁冲突），但成功执行了")
 	}
 }
+
+func TestDeployBundleWithUpyYaml(t *testing.T) {
+	root := t.TempDir()
+	bundlePath := filepath.Join(t.TempDir(), "bundle.zip")
+
+	f, err := os.Create(bundlePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(f)
+	// 使用新的标准清单文件名 upy.yaml
+	w, err := zw.Create("upy.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest := "name: test-upyyaml\nversion: 3.1.0\ntype: static\n"
+	_, _ = w.Write([]byte(manifest))
+	wDist, _ := zw.Create("dist/index.html")
+	_, _ = wDist.Write([]byte("<h1>UpyYaml Support</h1>"))
+	_ = zw.Close()
+	_ = f.Close()
+
+	res, err := DeployBundle(bundlePath, Options{
+		Root: root,
+	})
+	if err != nil {
+		t.Fatalf("使用 upy.yaml 部署失败: %v", err)
+	}
+	if res.Version != "3.1.0" || res.Project != "test-upyyaml" {
+		t.Fatalf("部署结果不匹配: %+v", res)
+	}
+}

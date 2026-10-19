@@ -113,8 +113,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	// 相同版本跳过
 	if st.CurrentVersion != "" && st.CurrentVersion == manifest.Version && !force {
 		log.Info(fmt.Sprintf("当前已是 %s，跳过部署（--force 可强制重新部署）", manifest.Version))
-		elapsed := time.Since(startedAt).Seconds()
-		log.Info("⏱ 部署耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
+		elapsedStr := ui.FormatDuration(time.Since(startedAt))
+		log.Info("⏱ 部署耗时: " + log.Green(log.Bold(elapsedStr)))
 		return &Result{Skipped: true, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 	}
 
@@ -217,8 +217,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	cleanupOldReleases(root, newState)
 	ui.PrintProjectLayout(root)
 
-	elapsed := time.Since(startedAt).Seconds()
-	log.Info("⏱ 部署耗时: " + log.Green(log.Bold(fmt.Sprintf("%.1fs", elapsed))))
+	elapsedStr := ui.FormatDuration(time.Since(startedAt))
+	log.Info("⏱ 部署耗时: " + log.Green(log.Bold(elapsedStr)))
 
 	return &Result{Skipped: false, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 }
@@ -335,7 +335,7 @@ func def(s, d string) string {
 func notifyDeploy(res *Result, err error, root string, startedAt time.Time) {
 	evt := notify.Event{
 		Root:    root,
-		Elapsed: fmt.Sprintf("%.1fs", time.Since(startedAt).Seconds()),
+		Elapsed: ui.FormatDuration(time.Since(startedAt)),
 	}
 	if res != nil {
 		evt.Version = res.Version

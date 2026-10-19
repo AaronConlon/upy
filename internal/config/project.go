@@ -56,6 +56,14 @@ func (c *ProjectConfig) ActiveBarks() []UserBark {
 	return c.Notify.ActiveBarks()
 }
 
+// ActiveWebhooks 返回当前项目生效的 Webhook 渠道
+func (c *ProjectConfig) ActiveWebhooks() []ProjectWebhook {
+	if c == nil {
+		return nil
+	}
+	return c.Notify.ActiveWebhooks()
+}
+
 // ReadProjectConfig 读取并校验服务器端 deploy.yaml
 func ReadProjectConfig(root string) (*ProjectConfig, error) {
 	path := filepath.Join(root, "deploy.yaml")

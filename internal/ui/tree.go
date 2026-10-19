@@ -20,7 +20,7 @@ const (
 // PrintProjectLayout 打印项目目录树
 func PrintProjectLayout(root string) {
 	os.Stderr.WriteString("  " + log.Cyan("project layout:") + "\n")
-	lines := renderTree(root, 4, map[string]bool{"node_modules": true, ".git": true}, map[string]bool{"current": true, "state.json": true, "deploy.yaml": true})
+	lines := renderTree(root, 4, map[string]bool{"node_modules": true, ".git": true}, map[string]bool{"current": true, "state.json": true, "deploy.yaml": true, "upy.yaml": true})
 	for _, l := range lines {
 		os.Stderr.WriteString("    " + l + "\n")
 	}

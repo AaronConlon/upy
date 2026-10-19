@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-// 构造一个含 deploy.yaml 的最小 zip
-func writeManifestZip(t *testing.T, version string) string {
+// 构造一个含指定清单文件名的最小 zip
+func writeNamedManifestZip(t *testing.T, filename, version string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "bundle.zip")
 	f, err := os.Create(path)
@@ -17,7 +17,7 @@ func writeManifestZip(t *testing.T, version string) string {
 	}
 	defer f.Close()
 	w := zip.NewWriter(f)
-	entry, err := w.Create("deploy.yaml")
+	entry, err := w.Create(filename)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,11 +32,21 @@ func writeManifestZip(t *testing.T, version string) string {
 }
 
 func TestManifestVersionFromZip(t *testing.T) {
-	path := writeManifestZip(t, "0.3.17")
-	got := ManifestVersionFromZip(path)
-	if got != "0.3.17" {
-		t.Fatalf("期望读到 0.3.17, 得到 %q", got)
-	}
+	t.Run("UpyYaml", func(t *testing.T) {
+		path := writeNamedManifestZip(t, "upy.yaml", "1.0.0")
+		got := ManifestVersionFromZip(path)
+		if got != "1.0.0" {
+			t.Fatalf("期望读到 1.0.0, 得到 %q", got)
+		}
+	})
+
+	t.Run("DeployYamlCompat", func(t *testing.T) {
+		path := writeNamedManifestZip(t, "deploy.yaml", "0.3.17")
+		got := ManifestVersionFromZip(path)
+		if got != "0.3.17" {
+			t.Fatalf("期望读到 0.3.17, 得到 %q", got)
+		}
+	})
 }
 
 func TestManifestVersionFromZipMissingFile(t *testing.T) {
@@ -52,6 +62,6 @@ func TestManifestVersionFromZipMissingFile(t *testing.T) {
 	}
 	f.Close()
 	if got := ManifestVersionFromZip(path); got != "" {
-		t.Fatalf("缺少 deploy.yaml 时应返回空串, 得到 %q", got)
+		t.Fatalf("缺少清单文件时应返回空串, 得到 %q", got)
 	}
 }

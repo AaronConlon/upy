@@ -331,6 +331,66 @@ func TestBarkChannelsFormats(t *testing.T) {
 			t.Fatalf("keys 不对: %+v", barks)
 		}
 	})
+
+	// 4. 统一写法: 通用属性 + 按 - name 分多个用户，用户级字段优先级高于通用字段
+	t.Run("UnifiedUsersConfig", func(t *testing.T) {
+		var cfg UserConfig
+		raw := []byte(`notify:
+  bark:
+    serverUrl: https://api.day.app
+    group: unified-app
+    sound: chime
+    icon: https://example.com/icon.png
+    level: active
+    users:
+      - name: Alice
+        token: token_alice
+        sound: glass # 覆盖通用 sound
+      - name: Bob
+        token: token_bob
+        serverUrl: https://bark.private.internal # 覆盖通用 serverUrl
+        level: timeSensitive
+      - name: Carol
+        token: token_carol # 完全继承通用属性
+`)
+		if err := yaml.Unmarshal(raw, &cfg); err != nil {
+			t.Fatal(err)
+		}
+		barks := cfg.ActiveBarks()
+		if len(barks) != 3 {
+			t.Fatalf("期望 3 个用户, 得到: %d", len(barks))
+		}
+
+		// Alice: sound 为 glass，其他继承
+		if barks[0].Name != "Alice" || barks[0].Key() != "token_alice" {
+			t.Errorf("Alice 基本信息不对: %+v", barks[0])
+		}
+		if barks[0].Sound != "glass" {
+			t.Errorf("Alice 期望 sound=glass (覆盖通用), 得到: %s", barks[0].Sound)
+		}
+		if barks[0].ServerURL != "https://api.day.app" || barks[0].Group != "unified-app" {
+			t.Errorf("Alice 通用属性未正确继承: %+v", barks[0])
+		}
+
+		// Bob: serverUrl 和 level 覆盖，其他继承
+		if barks[1].Name != "Bob" || barks[1].Key() != "token_bob" {
+			t.Errorf("Bob 基本信息不对: %+v", barks[1])
+		}
+		if barks[1].ServerURL != "https://bark.private.internal" || barks[1].Level != "timeSensitive" {
+			t.Errorf("Bob 覆盖字段不对: %+v", barks[1])
+		}
+		if barks[1].Sound != "chime" || barks[1].Group != "unified-app" {
+			t.Errorf("Bob 通用属性未继承: %+v", barks[1])
+		}
+
+		// Carol: 完全继承
+		if barks[2].Name != "Carol" || barks[2].Key() != "token_carol" {
+			t.Errorf("Carol 基本信息不对: %+v", barks[2])
+		}
+		if barks[2].ServerURL != "https://api.day.app" || barks[2].Sound != "chime" || barks[2].Group != "unified-app" {
+			t.Errorf("Carol 继承属性不对: %+v", barks[2])
+		}
+	})
 }
 
 func TestBarkUrlParsing(t *testing.T) {

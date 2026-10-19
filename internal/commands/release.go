@@ -110,7 +110,7 @@ func Release(args ReleaseArgs) error {
 		}
 		if v := bundle.ManifestVersionFromZip(localZip); v == "" {
 			_ = os.Remove(localZip)
-			return fmt.Errorf("下载完成但 bundle 格式无效或缺少 deploy.yaml，已清理损坏文件")
+			return fmt.Errorf("下载完成但 bundle 格式无效或缺少 upy.yaml 清单文件，已清理损坏文件")
 		}
 		log.Ok("已保存到 " + log.Path(localZip))
 	}
