@@ -37,6 +37,7 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
     - [B. Docker / Compose 容器项目](#b-docker--compose-容器项目)
     - [C. 原生系统服务 (system / Go 二进制 Web 服务)](#c-原生系统服务-system--go-二进制-web-服务)
 - [如何清理与维护](#如何清理与维护)
+- [如何备份与归档](#如何备份与归档)
 - [如何升级](#如何升级)
 - [常用命令速查](#常用命令速查)
 - [开源协议](#开源协议)
@@ -310,6 +311,93 @@ upy clean --all -y
 
 ---
 
+## 如何备份与归档
+
+在数据库迁移、大版本发布、环境变更或日常维护前，确保生产数据与状态的基线快照备份至关重要。各类技术栈（MySQL、PostgreSQL、SQLite、Redis、挂载卷及静态媒体文件）的数据备份方式差异极大，`upy` 遵循**约定优先（Convention over Configuration）**原则：由项目自身提供特定场景的备份脚本，由 `upy` 统一驱动、注入上下文变量、跨进程排他锁防护、产物轮转归档与通知推送。
+
+### 1. 约定式自动探测（零配置）
+
+`upy backup` 在项目根目录下自动按以下优先级寻找备份脚本并执行：
+1. `<项目根目录>/backup.sh`
+2. `<项目根目录>/scripts/backup.sh`
+3. `<项目根目录>/bin/backup.sh`
+
+*(亦可在 `deploy.yaml` 中通过 `backup.script` 显式指定脚本路径)*。
+
+### 2. `upy` 注入给备份脚本的环境变量
+
+执行备份时，`upy` 会自动注入标准化环境变量，脚本内部直接读取，无需硬编码服务器路径：
+
+| 环境变量名 | 说明 | 示例 |
+| :--- | :--- | :--- |
+| `UPY_PROJECT_NAME` | 项目名称 | `my-api-service` |
+| `UPY_PROJECT_ROOT` | 项目根目录绝对路径 | `/opt/my-api-service` |
+| `UPY_BACKUP_DIR` | 建议备份产物存放目录绝对路径 | `/opt/my-api-service/backups` |
+| `UPY_CURRENT_VERSION` | 当前生效运行的版本号 | `v1.2.0` |
+| `UPY_TIMESTAMP` | 标准格式时间戳 | `20261019-120000` |
+| `UPY_DEPLOY_TYPE` | 项目部署类型 | `docker`、`system` 或 `static` |
+
+### 3. 典型 `backup.sh` 示例（Docker Compose + MySQL 导出）
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 确保目标输出目录就绪
+mkdir -p "${UPY_BACKUP_DIR}"
+
+BACKUP_FILE="${UPY_BACKUP_DIR}/dump-${UPY_PROJECT_NAME}-${UPY_TIMESTAMP}.sql.gz"
+echo "正在导出数据库到: ${BACKUP_FILE}..."
+
+# 在容器内安全执行 mysqldump 导出并压缩
+docker compose exec -T db mysqldump -u root -p"${DB_PASSWORD}" "${DB_NAME}" | gzip > "${BACKUP_FILE}"
+
+echo "数据库导出成功！"
+```
+
+### 4. `deploy.yaml` 进阶配置（可选）
+
+```yaml
+name: my-app
+type: docker
+docker:
+  mode: compose
+  composeFile: docker-compose.yml
+
+# 备份功能配置（可选）
+backup:
+  script: backup.sh            # 自定义脚本路径（相对项目根目录，缺省自动探测）
+  dir: backups                 # 备份产物归档目录（相对项目根目录，默认 backups）
+  retention: 7                 # 自动轮转保留的最大备份份数（默认 7，0 表示不自动清理）
+  timeout: 15m                 # 备份最大超时时间（默认 15m，支持 30s, 5m, 1h）
+```
+
+### 5. 常用备份命令
+
+```bash
+# 1. 交互式选择已登记项目执行备份
+upy backup
+
+# 2. 直接针对指定项目执行备份
+upy backup my-app
+
+# 3. 查看项目历史备份文件列表与占用体积
+upy backup my-app --list
+
+# 4. 手动触发备份轮转，保留最近 N 个备份
+upy backup my-app --prune 5
+
+# 5. 一键批量备份所有已登记项目
+upy backup --all -y
+```
+
+> **安全保护机制**：  
+> - **跨进程排他锁（`.deploy.lock`）**：`upy backup` 执行时自动获取项目排他锁（`action: 备份中`），严格互斥正在进行的部署（`upy release`）或磁盘清理（`upy clean`），杜绝备份产生半更新脏数据。  
+> - **自动轮转防爆盘**：内置基于修改时间的智能轮转清理，自动保留最近 N 份备份（默认 7 份），防止历史备份文件无限膨胀撑爆服务器磁盘。  
+> - **通知联动推送**：备份完成后自动汇总耗时、产物文件体积，并通过 Bark 等渠道实时推送备份结果与告警。
+
+---
+
 ## 如何升级
 
 `upy` 拥有完善的跨分区自更新与在运行进程替换机制，随时保持工具最新：
@@ -339,6 +427,7 @@ upy version
 | `upy release list` | 查看当前项目的 GitHub Release 版本历史与资产信息 |
 | `upy deploy <项目名>` | 快捷为已登记的本地项目部署最新正式版本 |
 | `upy clean [项目名]` | 可视化分析并清理项目数据 (Bundle 缓存、旧版本、临时目录或注销) |
+| `upy backup [项目名]` | 执行项目约定备份 (`backup.sh`)，管理归档轮转并推送通知 |
 | `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
 | `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |
 | `upy update [版本]` | 自更新到最新版本或切换至指定版本 |

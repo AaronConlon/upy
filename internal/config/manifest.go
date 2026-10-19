@@ -53,6 +53,7 @@ type Manifest struct {
 	Docker      *ManifestDocker      `yaml:"docker"`
 	System      *ManifestSystem      `yaml:"system"`
 	Healthcheck *ManifestHealthcheck `yaml:"healthcheck"`
+	Backup      *ProjectBackup       `yaml:"backup"`
 }
 
 // ParseManifest 解析 bundle 内 deploy.yaml 内容并校验

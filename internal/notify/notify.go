@@ -19,8 +19,10 @@ import (
 type Kind string
 
 const (
-	KindSuccess Kind = "success"
-	KindFailure Kind = "failure"
+	KindSuccess       Kind = "success"
+	KindFailure       Kind = "failure"
+	KindBackupSuccess Kind = "backup_success"
+	KindBackupFailure Kind = "backup_failure"
 )
 
 // Event 一次部署通知
@@ -86,6 +88,32 @@ func formatEvent(evt Event) (title, body, groupSuffix, level string) {
 	if evt.Elapsed != "" {
 		lines = append(lines, "耗时: "+evt.Elapsed)
 	}
+	if evt.Kind == KindBackupSuccess {
+		lines := []string{
+			"项目: " + name,
+		}
+		if evt.Version != "" {
+			lines = append(lines, "归档: "+evt.Version)
+		}
+		if evt.Root != "" {
+			lines = append(lines, "目录: "+evt.Root)
+		}
+		if evt.Elapsed != "" {
+			lines = append(lines, "耗时: "+evt.Elapsed)
+		}
+		return "Uply 备份成功 · " + name, nlJoin(lines), "backup", "active"
+	}
+	if evt.Kind == KindBackupFailure {
+		lines := []string{
+			"项目: " + name,
+			"目录: " + evt.Root,
+		}
+		if msg := strings.TrimSpace(evt.Error); msg != "" {
+			lines = append(lines, "原因: "+msg)
+		}
+		return "Uply 备份失败 · " + name, nlJoin(lines), "backup_failure", "timeSensitive"
+	}
+
 	if evt.Kind == KindFailure {
 		if msg := strings.TrimSpace(evt.Error); msg != "" {
 			lines = append(lines, "原因: "+msg)

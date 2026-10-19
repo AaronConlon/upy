@@ -38,6 +38,7 @@ Paired with intelligent **disk space pruning and active version protection** (`u
     - [B. Docker / Compose Containers](#b-docker--compose-containers)
     - [C. Native Systemd Services (Go Binary Web Services)](#c-native-systemd-services-go-binary-web-services)
 - [Disk Maintenance & Pruning](#disk-maintenance--pruning)
+- [Convention Backups](#convention-backups)
 - [Self-Update](#self-update)
 - [Command Cheat Sheet](#command-cheat-sheet)
 - [License](#license)
@@ -309,6 +310,93 @@ upy clean --all -y
 
 ---
 
+## Convention Backups
+
+Production data integrity is paramount during database migrations, system upgrades, or scheduled maintenance. Since databases (MySQL, PostgreSQL, SQLite, Redis) and persistent volumes differ widely, `upy` adheres to **Convention over Configuration**: your application provides the domain-specific backup script, while `upy` handles **process locking**, **runtime context injection**, **archive rotation**, and **push alerts**.
+
+### 1. Zero-Config Convention Discovery
+
+`upy backup` automatically discovers and executes your project's backup script without requiring extra configuration:
+1. `<projectRoot>/backup.sh`
+2. `<projectRoot>/scripts/backup.sh`
+3. `<projectRoot>/bin/backup.sh`
+
+*(Or specify a custom script in `deploy.yaml` via `backup.script`)*.
+
+### 2. Runtime Context Injected by `upy`
+
+`upy` automatically injects standardized environment variables into the script subprocess:
+
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `UPY_PROJECT_NAME` | Project name | `my-api-service` |
+| `UPY_PROJECT_ROOT` | Absolute path of project root | `/opt/my-api-service` |
+| `UPY_BACKUP_DIR` | Target archive directory | `/opt/my-api-service/backups` |
+| `UPY_CURRENT_VERSION` | Currently active release version | `v1.2.0` |
+| `UPY_TIMESTAMP` | Formatted timestamp | `20261019-120000` |
+| `UPY_DEPLOY_TYPE` | Deployment stack type | `docker`, `system`, or `static` |
+
+### 3. Typical `backup.sh` Example (Docker Compose + Database Dump)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure target directory exists
+mkdir -p "${UPY_BACKUP_DIR}"
+
+BACKUP_FILE="${UPY_BACKUP_DIR}/dump-${UPY_PROJECT_NAME}-${UPY_TIMESTAMP}.sql.gz"
+echo "Exporting database to ${BACKUP_FILE}..."
+
+# Execute dump within the container
+docker compose exec -T db mysqldump -u root -p"${DB_PASSWORD}" "${DB_NAME}" | gzip > "${BACKUP_FILE}"
+
+echo "Database export completed successfully!"
+```
+
+### 4. Optional `deploy.yaml` Configuration
+
+```yaml
+name: my-app
+type: docker
+docker:
+  mode: compose
+  composeFile: docker-compose.yml
+
+# Optional backup settings
+backup:
+  script: backup.sh            # Custom script path (relative to project root)
+  dir: backups                 # Archive directory (defaults to backups/)
+  retention: 7                 # Retain latest N archives (default: 7, 0 disables auto-pruning)
+  timeout: 15m                 # Maximum timeout (supports 30s, 5m, 1h)
+```
+
+### 5. Common Backup Commands
+
+```bash
+# 1. Interactively select a registered project to backup
+upy backup
+
+# 2. Backup a specific project
+upy backup my-app
+
+# 3. View historical backup archives and disk usage
+upy backup my-app --list
+
+# 4. Manually rotate and retain only the latest N archives
+upy backup my-app --prune 5
+
+# 5. One-click batch backup of all registered projects
+upy backup --all -y
+```
+
+> **Key Safeguards**:  
+> - **Mutual Exclusion Lock (`.deploy.lock`)**: `upy backup` acquires an exclusive project lock (`action: 备份中`), strictly preventing race conditions against concurrent deployments (`upy release`) or cleanup (`upy clean`).  
+> - **Automatic Retention Pruning**: Automatically rotates and cleans older snapshots beyond the retention threshold (default: 7), ensuring backup files never exhaust disk space.  
+> - **Alerting & Notifications**: Automatically reports elapsed time, archive file sizes, and failure reasons to Bark mobile notifications.
+
+---
+
 ## Self-Update
 
 `upy` includes built-in cross-partition self-updates with in-place execution replacement:
@@ -338,6 +426,7 @@ upy version
 | `upy release list` | List GitHub Releases and asset availability for the current project |
 | `upy deploy <project>` | Quickly deploy the latest release of a registered local project |
 | `upy clean [project]` | Visually analyze and clean project data (bundles, old releases, or purge) |
+| `upy backup [project]` | Run convention project backup (`backup.sh`), prune archives, and push alerts |
 | `upy bundle <file>` | Deploy a local `.zip` bundle directly (offline mode, no GitHub connection) |
 | `upy init [owner] <token>` | Initialize or configure GitHub personal/organization access tokens |
 | `upy update [version]` | Self-update to latest release or switch to a target version |

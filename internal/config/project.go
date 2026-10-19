@@ -30,12 +30,21 @@ type ProjectService struct {
 	Unit  string `yaml:"unit"`
 }
 
+// ProjectBackup 服务器端备份配置 (可选)
+type ProjectBackup struct {
+	Script    string `yaml:"script"`    // 自定义脚本路径 (相对项目根目录，缺省自动探测)
+	Dir       string `yaml:"dir"`       // 备份产物归档目录 (相对项目根目录，默认 backups)
+	Retention int    `yaml:"retention"` // 自动轮转保留的最大备份份数 (0 表示不自动清理)
+	Timeout   string `yaml:"timeout"`   // 备份超时时间 (默认 15m)
+}
+
 // ProjectConfig 服务器端项目配置
 type ProjectConfig struct {
 	Name     string          `yaml:"name"`
 	Release  *ProjectRelease `yaml:"release"`
 	Releases ProjectReleases `yaml:"releases"`
 	Service  *ProjectService `yaml:"service"` // 可选: 允许在服务器端显式配置运行账号与 unit
+	Backup   *ProjectBackup  `yaml:"backup"`  // 可选: 备份脚本与轮转配置
 }
 
 // ReadProjectConfig 读取并校验服务器端 deploy.yaml
