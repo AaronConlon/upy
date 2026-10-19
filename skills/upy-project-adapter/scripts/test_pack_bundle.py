@@ -21,12 +21,12 @@ class BundleTests(unittest.TestCase):
         self.output = self.base / 'bundle.zip'
 
     def write_manifest(self):
-        (self.stage / 'deploy.yaml').write_text(json.dumps(self.manifest))
+        (self.stage / 'upy.yaml').write_text(json.dumps(self.manifest))
 
     def test_static_root_and_checksum(self):
         pack(self.stage, self.output)
         with zipfile.ZipFile(self.output) as archive:
-            self.assertEqual(set(archive.namelist()), {'deploy.yaml', 'dist/index.html'})
+            self.assertEqual(set(archive.namelist()), {'upy.yaml', 'dist/index.html'})
         self.assertEqual(Path(str(self.output)+'.sha256').read_text().split()[0], hashlib.sha256(self.output.read_bytes()).hexdigest())
 
     def test_system_executable_permissions(self):

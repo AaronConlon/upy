@@ -46,7 +46,7 @@ manifest = {
     'system':{'command':['./bin/server']},
     'healthcheck':{'url':'http://127.0.0.1:8080/health', 'timeout':'30s'},
 }
-(stage/'deploy.yaml').write_text(json.dumps(manifest, indent=2)+'\n')
+(stage/'upy.yaml').write_text(json.dumps(manifest, indent=2)+'\n')
 MANIFEST
 python3 scripts/upy/pack_bundle.py --stage "$STAGE" --output "$ASSET"
 # 验证最终 ZIP 的白名单、manifest 和 executable 权限。
@@ -54,8 +54,8 @@ python3 - "$ASSET" "$ARCH" "$VERSION" <<'VERIFY'
 import json, stat, sys, zipfile
 with zipfile.ZipFile(sys.argv[1]) as z:
     assert z.testzip() is None
-    assert sorted(z.namelist()) == ['bin/server', 'deploy.yaml']
-    m = json.loads(z.read('deploy.yaml'))
+    assert sorted(z.namelist()) == ['bin/server', 'upy.yaml']
+    m = json.loads(z.read('upy.yaml'))
     assert m['target'] == {'os':'linux','arch':sys.argv[2]}
     assert m['version'] == sys.argv[3]
     assert stat.S_IMODE(z.getinfo('bin/server').external_attr >> 16) == 0o755

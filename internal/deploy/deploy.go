@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/bundle"
+	"github.com/AaronConlon/upy/internal/cleaner"
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/deployer"
 	"github.com/AaronConlon/upy/internal/log"
@@ -213,8 +214,9 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	}
 	log.Ok("部署完成: " + manifest.Name + " " + manifest.Version)
 
-	// 先清理旧版本目录, 再输出最终目录结构, 最后打印耗时
+	// 先清理旧版本目录与旧 Bundle 缓存, 再输出最终目录结构, 最后打印耗时
 	cleanupOldReleases(root, newState)
+	cleanupOldBundles(root)
 	ui.PrintProjectLayout(root)
 
 	elapsedStr := ui.FormatDuration(time.Since(startedAt))
@@ -254,6 +256,21 @@ func cleanupOldReleases(root string, st *state.State) {
 		}
 		log.Info("🗑 清理旧版本目录 " + e.Name())
 		os.RemoveAll(filepath.Join(releasesDir, e.Name()))
+	}
+}
+
+// cleanupOldBundles 按保留策略清理多余的 bundle 缓存 (默认最多保留 3 个，支持 0~100)
+func cleanupOldBundles(root string) {
+	bundlesKeep := 3
+	if cfg, err := config.ReadProjectConfig(root); err == nil && cfg != nil {
+		bundlesKeep = cfg.BundlesKeep()
+	}
+	_, deleted, err := cleaner.PruneBundles(root, bundlesKeep)
+	if err != nil {
+		log.Warn("清理旧 Bundle 缓存出错: " + err.Error())
+	}
+	for _, name := range deleted {
+		log.Info("🗑 清理旧 Bundle 缓存 " + name)
 	}
 }
 

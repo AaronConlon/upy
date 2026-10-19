@@ -2,7 +2,7 @@
 
 构建 bundle 的工作在应用仓库，upy 自身 CLI 的二进制发布 workflow 不能直接复制成应用 workflow。
 
-生成完整项目专用 workflow，优先沿用已验证的 Actions 版本。最小结构：tag v* 触发；全局 contents: read；checkout 对应 tag；安装项目实际工具链并冻结依赖；项目测试；构建白名单 staging；生成 JSON 格式 deploy.yaml；打 ZIP 与 SHA256；将文件作为 Actions artifact 上传；统一 release job 下载全部 artifact 后发布 GitHub Release，只有该 job contents: write。
+生成完整项目专用 workflow，优先沿用已验证的 Actions 版本。最小结构：tag v* 触发；全局 contents: read；checkout 对应 tag；安装项目实际工具链并冻结依赖；项目测试；构建白名单 staging；生成 JSON 格式 `upy.yaml`；打 ZIP 与 SHA256；将文件作为 Actions artifact 上传；统一 release job 下载全部 artifact 后发布 GitHub Release，只有该 job contents: write。
 
 并发控制按 workflow+tag 分组、cancel-in-progress: false，避免同 tag 发布中断；同名 Release 重跑是否覆盖资产要明确选择，默认不可变发布。使用 gh release create 并 --verify-tag；已有同 tag Release 不要默默 --clobber。
 
@@ -14,7 +14,7 @@
 ```sh
 set -euo pipefail
 VERSION="${RELEASE_TAG#v}"
-# 项目构建后，将 JSON manifest 写入 staging/deploy.yaml
+# 项目构建后，将 JSON manifest 写入 staging/upy.yaml
 python3 scripts/upy/pack_bundle.py --stage .upy-stage --output "artifacts/bundle-linux-${GOARCH}.zip"
 ```
 

@@ -291,3 +291,62 @@ func TestDeployBundleWithUpyYaml(t *testing.T) {
 		t.Fatalf("部署结果不匹配: %+v", res)
 	}
 }
+
+func TestDeployBundlePrunesBundles(t *testing.T) {
+	root := t.TempDir()
+	bundlesDir := filepath.Join(root, "bundles")
+	if err := os.MkdirAll(bundlesDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// 写入配置: bundles keep 为 2
+	deployYaml := `name: test-prune
+release:
+  provider: github
+  repository: owner/repo
+bundles:
+  keep: 2
+`
+	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte(deployYaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// 预先放置 3 个旧的 zip 文件
+	now := time.Now()
+	_ = os.WriteFile(filepath.Join(bundlesDir, "b1.zip"), []byte("1"), 0o644)
+	_ = os.Chtimes(filepath.Join(bundlesDir, "b1.zip"), now.Add(-30*time.Minute), now.Add(-30*time.Minute))
+	_ = os.WriteFile(filepath.Join(bundlesDir, "b2.zip"), []byte("2"), 0o644)
+	_ = os.Chtimes(filepath.Join(bundlesDir, "b2.zip"), now.Add(-20*time.Minute), now.Add(-20*time.Minute))
+	_ = os.WriteFile(filepath.Join(bundlesDir, "b3.zip"), []byte("3"), 0o644)
+	_ = os.Chtimes(filepath.Join(bundlesDir, "b3.zip"), now.Add(-10*time.Minute), now.Add(-10*time.Minute))
+
+	// 构建当前待部署的 bundle
+	bundlePath := filepath.Join(t.TempDir(), "new-bundle.zip")
+	f, err := os.Create(bundlePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(f)
+	w, _ := zw.Create("upy.yaml")
+	_, _ = w.Write([]byte("name: test-prune\nversion: 1.0.0\ntype: static\n"))
+	wDist, _ := zw.Create("dist/index.html")
+	_, _ = wDist.Write([]byte("<h1>Prune</h1>"))
+	_ = zw.Close()
+	_ = f.Close()
+
+	_, err = DeployBundle(bundlePath, Options{Root: root})
+	if err != nil {
+		t.Fatalf("DeployBundle 失败: %v", err)
+	}
+
+	// 检查 bundles 目录，b1 应被删除，保留最新的 b2 和 b3
+	if _, err := os.Stat(filepath.Join(bundlesDir, "b1.zip")); !os.IsNotExist(err) {
+		t.Errorf("期望 b1.zip 被清理")
+	}
+	if _, err := os.Stat(filepath.Join(bundlesDir, "b2.zip")); err != nil {
+		t.Errorf("期望 b2.zip 被保留")
+	}
+	if _, err := os.Stat(filepath.Join(bundlesDir, "b3.zip")); err != nil {
+		t.Errorf("期望 b3.zip 被保留")
+	}
+}

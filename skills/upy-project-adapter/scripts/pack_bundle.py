@@ -20,7 +20,10 @@ def checked_path(stage, value):
 
 
 def validate(stage):
-    manifest = json.loads((stage / 'deploy.yaml').read_text())
+    manifest_path = stage / 'upy.yaml'
+    if not manifest_path.is_file():
+        raise ValueError('缺少 upy.yaml；服务器端 deploy.yaml 不能放入 bundle')
+    manifest = json.loads(manifest_path.read_text())
     if not isinstance(manifest, dict):
         raise ValueError('manifest 必须是对象')
     for field in ('name', 'version'):

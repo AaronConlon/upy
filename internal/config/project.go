@@ -23,6 +23,27 @@ type ProjectReleases struct {
 	Keep int `yaml:"keep"`
 }
 
+// ProjectBundles 压缩包保留策略 (默认保留最多 3 个，支持 0~100)
+type ProjectBundles struct {
+	Keep *int `yaml:"keep"`
+}
+
+// UnmarshalYAML 支持 bundles: 3 直接写数字，或 bundles: { keep: 3 }
+func (pb *ProjectBundles) UnmarshalYAML(value *yaml.Node) error {
+	var intVal int
+	if err := value.Decode(&intVal); err == nil {
+		pb.Keep = &intVal
+		return nil
+	}
+	type rawProjectBundles ProjectBundles
+	var raw rawProjectBundles
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+	pb.Keep = raw.Keep
+	return nil
+}
+
 // ProjectService 服务器端系统服务配置
 type ProjectService struct {
 	User  string `yaml:"user"`
@@ -43,6 +64,8 @@ type ProjectConfig struct {
 	Name     string          `yaml:"name"`
 	Release  *ProjectRelease `yaml:"release"`
 	Releases ProjectReleases `yaml:"releases"`
+	Bundles  *ProjectBundles `yaml:"bundles"` // 可选: bundle 压缩包保留策略 (默认最多保留 3 个，范围 0~100)
+	Bundle   *ProjectBundles `yaml:"bundle"`  // 兼容单数别名 bundle
 	Service  *ProjectService `yaml:"service"` // 可选: 允许在服务器端显式配置运行账号与 unit
 	Backup   *ProjectBackup  `yaml:"backup"`  // 可选: 备份脚本与轮转配置
 	Notify   *ProjectNotify  `yaml:"notify"`  // 可选: 项目级部署/备份通知配置
@@ -62,6 +85,21 @@ func (c *ProjectConfig) ActiveWebhooks() []ProjectWebhook {
 		return nil
 	}
 	return c.Notify.ActiveWebhooks()
+}
+
+// BundlesKeep 返回当前项目生效的 bundle 压缩包保留数量 (默认 3, 范围 0~100)
+func (c *ProjectConfig) BundlesKeep() int {
+	if c == nil {
+		return 3
+	}
+	b := c.Bundles
+	if b == nil {
+		b = c.Bundle
+	}
+	if b == nil || b.Keep == nil {
+		return 3
+	}
+	return *b.Keep
 }
 
 // ReadProjectConfig 读取并校验服务器端 deploy.yaml
@@ -94,5 +132,20 @@ func ReadProjectConfig(root string) (*ProjectConfig, error) {
 	if cfg.Releases.Keep <= 0 {
 		cfg.Releases.Keep = 1
 	}
+
+	// 校验并设置 bundles 保留策略 (默认保留最多 3 个，支持 0~100)
+	bundlesCfg := cfg.Bundles
+	if bundlesCfg == nil {
+		bundlesCfg = cfg.Bundle
+	}
+	keep := 3
+	if bundlesCfg != nil && bundlesCfg.Keep != nil {
+		keep = *bundlesCfg.Keep
+		if keep < 0 || keep > 100 {
+			return nil, fmt.Errorf("deploy.yaml 无效: bundles.keep 必须在 0 到 100 之间 (当前为 %d)", keep)
+		}
+	}
+	cfg.Bundles = &ProjectBundles{Keep: &keep}
+
 	return &cfg, nil
 }

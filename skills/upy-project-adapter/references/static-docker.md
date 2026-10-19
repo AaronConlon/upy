@@ -9,7 +9,7 @@ type: static
 static:
   directory: dist
 ```
-ZIP 内容必须是 deploy.yaml + dist/index.html + dist 内其他资源，不能套一层项目目录。若真实输出为 out，修改 directory 并复制 out。根据 packageManager / lockfile 使用冻结依赖安装：pnpm frozen-lockfile、npm ci 或对应 Yarn 版本；Node 版本来自项目。已有 build script 优先，不能盲目 npm install。
+ZIP 内容必须是 `upy.yaml` + dist/index.html + dist 内其他资源，不能套一层项目目录。若真实输出为 out，修改 directory 并复制 out。根据 packageManager / lockfile 使用冻结依赖安装：pnpm frozen-lockfile、npm ci 或对应 Yarn 版本；Node 版本来自项目。已有 build script 优先，不能盲目 npm install。
 
 upy 只切换 current 软链，不替你配置 HTTP 服务。Nginx root 指向 <root>/current；SPA 路由回退 index.html，静态资源路径/base 按域名部署位置设置。SSR 需要常驻 runtime，使用 Docker/system。
 

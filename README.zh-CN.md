@@ -159,6 +159,14 @@ release:
   repository: owner/repo      # GitHub 仓库路径 (组织/仓库名)
   asset: bundle.zip          # 资产文件名（可选，默认 bundle.zip，支持正则/模糊匹配）
 
+# 可选: Bundle 压缩包保留策略 (默认最多保留 3 个，支持设置范围 0~100)
+bundles:
+  keep: 3
+
+# 可选: 历史版本目录保留策略 (清理逻辑默认保留当前与上一版本)
+releases:
+  keep: 1
+
 # 可选: 项目级独立配置 Bark 通知接收人 (与全局 ~/.upy/config.yaml 智能合并并自动去重)
 notify:
   bark:
@@ -385,6 +393,12 @@ type: docker
 docker:
   mode: compose
   composeFile: docker-compose.yml
+
+# 压缩包与历史版本保留策略（可选）
+bundles:
+  keep: 3                      # 保留最近的 Bundle 压缩包数量 (默认 3，支持 0~100)
+releases:
+  keep: 1                      # 历史版本保留份数 (默认保留当前与上一版本)
 
 # 备份功能配置（可选）
 backup:
@@ -707,6 +721,9 @@ upy update --force
 # 查看当前运行版本及环境
 upy version
 ```
+
+> 💡 **自动同步 Shell 命令补全**：  
+> 在执行 `upy update` 升级或切换版本时，`upy` 会自动跨 Shell 探测当前主机环境（支持 `zsh`、`bash` 与 `fish`），并一键就地同步更新命令补全脚本。即使新版本加入了新一级命令（如 `analysis`），无需手动执行任何脚本，新开终端（或 `source` 配置文件）即可直接体验流畅的 Tab 补全。
 
 ---
 

@@ -21,7 +21,7 @@ Agent 会先读取项目事实与目标版本，再选择部署类型。仅生�
 - `SKILL.md`：入口与接入步骤。
 - `references/`：当前 upy 契约和分类细节。
 - `assets/`：结构样例，使用前替换项目参数。
-- `scripts/pack_bundle.py`：仅依赖 Python3 标准库，读取 JSON 格式的 deploy.yaml，生成 ZIP 和 SHA256。校验核心布局与路径边界，不能替代完整 manifest parser、ELF 检查或部署测试；敏感文件名检查也不能代替人工白名单审查。
+- `scripts/pack_bundle.py`：仅依赖 Python3 标准库，读取 Bundle 根目录 JSON 格式的 `upy.yaml`，生成 ZIP 和 SHA256。服务器侧的 `deploy.yaml` 不属于 Bundle。校验核心布局与路径边界，不能替代完整 manifest parser、ELF 检查或部署测试；敏感文件名检查也不能代替人工白名单审查。
 - `evals/evals.json`：Agent 场景评估定义。
 
 运行脚本测试：

@@ -28,6 +28,6 @@ import json
 import sys
 from pathlib import Path
 manifest = {"name": "demo-web", "version": sys.argv[2], "type": "static", "static": {"directory": "dist"}}
-(Path(sys.argv[1]) / "deploy.yaml").write_text(json.dumps(manifest, indent=2) + "\n")
+(Path(sys.argv[1]) / "upy.yaml").write_text(json.dumps(manifest, indent=2) + "\n")
 PYMANIFEST
 python3 scripts/upy/pack_bundle.py --stage "$STAGE" --output "$OUTPUT"

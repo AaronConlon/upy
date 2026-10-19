@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/cmdrun"
 	"github.com/AaronConlon/upy/internal/config"
@@ -192,6 +194,80 @@ func CleanBundles(root string) (int64, int, error) {
 		}
 	}
 	return freedBytes, count, errors.Join(errs...)
+}
+
+// PruneBundles 按保留策略清理 bundles/ 目录下的 zip 压缩包，保留修改时间最新的 keepCount 个 (0~100)
+// 返回释放的字节数、已删除的文件名列表、错误
+func PruneBundles(root string, keepCount int) (int64, []string, error) {
+	if keepCount < 0 {
+		keepCount = 0
+	}
+	lock, err := projectlock.Acquire(root, "清理 Bundle 缓存")
+	if err != nil {
+		return 0, nil, err
+	}
+	defer lock.Release()
+
+	bundlesDir := filepath.Join(root, "bundles")
+	entries, err := os.ReadDir(bundlesDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil, nil
+		}
+		return 0, nil, err
+	}
+
+	type bundleItem struct {
+		name    string
+		path    string
+		size    int64
+		modTime time.Time
+	}
+
+	var items []bundleItem
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".zip") {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		items = append(items, bundleItem{
+			name:    e.Name(),
+			path:    filepath.Join(bundlesDir, e.Name()),
+			size:    info.Size(),
+			modTime: info.ModTime(),
+		})
+	}
+
+	if len(items) <= keepCount {
+		return 0, nil, nil
+	}
+
+	// 按修改时间降序排序 (最新的排前面)；如果修改时间相同，按文件名降序排序
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].modTime.Equal(items[j].modTime) {
+			return items[i].name > items[j].name
+		}
+		return items[i].modTime.After(items[j].modTime)
+	})
+
+	var freedBytes int64
+	var deleted []string
+	var errs []error
+
+	for i := keepCount; i < len(items); i++ {
+		item := items[i]
+		if err := os.Remove(item.path); err != nil {
+			errs = append(errs, fmt.Errorf("删除 bundle 缓存失败 %s: %w", item.name, err))
+		} else {
+			freedBytes += item.size
+			deleted = append(deleted, item.name)
+		}
+	}
+
+	return freedBytes, deleted, errors.Join(errs...)
 }
 
 // CleanOldReleases 清理 releases/ 下所有非活跃历史版本目录

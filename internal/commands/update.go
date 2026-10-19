@@ -129,12 +129,13 @@ func UpdateCmd(target string, force bool) error {
 	_ = os.Chmod(self, 0o755)
 
 	log.Ok(fmt.Sprintf("已成功更新 %s 到 %s", self, release.Tag))
-	// 已替换为新二进制，交由新版本写入补全规则，避免把旧命令列表写回 shell。
+	// 已替换为新二进制，交由新版本写入补全规则，并在异常时回退到本进程同步
 	completion := exec.Command(self, "__install-completion")
 	completion.Stdout = os.Stdout
 	completion.Stderr = os.Stderr
 	if err := completion.Run(); err != nil {
-		log.Warn("Tab 命令补全同步失败: " + err.Error())
+		log.Warn("通过新版本注册补全异常，使用当前进程同步: " + err.Error())
+		reportCompletionInstall()
 	}
 	log.Info("⏱ 耗时: " + log.Green(log.Bold(ui.FormatDuration(time.Since(startedAt)))))
 	log.Info("请重新运行 upy 以使用新版本。")
@@ -152,7 +153,11 @@ func reportCompletionInstall() {
 		return
 	}
 	log.Info("检测到当前 shell: " + result.Shell)
-	log.Ok("已同步 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+	if len(result.ScriptPaths) > 1 {
+		log.Ok("已同步 Tab 命令补全 (" + strings.Join(result.ScriptPaths, ", ") + ")（新开终端后生效）")
+	} else {
+		log.Ok("已同步 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+	}
 }
 
 // replaceExecutable 替换目标二进制文件，妥善处理同分区原子 rename、跨分区 EXDEV 以及 Linux 运行中二进制 ETXTBSY 保护

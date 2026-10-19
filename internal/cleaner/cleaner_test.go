@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/projectlock"
 	"github.com/AaronConlon/upy/internal/state"
@@ -405,5 +406,70 @@ func TestPurgeProject_SystemdCleanup(t *testing.T) {
 	// 验证 unit 文件已被删除
 	if _, err := os.Stat(unitFile); !os.IsNotExist(err) {
 		t.Errorf("Expected unit file to be deleted during PurgeProject")
+	}
+}
+
+func TestPruneBundles(t *testing.T) {
+	root := t.TempDir()
+	bundlesDir := filepath.Join(root, "bundles")
+	if err := os.MkdirAll(bundlesDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// 创建 4 个不同时间的 zip 文件
+	now := time.Now()
+	files := []struct {
+		name    string
+		size    int
+		modDiff time.Duration
+	}{
+		{"bundle-v1.zip", 100, -40 * time.Minute},
+		{"bundle-v2.zip", 200, -30 * time.Minute},
+		{"bundle-v3.zip", 300, -20 * time.Minute},
+		{"bundle-v4.zip", 400, -10 * time.Minute},
+	}
+	for _, f := range files {
+		p := filepath.Join(bundlesDir, f.name)
+		_ = os.WriteFile(p, make([]byte, f.size), 0o644)
+		_ = os.Chtimes(p, now.Add(f.modDiff), now.Add(f.modDiff))
+	}
+
+	// 1. keep = 2: 应删除最旧的 bundle-v1.zip (100) 和 bundle-v2.zip (200)，保留 v3 和 v4
+	freed, deleted, err := PruneBundles(root, 2)
+	if err != nil {
+		t.Fatalf("PruneBundles(2) 失败: %v", err)
+	}
+	if freed != 300 {
+		t.Errorf("期望释放 300 字节，实际 %d", freed)
+	}
+	if len(deleted) != 2 || deleted[0] != "bundle-v2.zip" || deleted[1] != "bundle-v1.zip" {
+		t.Errorf("期望删除 [bundle-v2.zip bundle-v1.zip]，实际 %v", deleted)
+	}
+	if _, err := os.Stat(filepath.Join(bundlesDir, "bundle-v3.zip")); err != nil {
+		t.Errorf("bundle-v3.zip 应被保留")
+	}
+	if _, err := os.Stat(filepath.Join(bundlesDir, "bundle-v4.zip")); err != nil {
+		t.Errorf("bundle-v4.zip 应被保留")
+	}
+
+	// 2. keep = 2 再次执行：无需清理
+	freed2, deleted2, err := PruneBundles(root, 2)
+	if err != nil {
+		t.Fatalf("PruneBundles(2) 再次执行失败: %v", err)
+	}
+	if freed2 != 0 || len(deleted2) != 0 {
+		t.Errorf("期望无需清理，实际 freed=%d, deleted=%v", freed2, deleted2)
+	}
+
+	// 3. keep = 0: 应清理所有剩余的 zip (v3: 300, v4: 400)
+	freed3, deleted3, err := PruneBundles(root, 0)
+	if err != nil {
+		t.Fatalf("PruneBundles(0) 失败: %v", err)
+	}
+	if freed3 != 700 {
+		t.Errorf("期望释放 700 字节，实际 %d", freed3)
+	}
+	if len(deleted3) != 2 {
+		t.Errorf("期望删除 2 个文件，实际 %d", len(deleted3))
 	}
 }

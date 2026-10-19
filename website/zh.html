@@ -325,6 +325,12 @@ release:
   repository: owner/my-spa-app
   asset: bundle.zip
 
+<span class="comment"># 压缩包与版本保留策略 (默认最多保留 3 个 bundle 压缩包，范围 0~100)</span>
+bundles:
+  keep: 3
+releases:
+  keep: 1
+
 <span class="comment"># Nginx 配置指向软链: root /var/www/my-spa-app/current;</span></code></pre>
               </div>
             </div>
@@ -598,7 +604,8 @@ release:
             <span class="step-number">02 / 清理</span>
             <h3>磁盘空间分析与安全清理。</h3>
             <p>
-              扫描项目磁盘占用（MB/GB），支持交互式清理历史 bundle 缓存与陈旧版本。
+              部署时依据 <code>bundles.keep</code> 自动保留最新压缩包（默认最多 3 个，支持 0~100 自由定制）；
+              支持通过 <code>upy clean</code> 交互式清理或一键常规瘦身。
               内置双重活跃版本保护，禁止删除 <code>current</code> 正在运行的版本；通过跨进程互斥锁避免并发冲突。
             </p>
             <a
@@ -612,11 +619,11 @@ release:
             <pre><code><span class="comment"># 交互式清理菜单（支持空间分析）</span>
 upy clean
 
-<span class="comment"># 清理历史 bundle 压缩包缓存</span>
+<span class="comment"># 仅清理历史 bundle 压缩包缓存</span>
 upy clean --bundles
 
-<span class="comment"># 仅保留最近 3 个历史版本</span>
-upy clean --keep 3</code></pre>
+<span class="comment"># 一键常规瘦身（清理缓存与旧版本）</span>
+upy clean --all -y</code></pre>
           </div>
         </article>
         <article class="step step-wide" data-step>
@@ -1055,6 +1062,10 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
                 <div><strong>智能去重与独立静音：</strong>重叠 Token 自动去重仅推送一次；声明 <code>notify: { enabled: false }</code> 可随时独立静音该项目。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>压缩包保留与 Shell 补全同步：</strong>支持在 <code>deploy.yaml</code> 中通过 <code>bundles.keep</code> 控制保留 0~100 个历史压缩包（默认最多 3 个）；<code>upy update</code> 升级时全自动同步 <code>zsh</code>、<code>bash</code> 与 <code>fish</code> 补全规则，新命令即刻生效。</div>
               </div>
             </div>
           </div>

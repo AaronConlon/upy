@@ -196,7 +196,11 @@ func main() {
 			return
 		}
 		log.Info("检测到当前 shell: " + result.Shell)
-		log.Ok("已安装 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+		if len(result.ScriptPaths) > 1 {
+			log.Ok("已安装 Tab 命令补全 (" + strings.Join(result.ScriptPaths, ", ") + ")（新开终端后生效）")
+		} else {
+			log.Ok("已安装 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+		}
 		return
 	}
 

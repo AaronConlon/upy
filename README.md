@@ -158,6 +158,14 @@ release:
   repository: owner/repo      # GitHub repo (owner/name)
   asset: bundle.zip          # Asset name (defaults to bundle.zip, supports regex/wildcard)
 
+# Optional: Bundle archive retention (default: 3, allowed: 0~100)
+bundles:
+  keep: 3
+
+# Optional: Release directory retention (default: keep current and previous releases)
+releases:
+  keep: 1
+
 # Optional: Project-level multi-recipient Bark notifications
 notify:
   bark:
@@ -384,6 +392,12 @@ type: docker
 docker:
   mode: compose
   composeFile: docker-compose.yml
+
+# Archive and release retention (optional)
+bundles:
+  keep: 3                      # Retain latest N bundle archives (default: 3, allowed: 0~100)
+releases:
+  keep: 1                      # Retain latest release directories (default: current & previous)
 
 # Optional backup settings
 backup:
@@ -708,6 +722,9 @@ upy update --force
 # Display current version and environment
 upy version
 ```
+
+> 💡 **Automatic Shell Completion Synchronization**:  
+> Running `upy update` automatically scans and synchronizes shell completion rules across available host shells (`zsh`, `bash`, and `fish`). Newly introduced commands (such as `analysis`) are immediately available via Tab completion in new terminals without manual reinstallation.
 
 ---
 

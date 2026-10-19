@@ -1,6 +1,6 @@
 ---
 name: upy-project-adapter
-description: 为应用项目接入 upy 部署，生成服务器配置、bundle deploy.yaml、GitHub Actions 构建和 GitHub Release 资产。用户提到适配 upy、upy 配置、发布 bundle、Release 自动部署、Go 二进制 systemd 部署、SPA 或 Docker Compose 接入 upy 时使用，包括检查和修复已有接入。适用于应用仓库，不要与 upy CLI 自身的发布流程混淆。
+description: 为应用项目接入 upy 部署，生成服务器配置、bundle upy.yaml、GitHub Actions 构建和 GitHub Release 资产。用户提到适配 upy、upy 配置、发布 bundle、Release 自动部署、Go 二进制 systemd 部署、SPA 或 Docker Compose 接入 upy 时使用，包括检查和修复已有接入。适用于应用仓库，不要与 upy CLI 自身的发布流程混淆。
 ---
 
 # upy 项目接入
@@ -31,11 +31,11 @@ scripts/upy/pack_bundle.py            # 从本 Skill scripts 复制
 .github/workflows/upy-release.yml
 docs/upy-deployment.md
 ```
-Bundle manifest 在 staging 根目录生成 `upy.yaml`（兼容旧版 `deploy.yaml`）；不得将 server 配置误放 ZIP。不要提交真实 token、service.env、数据库或整个工作目录。构建 staging 只复制已列明的产物和运行必需文件。
+Bundle manifest 在 staging 根目录生成官方文件名 `upy.yaml`；upy v0.3.0 仍兼容读取旧版 `deploy.yaml`，但新接入不要继续生成旧名。服务器配置仍是 `<root>/deploy.yaml`，不得误放入 ZIP。不要提交真实 token、service.env、数据库或整个工作目录。构建 staging 只复制已列明的产物和运行必需文件。
 
 可参考 [完整接入示例](assets/examples/README.md) 中的配置、构建脚本和 workflow。使用 assets 中 server 和 manifest 样例作结构参考，必须替换项目名、仓库、目录、端口、入口等。生成 workflow 时遵循 references/release.md，不能只交付未替换的模板。
 
-打包工具用标准库读取 **JSON 格式** manifest（命名为 upy.yaml 或 deploy.yaml，upy 的 YAML parser 可读取 JSON）。调用方式：
+打包工具用标准库读取 **JSON 格式** manifest（文件名必须为 `upy.yaml`；JSON 是 YAML 的子集）。调用方式：
 ```
 python3 scripts/upy/pack_bundle.py --stage .upy-stage --output artifacts/bundle.zip
 ```

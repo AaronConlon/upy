@@ -325,6 +325,12 @@ release:
   repository: owner/my-spa-app
   asset: bundle.zip
 
+<span class="comment"># Retention policies (defaults to 3 bundle archives, range 0~100)</span>
+bundles:
+  keep: 3
+releases:
+  keep: 1
+
 <span class="comment"># Nginx config: root /var/www/my-spa-app/current;</span></code></pre>
               </div>
             </div>
@@ -600,7 +606,8 @@ release:
             <span class="step-number">02 / Clean</span>
             <h3>Disk space analysis and safe pruning.</h3>
             <p>
-              Scans disk usage with human-readable formatting (MB/GB) and interactively prunes stale bundle caches and obsolete releases.
+              Auto-prunes old bundle archives during deployment based on <code>bundles.keep</code> (default 3, range 0~100);
+              supports interactive cleanup or one-click slim down with <code>upy clean</code>.
               Dual-layer active protection ensures the active <code>current</code> version is never deleted, backed by cross-process locks against concurrent operations.
             </p>
             <a
@@ -614,11 +621,11 @@ release:
             <pre><code><span class="comment"># Interactive clean menu with usage breakdown</span>
 upy clean
 
-<span class="comment"># Purge downloaded bundle archives</span>
+<span class="comment"># Purge downloaded bundle archives only</span>
 upy clean --bundles
 
-<span class="comment"># Keep only the 3 most recent releases</span>
-upy clean --keep 3</code></pre>
+<span class="comment"># One-click slim down (caches and old releases)</span>
+upy clean --all -y</code></pre>
           </div>
         </article>
         <article class="step step-wide" data-step>
@@ -1057,6 +1064,10 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
                 <div><strong>Smart Merge &amp; Deduplication:</strong> Overlapping recipients between project and global configs are merged and dispatched once.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Bundle Retention &amp; Shell Completion Sync:</strong> Configurable <code>bundles.keep</code> (0~100, default 3) in <code>deploy.yaml</code>; <code>upy update</code> automatically synchronizes completion rules for <code>zsh</code>, <code>bash</code>, and <code>fish</code> so new commands are instantly available.</div>
               </div>
             </div>
           </div>
