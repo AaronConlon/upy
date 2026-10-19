@@ -252,6 +252,347 @@ upy bundle ./bundle.zip</code></pre>
             </p>
           </article>
         </div>
+
+        <!-- 三大部署模式实战全流程 -->
+        <div class="deploy-showcase" id="deploy-showcase">
+          <div class="showcase-header">
+            <div class="showcase-header-intro">
+              <h4>三大部署实战全流程：从 CI 打包到服务器运行</h4>
+              <p>真实还原三大模式的完整流水线 —— 包含 CI 自动化打包脚本、服务器目录结构、真实终端执行日志与底层可靠性保障。</p>
+            </div>
+            <div class="showcase-tabs" role="tablist" aria-label="三大部署模式实战切换">
+              <button type="button" role="tab" class="showcase-tab is-active" id="tab-spa" aria-selected="true" aria-controls="panel-spa">
+                <span class="tab-badge">01</span>
+                <span class="tab-text">
+                  <strong>SPA 静态站点</strong>
+                  <small>Vue · React · Vite · Astro</small>
+                </span>
+              </button>
+              <button type="button" role="tab" class="showcase-tab" id="tab-system" aria-selected="false" aria-controls="panel-system">
+                <span class="tab-badge">02</span>
+                <span class="tab-text">
+                  <strong>Systemd 原生服务</strong>
+                  <small>Go · Rust · 编译二进制</small>
+                </span>
+              </button>
+              <button type="button" role="tab" class="showcase-tab" id="tab-docker" aria-selected="false" aria-controls="panel-docker">
+                <span class="tab-badge">03</span>
+                <span class="tab-text">
+                  <strong>Docker / Compose</strong>
+                  <small>容器微服务 · 多容器栈</small>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel 1: SPA 静态站点 -->
+          <div class="showcase-panel is-active" id="panel-spa" role="tabpanel" aria-labelledby="tab-spa">
+            <div class="showcase-grid">
+              <div class="showcase-steps">
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>01</span> CI/CD 自动化打包</div>
+                    <div class="step-card-file">.github/workflows/deploy.yml</div>
+                  </div>
+                  <pre><code><span class="comment"># 1. 构建前端产物</span>
+- name: Build frontend
+  run: npm ci && npm run build
+
+<span class="comment"># 2. 写入清单并打成 bundle.zip</span>
+- name: Package bundle
+  run: |
+    cat &lt;&lt; 'EOF' &gt; dist/deploy.yaml
+    name: my-spa-app
+    version: ${{ github.ref_name }}
+    type: static
+    static:
+      directory: dist
+    EOF
+    cd dist &amp;&amp; zip -r ../bundle.zip . deploy.yaml</code></pre>
+                </div>
+
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>02</span> 服务器端配置与目录布局</div>
+                    <div class="step-card-file">/var/www/my-spa-app/deploy.yaml</div>
+                  </div>
+                  <pre><code><span class="comment"># 服务器端项目配置</span>
+name: my-spa-app
+release:
+  provider: github
+  repository: owner/my-spa-app
+  asset: bundle.zip
+
+<span class="comment"># Nginx 配置指向软链: root /var/www/my-spa-app/current;</span></code></pre>
+                </div>
+
+                <div class="showcase-guarantees">
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>彻底杜绝 403 Forbidden</strong>：递归自动规整目录权限为 <code>0755</code>，静态文件权限为 <code>0644</code>。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>微秒级原子软链切换</strong>：通过 POSIX 原子重命名切换 <code>current -&gt; releases/1.0.0/dist</code>，发布过程零中断。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>双版本保护与秒级回滚</strong>：安全保留当前与上一版本，健康探测异常时软链瞬间切回上一成功版本。</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">host: /var/www/my-spa-app</span>
+                  <button type="button" class="terminal-copy" data-copy="term-spa-code-zh">复制日志</button>
+                </div>
+                <div class="terminal-body">
+                  <pre id="term-spa-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-info">📦 项目:</span> my-spa-app
+  <span class="t-info">📁 目录:</span> /var/www/my-spa-app
+  <span class="t-info">🧩 类型:</span> 静态站点 (static)
+  <span class="t-info">🏷 当前版本:</span> 未部署
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-step">-&gt; 正在获取 owner/my-spa-app 的 v1.0.0 版本...</span>
+  <span class="t-ok">✓ 已选择版本 v1.0.0</span>
+  <span class="t-step">-&gt; ⬇️  正在下载资产 bundle.zip（1.4MB）...</span>
+  <span class="t-ok">✓ 已保存到 bundles/v1.0.0-bundle.zip</span>
+  <span class="t-step">-&gt; 正在解压 bundle...</span>
+  <span class="t-ok">✓ bundle 解压完成</span>
+  <span class="t-step">-&gt; 正在校验静态 bundle 入口...</span>
+  <span class="t-ok">✓ 静态 bundle 校验通过 (dist/index.html 存在)</span>
+  <span class="t-step">-&gt; 正在自适应修复目录与文件权限...</span>
+  <span class="t-ok">✓ 目录权限修正为 0755，文件权限修正为 0644</span>
+  <span class="t-step">-&gt; 正在原子切换 current 软链...</span>
+  <span class="t-highlight">✓ current -&gt; releases/1.0.0/dist</span>
+  <span class="t-ok">✓ 部署完成: my-spa-app 1.0.0</span>
+  <span class="t-time">⏱ 部署耗时: 0.8s</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 2: Systemd 原生服务 -->
+          <div class="showcase-panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
+            <div class="showcase-grid">
+              <div class="showcase-steps">
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>01</span> CI/CD 打包流水线 (源自 upy-test)</div>
+                    <div class="step-card-file">.github/workflows/system.yml</div>
+                  </div>
+                  <pre><code><span class="comment"># 1. 交叉编译 Linux 纯静态二进制</span>
+- name: Build Go binary
+  env:
+    CGO_ENABLED: '0'
+    GOOS: linux
+    GOARCH: amd64
+  run: go build -trimpath -ldflags "-s -w" -o bin/web ./cmd/web
+
+<span class="comment"># 2. 打包清单与可执行文件</span>
+- name: Package bundle
+  run: |
+    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    name: my-api
+    version: ${{ github.ref_name }}
+    type: system
+    target: { os: linux, arch: amd64 }
+    system:
+      command: ["./bin/web", "--port", "8080"]
+    healthcheck:
+      url: http://127.0.0.1:8080/health
+      timeout: 15s
+    EOF
+    zip -r bundle-linux-amd64.zip deploy.yaml bin/web</code></pre>
+                </div>
+
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>02</span> 服务器端配置与数据隔离</div>
+                    <div class="step-card-file">/opt/my-api/deploy.yaml</div>
+                  </div>
+                  <pre><code>name: my-api
+release:
+  provider: github
+  repository: owner/my-api
+  asset: bundle-linux-amd64.zip
+service:
+  user: my-api            <span class="comment"># 独立无权限系统账号</span>
+  group: my-api
+  unit: upy-my-api.service
+
+<span class="comment"># 业务持久化数据隔离在 /opt/my-api/shared/data/</span>
+<span class="comment"># 环境变量与配置位于 /opt/my-api/shared/service.env</span></code></pre>
+                </div>
+
+                <div class="showcase-guarantees">
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>拒绝静默提权</strong>：显式预检 <code>service.user</code> 与用户组存在性，不存在时立即阻断，杜绝以 root 提权运行。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>端口与 PID 严密防伪</strong>：结合 <code>/proc/&lt;pid&gt;/fd</code> 与 socket 校验本地监听者归属，防止被假冒进程欺骗。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>有界确定性回滚</strong>：新服务失败时，先还原置换前二进制再拉起旧服务，并进行真实 HTTP 存活性验证。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Live Unit 保护</strong>：<code>clean</code> 动态解析 live systemd unit 引用，严防清理误删正在运行的活跃二进制。</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">host: /opt/my-api (systemd)</span>
+                  <button type="button" class="terminal-copy" data-copy="term-system-code-zh">复制日志</button>
+                </div>
+                <div class="terminal-body">
+                  <pre id="term-system-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-info">📦 项目:</span> my-api
+  <span class="t-info">📁 目录:</span> /opt/my-api
+  <span class="t-info">🧩 类型:</span> 系统原生服务 (system)
+  <span class="t-info">🏷 当前版本:</span> 1.0.0
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-step">-&gt; 正在获取 owner/my-api 的 v1.1.0 版本...</span>
+  <span class="t-ok">✓ 已选择版本 v1.1.0</span>
+  <span class="t-step">-&gt; ⬇️  正在下载资产 bundle-linux-amd64.zip（4.2MB）...</span>
+  <span class="t-ok">✓ 已保存到 bundles/v1.1.0-bundle-linux-amd64.zip</span>
+  <span class="t-step">-&gt; 正在解压 bundle...</span>
+  <span class="t-ok">✓ bundle 解压完成</span>
+  <span class="t-step">-&gt; 正在校验系统服务配置与可执行文件...</span>
+  <span class="t-ok">✓ 系统服务配置校验通过 (user: my-api, arch: linux/amd64)</span>
+  <span class="t-step">-&gt; 正在更新 systemd unit 并加载配置...</span>
+  <span class="t-ok">✓ 系统服务已启动 (upy-my-api.service)</span>
+  <span class="t-step">-&gt; 正在健康检查 http://127.0.0.1:8080/health (超时 15s)...</span>
+  <span class="t-ok">✓ 健康检查通过 (PID: 28412, Port 8080 归属校验无误)</span>
+  <span class="t-step">-&gt; 正在原子切换 current 软链...</span>
+  <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
+  <span class="t-ok">✓ 部署完成: my-api 1.1.0</span>
+  <span class="t-time">⏱ 部署耗时: 3.2s</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Docker / Compose 容器项目 -->
+          <div class="showcase-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
+            <div class="showcase-grid">
+              <div class="showcase-steps">
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>01</span> CI/CD 自动化打包</div>
+                    <div class="step-card-file">.github/workflows/deploy.yml</div>
+                  </div>
+                  <pre><code><span class="comment"># 打包 Compose 文件与应用制品</span>
+- name: Package Compose bundle
+  run: |
+    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    name: my-compose-stack
+    version: ${{ github.ref_name }}
+    type: docker
+    docker:
+      mode: compose
+      composeFile: docker-compose.yml
+    healthcheck:
+      url: http://127.0.0.1:8080/health
+      timeout: 30s
+    EOF
+    zip -r bundle.zip deploy.yaml docker-compose.yml Dockerfile src/</code></pre>
+                </div>
+
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>02</span> 服务器端配置与密钥隔离</div>
+                    <div class="step-card-file">/opt/my-compose-stack/deploy.yaml</div>
+                  </div>
+                  <pre><code>name: my-compose-stack
+release:
+  provider: github
+  repository: owner/my-compose-stack
+  asset: bundle.zip
+
+<span class="comment"># 生产环境私密配置放于 shared/.env</span>
+<span class="comment"># 数据库与持久化数据卷挂载至 shared/data/</span></code></pre>
+                </div>
+
+                <div class="showcase-guarantees">
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>零端口绑定冲突</strong>：新镜像先在后台 build 就绪，旧容器平滑停止并清理孤儿后立即启动新栈。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>分层环境变量合并</strong>：制品默认配置按 Compose 优先级被宿主机 <code>shared/.env</code> 生产密钥覆盖。</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>容器故障自动回滚</strong>：健康探测失败或容器异常崩溃时，自动停止故障容器并无损重启上一可用版本。</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">host: /opt/my-compose-stack (docker)</span>
+                  <button type="button" class="terminal-copy" data-copy="term-docker-code-zh">复制日志</button>
+                </div>
+                <div class="terminal-body">
+                  <pre id="term-docker-code-zh"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-info">📦 项目:</span> my-compose-stack
+  <span class="t-info">📁 目录:</span> /opt/my-compose-stack
+  <span class="t-info">🧩 类型:</span> Docker Compose (docker)
+  <span class="t-info">🏷 当前版本:</span> 1.0.0
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-step">-&gt; 正在获取 owner/my-compose-stack 的 v1.1.0 版本...</span>
+  <span class="t-ok">✓ 已选择版本 v1.1.0</span>
+  <span class="t-step">-&gt; ⬇️  正在下载资产 bundle.zip（1.8MB）...</span>
+  <span class="t-ok">✓ 已保存到 bundles/v1.1.0-bundle.zip</span>
+  <span class="t-step">-&gt; 正在解压 bundle...</span>
+  <span class="t-ok">✓ bundle 解压完成</span>
+  <span class="t-step">-&gt; 正在执行 docker compose build (docker-compose.yml)...</span>
+  <span class="t-ok">✓ 镜像构建完成</span>
+  <span class="t-step">-&gt; 正在停止上一版本并释放宿主端口...</span>
+  <span class="t-ok">✓ 上一版本旧栈已平滑停止</span>
+  <span class="t-step">-&gt; 正在启动新版本 (docker compose up -d)...</span>
+  <span class="t-ok">✓ 容器集群已启动</span>
+  <span class="t-step">-&gt; 正在健康检查 http://127.0.0.1:8080/health (超时 30s)...</span>
+  <span class="t-ok">✓ 健康检查通过 (HTTP 200 OK)</span>
+  <span class="t-step">-&gt; 正在原子切换 current 软链...</span>
+  <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
+  <span class="t-ok">✓ 部署完成: my-compose-stack 1.1.0</span>
+  <span class="t-time">⏱ 部署耗时: 12.3s</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <article class="step" data-step>
           <div class="step-copy">
             <span class="step-number">02 / 清理</span>

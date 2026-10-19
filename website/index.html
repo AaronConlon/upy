@@ -252,6 +252,349 @@ upy bundle ./bundle.zip</code></pre>
             </p>
           </article>
         </div>
+
+        <!-- Interactive 3-Mode Deployment Showcase -->
+        <div class="deploy-showcase" id="deploy-showcase">
+          <div class="showcase-header">
+            <div class="showcase-header-intro">
+              <h4>Deployment Walkthrough: From CI Packaging to Server Execution</h4>
+              <p>Explore real-world pipelines for each deployment mode — including CI build steps, server directory structure, terminal logs, and resilience mechanisms.</p>
+            </div>
+            <div class="showcase-tabs" role="tablist" aria-label="Deployment Mode Walkthroughs">
+              <button type="button" role="tab" class="showcase-tab is-active" id="tab-spa" aria-selected="true" aria-controls="panel-spa">
+                <span class="tab-badge">01</span>
+                <span class="tab-text">
+                  <strong>SPA Static Sites</strong>
+                  <small>Vue · React · Vite · Astro</small>
+                </span>
+              </button>
+              <button type="button" role="tab" class="showcase-tab" id="tab-system" aria-selected="false" aria-controls="panel-system">
+                <span class="tab-badge">02</span>
+                <span class="tab-text">
+                  <strong>Systemd Native Services</strong>
+                  <small>Go · Rust · Compiled Binaries</small>
+                </span>
+              </button>
+              <button type="button" role="tab" class="showcase-tab" id="tab-docker" aria-selected="false" aria-controls="panel-docker">
+                <span class="tab-badge">03</span>
+                <span class="tab-text">
+                  <strong>Docker / Compose</strong>
+                  <small>Microservices · Containers</small>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel 1: SPA Static Sites -->
+          <div class="showcase-panel is-active" id="panel-spa" role="tabpanel" aria-labelledby="tab-spa">
+            <div class="showcase-grid">
+              <div class="showcase-steps">
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>01</span> CI/CD Packaging</div>
+                    <div class="step-card-file">.github/workflows/deploy.yml</div>
+                  </div>
+                  <pre><code><span class="comment"># 1. Build frontend artifacts</span>
+- name: Build frontend
+  run: npm ci && npm run build
+
+<span class="comment"># 2. Inject manifest & package bundle.zip</span>
+- name: Package bundle
+  run: |
+    cat &lt;&lt; 'EOF' &gt; dist/deploy.yaml
+    name: my-spa-app
+    version: ${{ github.ref_name }}
+    type: static
+    static:
+      directory: dist
+    EOF
+    cd dist &amp;&amp; zip -r ../bundle.zip . deploy.yaml</code></pre>
+                </div>
+
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>02</span> Server Configuration &amp; Layout</div>
+                    <div class="step-card-file">/var/www/my-spa-app/deploy.yaml</div>
+                  </div>
+                  <pre><code><span class="comment"># Server project declaration</span>
+name: my-spa-app
+release:
+  provider: github
+  repository: owner/my-spa-app
+  asset: bundle.zip
+
+<span class="comment"># Nginx config: root /var/www/my-spa-app/current;</span></code></pre>
+                </div>
+
+                <div class="showcase-guarantees">
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Zero 403 Forbidden Errors</strong>: Recursively resets directory permissions to <code>0755</code> and file permissions to <code>0644</code>.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Atomic Symlink Swap</strong>: Points <code>current -&gt; releases/1.0.0/dist</code> in microseconds using POSIX atomic rename.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Dual-Version Rollback</strong>: Keeps active and previous release intact; rollback immediately swaps symlink back.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">host: /var/www/my-spa-app</span>
+                  <button type="button" class="terminal-copy" data-copy="term-spa-code">Copy Log</button>
+                </div>
+                <div class="terminal-body">
+                  <pre id="term-spa-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-info">📦 Project:</span> my-spa-app
+  <span class="t-info">📁 Root:</span>    /var/www/my-spa-app
+  <span class="t-info">🧩 Type:</span>    Static SPA (static)
+  <span class="t-info">🏷 Active:</span>  (none)
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-step">-&gt; Fetching latest release from owner/my-spa-app...</span>
+  <span class="t-ok">✓ Selected version v1.0.0</span>
+  <span class="t-step">-&gt; ⬇️  Downloading bundle.zip (1.4MB)...</span>
+  <span class="t-ok">✓ Saved to bundles/v1.0.0-bundle.zip</span>
+  <span class="t-step">-&gt; Extracting bundle...</span>
+  <span class="t-ok">✓ Bundle unpacked into releases/1.0.0</span>
+  <span class="t-step">-&gt; Validating static entrypoint...</span>
+  <span class="t-ok">✓ Verified dist/index.html</span>
+  <span class="t-step">-&gt; Normalizing filesystem permissions...</span>
+  <span class="t-ok">✓ Corrected dirs to 0755, files to 0644</span>
+  <span class="t-step">-&gt; Atomically switching symlink...</span>
+  <span class="t-highlight">✓ current -&gt; releases/1.0.0/dist</span>
+  <span class="t-ok">✓ Deployment complete: my-spa-app 1.0.0</span>
+  <span class="t-time">⏱ Elapsed: 0.8s</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 2: Native Systemd Services -->
+          <div class="showcase-panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system" hidden>
+            <div class="showcase-grid">
+              <div class="showcase-steps">
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>01</span> CI/CD Packaging (from upy-test)</div>
+                    <div class="step-card-file">.github/workflows/system.yml</div>
+                  </div>
+                  <pre><code><span class="comment"># 1. Compile static Linux binary</span>
+- name: Build Go binary
+  env:
+    CGO_ENABLED: '0'
+    GOOS: linux
+    GOARCH: amd64
+  run: go build -trimpath -ldflags "-s -w" -o bin/web ./cmd/web
+
+<span class="comment"># 2. Package manifest + executable</span>
+- name: Package bundle
+  run: |
+    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    name: my-api
+    version: ${{ github.ref_name }}
+    type: system
+    target: { os: linux, arch: amd64 }
+    system:
+      command: ["./bin/web", "--port", "8080"]
+    healthcheck:
+      url: http://127.0.0.1:8080/health
+      timeout: 15s
+    EOF
+    zip -r bundle-linux-amd64.zip deploy.yaml bin/web</code></pre>
+                </div>
+
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>02</span> Server Configuration &amp; Isolation</div>
+                    <div class="step-card-file">/opt/my-api/deploy.yaml</div>
+                  </div>
+                  <pre><code>name: my-api
+release:
+  provider: github
+  repository: owner/my-api
+  asset: bundle-linux-amd64.zip
+service:
+  user: my-api            <span class="comment"># Dedicated unprivileged user</span>
+  group: my-api
+  unit: upy-my-api.service
+
+<span class="comment"># Shared data in /opt/my-api/shared/data/</span>
+<span class="comment"># Environment in /opt/my-api/shared/service.env</span></code></pre>
+                </div>
+
+                <div class="showcase-guarantees">
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Zero Privilege Creep</strong>: Explicitly verifies <code>service.user</code> exists; refuses silent root fallback.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Port &amp; PID Spoofing Defense</strong>: Cross-checks <code>/proc/&lt;pid&gt;/fd</code> against TCP sockets to verify listener PID.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Bounded Rollback</strong>: On failure, restores unit &amp; binary, restarts previous process, and verifies real HTTP health.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Live Unit Protection</strong>: <code>clean</code> dynamically parses systemd unit references to prevent deleting active binaries.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">host: /opt/my-api (systemd)</span>
+                  <button type="button" class="terminal-copy" data-copy="term-system-code">Copy Log</button>
+                </div>
+                <div class="terminal-body">
+                  <pre id="term-system-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-info">📦 Project:</span> my-api
+  <span class="t-info">📁 Root:</span>    /opt/my-api
+  <span class="t-info">🧩 Type:</span>    Native Service (system)
+  <span class="t-info">🏷 Active:</span>  1.0.0
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-step">-&gt; Fetching latest release from owner/my-api...</span>
+  <span class="t-ok">✓ Selected version v1.1.0</span>
+  <span class="t-step">-&gt; ⬇️  Downloading bundle-linux-amd64.zip (4.2MB)...</span>
+  <span class="t-ok">✓ Saved to bundles/v1.1.0-bundle-linux-amd64.zip</span>
+  <span class="t-step">-&gt; Extracting bundle...</span>
+  <span class="t-ok">✓ Bundle unpacked into releases/1.1.0</span>
+  <span class="t-step">-&gt; Validating service user &amp; executable...</span>
+  <span class="t-ok">✓ Pre-flight passed (user: my-api, arch: linux/amd64)</span>
+  <span class="t-step">-&gt; Stopping previous unit &amp; updating definition...</span>
+  <span class="t-ok">✓ Generated /etc/systemd/system/upy-my-api.service</span>
+  <span class="t-step">-&gt; Reloading systemd daemon &amp; starting service...</span>
+  <span class="t-ok">✓ Service active (PID: 28412)</span>
+  <span class="t-step">-&gt; Probing http://127.0.0.1:8080/health (timeout 15s)...</span>
+  <span class="t-ok">✓ Healthcheck passed (socket verified to MainPID 28412)</span>
+  <span class="t-step">-&gt; Atomically switching symlink...</span>
+  <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
+  <span class="t-ok">✓ Deployment complete: my-api 1.1.0</span>
+  <span class="t-time">⏱ Elapsed: 3.2s</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Docker / Compose Containers -->
+          <div class="showcase-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
+            <div class="showcase-grid">
+              <div class="showcase-steps">
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>01</span> CI/CD Packaging</div>
+                    <div class="step-card-file">.github/workflows/deploy.yml</div>
+                  </div>
+                  <pre><code><span class="comment"># Package Compose file and app bundle</span>
+- name: Package Compose bundle
+  run: |
+    cat &lt;&lt; 'EOF' &gt; deploy.yaml
+    name: my-compose-stack
+    version: ${{ github.ref_name }}
+    type: docker
+    docker:
+      mode: compose
+      composeFile: docker-compose.yml
+    healthcheck:
+      url: http://127.0.0.1:8080/health
+      timeout: 30s
+    EOF
+    zip -r bundle.zip deploy.yaml docker-compose.yml Dockerfile src/</code></pre>
+                </div>
+
+                <div class="showcase-step-card">
+                  <div class="step-card-header">
+                    <div class="step-card-title"><span>02</span> Server Configuration &amp; Secrets</div>
+                    <div class="step-card-file">/opt/my-compose-stack/deploy.yaml</div>
+                  </div>
+                  <pre><code>name: my-compose-stack
+release:
+  provider: github
+  repository: owner/my-compose-stack
+  asset: bundle.zip
+
+<span class="comment"># Server persistent secrets in shared/.env</span>
+<span class="comment"># Database volumes mapped to shared/data/</span></code></pre>
+                </div>
+
+                <div class="showcase-guarantees">
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Zero Port Collisions</strong>: Pre-builds new images before stopping old containers; frees ports cleanly with <code>down --remove-orphans</code>.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Hierarchical Env Merging</strong>: Bundle defaults are cleanly overridden by host <code>shared/.env</code> credentials.</div>
+                  </div>
+                  <div class="guarantee-item">
+                    <span class="guarantee-icon">✓</span>
+                    <div><strong>Automated Container Rollback</strong>: On probe failure or container crash, tears down broken stack and restarts previous working version.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Terminal Window -->
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">host: /opt/my-compose-stack (docker)</span>
+                  <button type="button" class="terminal-copy" data-copy="term-docker-code">Copy Log</button>
+                </div>
+                <div class="terminal-body">
+                  <pre id="term-docker-code"><span class="t-prompt">$</span> <span class="t-cmd">upy release latest</span>
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-info">📦 Project:</span> my-compose-stack
+  <span class="t-info">📁 Root:</span>    /opt/my-compose-stack
+  <span class="t-info">🧩 Type:</span>    Docker Compose (docker)
+  <span class="t-info">🏷 Active:</span>  1.0.0
+<span class="t-banner">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="t-step">-&gt; Fetching latest release from owner/my-compose-stack...</span>
+  <span class="t-ok">✓ Selected version v1.1.0</span>
+  <span class="t-step">-&gt; ⬇️  Downloading bundle.zip (1.8MB)...</span>
+  <span class="t-ok">✓ Saved to bundles/v1.1.0-bundle.zip</span>
+  <span class="t-step">-&gt; Extracting bundle...</span>
+  <span class="t-ok">✓ Bundle unpacked into releases/1.1.0</span>
+  <span class="t-step">-&gt; Executing docker compose build (docker-compose.yml)...</span>
+  <span class="t-ok">✓ Images built successfully</span>
+  <span class="t-step">-&gt; Stopping previous version &amp; freeing host ports...</span>
+  <span class="t-ok">✓ Previous stack removed cleanly</span>
+  <span class="t-step">-&gt; Starting new version (docker compose up -d)...</span>
+  <span class="t-ok">✓ Containers started</span>
+  <span class="t-step">-&gt; Probing http://127.0.0.1:8080/health (timeout 30s)...</span>
+  <span class="t-ok">✓ Healthcheck passed (HTTP 200 OK)</span>
+  <span class="t-step">-&gt; Atomically switching symlink...</span>
+  <span class="t-highlight">✓ current -&gt; releases/1.1.0</span>
+  <span class="t-ok">✓ Deployment complete: my-compose-stack 1.1.0</span>
+  <span class="t-time">⏱ Elapsed: 12.3s</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <article class="step" data-step>
           <div class="step-copy">
             <span class="step-number">02 / Clean</span>

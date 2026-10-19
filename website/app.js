@@ -12,27 +12,77 @@ const textFailMsg = isZh
   : "Could not copy automatically. Command selected, please use Ctrl+C / Cmd+C.";
 
 for (const button of document.querySelectorAll("[data-copy]")) {
+  const origText = button.textContent.trim();
   button.addEventListener("click", async () => {
     const source = document.getElementById(button.dataset.copy);
+    if (!source) return;
     button.disabled = true;
     try {
       await navigator.clipboard.writeText(source.textContent.trim());
       button.textContent = textCopied;
-      status.textContent = textSuccessMsg;
+      if (status) status.textContent = textSuccessMsg;
     } catch {
       const range = document.createRange();
       range.selectNodeContents(source);
       const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
       button.textContent = textManual;
-      status.textContent = textFailMsg;
+      if (status) status.textContent = textFailMsg;
     } finally {
       button.disabled = false;
       window.setTimeout(() => {
-        button.textContent = textCopy;
-      }, 3000);
+        button.textContent = origText;
+      }, 2500);
     }
+  });
+}
+
+// 三大部署模式实战 Tab 切换
+const showcaseTabs = Array.from(document.querySelectorAll(".showcase-tab"));
+const showcasePanels = Array.from(document.querySelectorAll(".showcase-panel"));
+
+if (showcaseTabs.length > 0) {
+  showcaseTabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => {
+      showcaseTabs.forEach((t) => {
+        t.classList.remove("is-active");
+        t.setAttribute("aria-selected", "false");
+      });
+      showcasePanels.forEach((p) => {
+        p.classList.remove("is-active");
+        p.hidden = true;
+      });
+
+      tab.classList.add("is-active");
+      tab.setAttribute("aria-selected", "true");
+
+      const targetId = tab.getAttribute("aria-controls");
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        targetPanel.classList.add("is-active");
+        targetPanel.hidden = false;
+      }
+    });
+
+    tab.addEventListener("keydown", (e) => {
+      let targetIndex = null;
+      if (e.key === "ArrowRight") {
+        targetIndex = (index + 1) % showcaseTabs.length;
+      } else if (e.key === "ArrowLeft") {
+        targetIndex = (index - 1 + showcaseTabs.length) % showcaseTabs.length;
+      } else if (e.key === "Home") {
+        targetIndex = 0;
+      } else if (e.key === "End") {
+        targetIndex = showcaseTabs.length - 1;
+      }
+
+      if (targetIndex !== null) {
+        e.preventDefault();
+        showcaseTabs[targetIndex].focus();
+        showcaseTabs[targetIndex].click();
+      }
+    });
   });
 }
 

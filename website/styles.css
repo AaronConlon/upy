@@ -917,3 +917,284 @@ figcaption > span:last-child {
   height: 100%;
   pointer-events: none;
 }
+
+/* ============================================================
+   三大部署模式实战全流程 (Deployment Showcase)
+   ============================================================ */
+.deploy-showcase {
+  margin-top: 50px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  position: relative;
+}
+.deploy-showcase::after {
+  content: "+";
+  position: absolute;
+  right: -5px;
+  bottom: -15px;
+  font: 20px var(--font-mono);
+  color: var(--color-ink);
+}
+.showcase-header {
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-surface);
+  padding: 24px 28px 0;
+}
+.showcase-header-intro {
+  margin-bottom: 20px;
+}
+.showcase-header-intro h4 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+}
+.showcase-header-intro p {
+  font-size: 14px;
+  color: var(--color-muted);
+  margin: 0;
+}
+.showcase-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.showcase-tabs::-webkit-scrollbar {
+  display: none;
+}
+.showcase-tab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  font-family: var(--font-body);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+  position: relative;
+  top: 1px;
+}
+.showcase-tab:hover {
+  color: var(--color-ink);
+  background: rgba(0, 0, 0, 0.02);
+}
+.showcase-tab.is-active {
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border-color: var(--color-rule);
+  border-top: 2px solid var(--color-ink);
+  font-weight: 500;
+}
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  color: var(--color-muted);
+}
+.showcase-tab.is-active .tab-badge {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+}
+.tab-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.25;
+}
+.tab-text strong {
+  font-size: 14px;
+  color: inherit;
+}
+.tab-text small {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.showcase-panel {
+  display: none;
+  padding: 32px 28px;
+}
+.showcase-panel.is-active {
+  display: block;
+}
+.showcase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 980px) {
+  .showcase-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .showcase-panel {
+    padding: 24px 18px;
+  }
+  .showcase-header {
+    padding: 20px 18px 0;
+  }
+}
+.showcase-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.showcase-step-card {
+  border: 1px solid var(--color-rule);
+  background: var(--color-surface);
+  padding: 18px 20px;
+}
+.step-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-rule);
+}
+.step-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.step-card-title span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.step-card-file {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-muted);
+  background: var(--color-paper);
+  padding: 2px 8px;
+  border: 1px solid var(--color-rule);
+}
+.showcase-step-card pre {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+.showcase-guarantees {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  padding: 16px 18px;
+}
+.guarantee-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+.guarantee-item strong {
+  color: var(--color-ink);
+}
+.guarantee-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--color-ink);
+  margin-top: 2px;
+}
+
+/* Terminal Component */
+.terminal-window {
+  background: var(--color-code);
+  border: 1px solid #23272e;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #181a1f;
+  border-bottom: 1px solid #282c34;
+}
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+.terminal-dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-red { background: #e06c75; }
+.dot-yellow { background: #e5c07b; }
+.dot-green { background: #98c379; }
+.terminal-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #abb2bf;
+  letter-spacing: 0.2px;
+}
+.terminal-copy {
+  background: transparent;
+  border: 1px solid #3e4451;
+  color: #abb2bf;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all var(--dur-fast) ease;
+}
+.terminal-copy:hover {
+  background: #282c34;
+  color: #fff;
+}
+.terminal-body {
+  padding: 16px 18px;
+  overflow-x: auto;
+  max-height: 540px;
+}
+.terminal-body pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-code-text);
+  white-space: pre;
+}
+.t-prompt { color: #61afef; }
+.t-cmd { color: #98c379; font-weight: 600; }
+.t-banner { color: #5c6370; }
+.t-info { color: #abb2bf; }
+.t-step { color: #e5c07b; }
+.t-ok { color: #98c379; font-weight: 500; }
+.t-dim { color: #5c6370; }
+.t-highlight { color: #61afef; font-weight: 500; }
+.t-time { color: #e5c07b; font-weight: 500; }
