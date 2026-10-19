@@ -15,6 +15,7 @@ import (
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/notify"
 	"github.com/AaronConlon/upy/internal/platform"
+	"github.com/AaronConlon/upy/internal/projectlock"
 	"github.com/AaronConlon/upy/internal/state"
 	"github.com/AaronConlon/upy/internal/ui"
 )
@@ -51,6 +52,11 @@ func DeployBundle(zipPath string, opts Options) (*Result, error) {
 }
 
 func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Result, error) {
+	lock, err := projectlock.Acquire(root, "部署")
+	if err != nil {
+		return nil, err
+	}
+	defer lock.Release()
 
 	if _, err := os.Stat(zipPath); err != nil {
 		return nil, fmt.Errorf("未找到 bundle 文件: %s", zipPath)

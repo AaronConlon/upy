@@ -1,168 +1,280 @@
-# Upy (Go)
+# upy
 
-轻量级 Web 项目部署 CLI 的 **Go 实现**（原 Bun/TypeScript 版本在 `WeiaiHealth-Software/uply`）。
+轻量级 Web 项目自动化部署工具（Go 单二进制，零外部依赖，极速部署）。
 
-- 单二进制，无运行时依赖，约 **9MB**（Bun 版约 60MB）
-- 功能与 Bun 版一致：`release` / `deploy` / `bundle` / `version` / `update` / `init`
-- 支持两类部署：静态 SPA（切 current 软链）和 Docker Compose 集成项目
-- Compose 部署顺序安全：新镜像构建成功后先对上一版本执行 `down --remove-orphans` 释放端口与容器名，再启动新版本；健康检查失败自动停掉失败新栈并 `up -d` 回滚上一版本
-- 私有 GitHub Release 部署、多 Token 组织归属自动路由、bundle 本地缓存复用、SQLite 数据卷持久化
-- Release 资产名不固定也支持：先精确匹配配置的 `asset`，未命中时按「项目名 + 版本号」模糊匹配（如 `test-deploy-website-v0.5.1-20260815.zip`）
-- 中文 CLI（横幅 / 目录树 / 颜色 / emoji）
+支持 **SPA 前端静态站点**（原子软链切换、Web 服务器权限自适应）与 **Docker / Docker Compose 容器项目**（平滑启停、健康检查与失败自动回滚），兼具 GitHub Release 自动化拉取与本地离线包部署能力。
 
-## 一键安装
+---
 
-在 Linux / macOS 上，运行以下命令自动识别架构并安装到 `/usr/local/bin`：
+## 目录
+
+- [这是什么](#这是什么)
+- [如何安装](#如何安装)
+- [如何初始化](#如何初始化)
+- [如何部署](#如何部署)
+  - [1. 服务器端项目配置](#1-服务器端项目配置)
+  - [2. 常用部署命令](#2-常用部署命令)
+  - [3. bundle.zip 打包规范](#3-bundlezip-打包规范)
+- [如何清理与维护](#如何清理与维护)
+- [如何升级](#如何升级)
+- [常用命令速查](#常用命令速查)
+
+---
+
+## 这是什么
+
+`upy` 专为轻量级、低心智负担的 Web 应用发布流程而设计：
+
+- **单二进制零依赖**：体积仅 ~8.5MB，开箱即用，无需 Node.js、Python 或任何额外运行时环境。
+- **静态 SPA 原子部署**：通过 `current` 软链实现无感知秒级切换；自动规整目录与文件权限（`0755` / `0644`），彻底避免 Nginx / Caddy 出现 `403 Forbidden`。
+- **Docker / Compose 容器管理**：新版本镜像准备就绪后，平滑停止旧栈释放端口，新栈健康检查不通过时自动回滚上一版本。
+- **GitHub Release 驱动**：支持公开与私有仓库，多组织 Token 自动匹配路由，断点续传与 SHA-256 完整性强校验。
+- **本地项目快速调度**：在任意路径直接运行 `upy`，即可列出本机已纳管的项目并交互式选择部署。
+- **通知与观测**：内置全流程真实耗时统计与 Bark 移动端推送。
+
+---
+
+## 如何安装
+
+在 Linux / macOS 终端执行以下一键安装脚本，自动识别系统架构（x64 / arm64）并安装到系统路径：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 ```
 
-> 如果 `/usr/local/bin` 需要管理员权限，脚本会自动调用 `sudo` 完成安装。
+> **说明**：默认安装至 `/usr/local/bin`（必要时自动请求 sudo 权限）。脚本会自动为 `zsh`、`bash`、`fish` 配置 Tab 命令补全，新开终端窗口后生效。
 
 ### 自定义安装选项
 
-支持通过环境变量指定安装目录或固定版本：
+支持通过环境变量指定安装路径或固定版本：
 
 ```bash
-# 安装到自定义目录（如无需 sudo 的 ~/.local/bin）
+# 安装到用户个人目录（无需 root 权限）
 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 
 # 安装指定版本
-VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+VERSION=v0.1.11 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 ```
 
-安装器会自动识别并提示当前 shell；对 zsh、bash、fish 自动配置 Tab 一级命令补全（`release`、`deploy`、`bundle`、`version`、`update`、`init`）。新开终端后即可使用，例如 `upy rel<Tab>`。
+---
 
-每个 Release 还会附带 `SHA256SUMS`。安装器与 `upy update` 都会先校验当前平台二进制的 SHA-256；缺少清单或校验不一致时会拒绝替换本地二进制。
+## 如何初始化
 
-## 初始化与多 Token 配置
+如果你的项目托管在 **GitHub 私有仓库**，需要配置 GitHub Token 才能拉取 Release 资产。`upy` 支持全局默认 Token 以及按组织/个人归属的多 Token 自动路由。
 
-`upy` 内置了 `init` 命令，支持快速创建用户配置文件，并**支持多 Token 归属管理**。当拉取不同组织或个人私有仓库时，自动根据仓库的 Owner 匹配对应的 Token。
-
-### 1. 命令行快速初始化
+### 1. 命令行快速配置
 
 ```bash
-# 设置全局默认 / 兜底 Token
+# 设置全局默认 Token
 upy init ghp_your_default_token
 
-# 为指定组织设置专属 Token (如 WeiaiHealth-Software)
-upy init WeiaiHealth-Software ghp_org_token
+# 为指定组织（如 MyOrg）设置专属 Token
+upy init MyOrg ghp_org_token
 
-# 为个人用户名设置专属 Token (如 AaronConlon)
+# 为个人用户名（如 AaronConlon）设置专属 Token
 upy init AaronConlon ghp_personal_token
 
-# 交互式引导 (自动提示归属与密码密文输入)
+# 交互式引导配置（密码密文输入）
 upy init
 ```
 
-命令会自动创建或追加合并到 `~/.upy/config.yaml`，并将文件权限设置为 `600` 保护敏感信息。
+配置会自动保存至 `~/.upy/config.yaml` 并将权限严格限制为 `600`。
 
 ### 2. 配置文件说明 (`~/.upy/config.yaml`)
 
-可复制模板快速新建：
-
-```bash
-mkdir -p ~/.upy
-cp config.example.yaml ~/.upy/config.yaml
-```
-
-配置文件内容示例：
+可手动新建或修改配置文件，同时支持配置部署完成后的通知推送：
 
 ```yaml
 github:
-  # 全局默认 / 兜底 token (可选)
-  token: github_pat_default_xxx
+  # 全局默认兜底 Token（可选）
+  token: ghp_default_xxx
 
-  # 多组织 / 个人归属 token 映射 (可选)
-  # 从对应组织或个人仓库 (如 WeiaiHealth-Software/app) 拉取时优先使用
+  # 多组织 / 个人专属 Token 映射（可选，拉取对应仓库时优先使用）
   tokens:
-    WeiaiHealth-Software: github_pat_org_xxx
-    AaronConlon: github_pat_personal_xxx
+    MyOrg: ghp_org_xxx
+    AaronConlon: ghp_personal_xxx
 
 notify:
   bark:
     - name: phone
       serverUrl: https://api.day.app
       token: your-bark-device-key
-      group: upy.phone
-
-# 由 upy release 成功后自动维护；可在任意目录执行 upy 选择项目
-projects:
-  - name: codia
-    root: /opt/apps/codia
+      group: upy
 ```
 
-**Token 解析与匹配优先级**：
-1. `github.tokens.<owner>`（匹配项目所在组织或个人用户名，大小写不敏感）
-2. `github.token`（全局默认兜底）
-3. 环境变量 `DEPLOY_GITHUB_TOKEN`（仅作最后兜底）
+---
 
-## 本地构建与 CI 发布
+## 如何部署
 
-### 本地构建
+### 1. 服务器端项目配置
 
-```bash
-./scripts/build.sh                     # 当前平台, 版本取最近 git tag
-UPLY_VERSION=v0.1.0 ./scripts/build.sh # 指定版本构建
+在目标服务器的项目根目录（例如 `/var/www/my-app`）下创建一个 `deploy.yaml` 文件：
+
+```yaml
+name: my-app
+release:
+  provider: github
+  repository: owner/repo      # GitHub 仓库路径 (组织/仓库名)
+  asset: bundle.zip          # 资产文件名（可选，默认 bundle.zip，支持正则/模糊匹配）
 ```
 
-构建出的产物位于 `dist/upy-<os>-<arch>`。
+> **Nginx 配置提示（SPA 静态站点）**：  
+> 将 Nginx 的 `root` 指向项目根目录下的 `current` 软链即可，例如：`root /var/www/my-app/current;`。每次发布新版本，`upy` 会自动原子切换该软链。
 
-### CI 跨平台发布 (GitHub Actions)
+### 2. 常用部署命令
 
-项目已配置 GitHub Actions 跨平台构建工作流（`.github/workflows/release.yml`）：
-
-- **触发条件**：推送 tag（如 `v0.1.0`）或在 Actions 页面手动触发 `workflow_dispatch`。
-- **构建矩阵**：并发构建 4 大平台二进制：
-  - `upy-linux-x64`
-  - `upy-linux-arm64`
-  - `upy-darwin-x64`
-  - `upy-darwin-arm64`
-- **自动化发布**：自动创建 GitHub Release 并上传 4 平台二进制资产。
+在服务器项目根目录下执行：
 
 ```bash
-# 发布新版本示例
-git tag -a v0.1.0 -m "release v0.1.0"
-git push origin v0.1.0
+# 1. 交互式选择要部署的 Release 版本（推荐）
+upy release
+
+# 2. 直接部署最新正式版本
+upy release latest
+
+# 3. 部署指定版本
+upy release v1.0.0
+
+# 4. 查看仓库的 Release 发布历史
+upy release list
+
+# 5. 强制重新下载并部署（即使当前已是该版本）
+upy release latest --force
 ```
 
-## 自更新与版本切换
+#### 跨项目与全局快捷操作
 
-已安装 `upy` 后，可通过内置命令一键升级或切换版本：
-
-```bash
-# 1. 自动检查并升级到 Releases 最新版本
-upy update
-
-# 2. 切换/更新/回滚到指定版本
-upy update v0.1.0
-
-# 3. 强制重新下载并覆盖当前版本
-upy update --force
-upy update v0.1.0 --force
-```
-
-`upy update` 同样会输出识别到的 shell，并同步 Tab 命令补全。
-
-### 私有仓库授权机制
-
-若 `upy` 所在的仓库为**私有仓库 (Private Repository)**，自更新会自动按以下顺序提取 Token 访问 GitHub API 进行鉴权与资产下载：
-
-1. `~/.upy/config.yaml` 中为归属 `AaronConlon` 配置的专属 Token (`github.tokens.AaronConlon`)
-2. 配置文件中的全局默认 Token (`github.token`)
-3. 环境变量 `DEPLOY_GITHUB_TOKEN`
-
-> 推荐只需运行一次 `upy init AaronConlon <token>` 即可无缝自更新与切换版本。
-
-## 本地项目快捷部署
-
-每次 `upy release` 成功后，upy 会将项目名称和根目录保存进 `~/.upy/config.yaml` 的 `projects` 字段。直接执行 `upy` 时，会先过滤并清理根目录已不存在、不是目录或缺少 `deploy.yaml` 的项目，再交互选择项目，并进入常规的 Release 版本选择。
+一旦在某个目录成功执行过一次部署，`upy` 会自动登记该项目。之后你可以在**服务器的任何路径**快速操作：
 
 ```bash
-# 在任意目录选择已部署项目，再选择要部署的版本
+# 在任意目录输入 upy，直接交互选择已登记的项目并部署
 upy
 
-# 直接为已登记项目拉取并部署最新正式版本
-upy deploy codia
+# 快捷为指定项目部署最新版本
+upy deploy my-app
 ```
+
+#### 本地离线包部署
+
+如果服务器无法连通外网 GitHub，也可以直接部署本地传入的 zip 压缩包：
+
+```bash
+upy bundle ./bundle.zip
+```
+
+---
+
+### 3. bundle.zip 打包规范
+
+在 CI/CD（如 GitHub Actions）构建产物并打包发布时，压缩包内部需包含应用文件以及一份描述清单 `deploy.yaml`：
+
+#### A. 前端静态应用（SPA）
+
+压缩包内结构：
+```text
+bundle.zip
+├── deploy.yaml
+└── dist/
+    ├── index.html
+    ├── assets/
+    └── ...
+```
+
+清单 `deploy.yaml` 格式：
+```yaml
+name: my-spa-app
+version: 1.0.0
+type: static
+static:
+  directory: dist   # 静态资源所在目录，默认 dist
+```
+
+#### B. Docker / Compose 容器项目
+
+压缩包内结构：
+```text
+bundle.zip
+├── deploy.yaml
+├── docker-compose.yml
+└── ...
+```
+
+清单 `deploy.yaml` 格式：
+```yaml
+name: my-api-service
+version: 1.0.0
+type: docker
+docker:
+  mode: compose
+  composeFile: docker-compose.yml
+healthcheck:
+  url: http://localhost:8080/health
+  timeout: 30s      # 健康检查超时，支持 30s 或数字秒
+```
+
+---
+
+## 如何清理与维护
+
+随着持续迭代部署，项目目录下会产生历史 Bundle 压缩包与历史发布版本。通过 `upy clean` 可以随时进行可视化磁盘分析与安全清理：
+
+```bash
+# 1. 交互式选择项目与清理内容（推荐，自动分析磁盘占用）
+upy clean
+
+# 2. 清理指定项目的数据
+upy clean my-app
+
+# 3. 仅清理下载的 Bundle 缓存压缩包
+upy clean --bundles
+
+# 4. 仅清理历史非当前版本与中断残留目录
+upy clean --old-releases
+
+# 5. 一键常规瘦身并跳过确认（清理缓存 + 旧版本 + 临时目录，安全保留当前生效版本）
+upy clean --all -y
+```
+
+> **安全保护**：`upy clean` 受到**活跃版本保护机制**约束，默认不会影响 `current` 软链所指向的当前线上服务。若需彻底重置项目，可在交互菜单中选择“彻底清空部署产物”。
+
+---
+
+## 如何升级
+
+`upy` 拥有完善的跨分区自更新与在运行进程替换机制，随时保持工具最新：
+
+```bash
+# 检查并自动升级到最新版本
+upy update
+
+# 更新或回滚到指定版本
+upy update v0.1.11
+
+# 强制重新下载并覆盖更新
+upy update --force
+
+# 查看当前运行版本及环境
+upy version
+```
+
+---
+
+## 常用命令速查
+
+| 命令 | 说明 |
+| :--- | :--- |
+| `upy` | 在任意目录唤起已登记项目列表，交互选择项目并部署 |
+| `upy release [latest\|<版本>]` | 在项目目录下从 GitHub Release 拉取并部署（缺省参数时交互选版） |
+| `upy release list` | 查看当前项目的 GitHub Release 版本历史与资产信息 |
+| `upy deploy <项目名>` | 快捷为已登记的本地项目部署最新正式版本 |
+| `upy clean [项目名]` | 可视化分析并清理项目数据 (Bundle 缓存、旧版本、临时目录或注销) |
+| `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
+| `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |
+| `upy update [版本]` | 自更新到最新版本或切换至指定版本 |
+| `upy version` | 打印当前版本并检查是否有新版本可用 |
+
+---
+
+## 开源协议
+
+MIT License

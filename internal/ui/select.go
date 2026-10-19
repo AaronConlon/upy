@@ -4,6 +4,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"golang.org/x/term"
@@ -72,4 +73,33 @@ func numberedSelect(message string, options []SelectOption) (int, error) {
 		return 0, fmt.Errorf("无效选择: %d", n)
 	}
 	return n - 1, nil
+}
+
+// Confirm 提示用户确认操作 (y/N)
+func Confirm(message string, defaultVal bool) (bool, error) {
+	if term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stderr.Fd())) {
+		var confirmed bool
+		prompt := &survey.Confirm{
+			Message: message,
+			Default: defaultVal,
+		}
+		if err := survey.AskOne(prompt, &confirmed); err != nil {
+			return false, fmt.Errorf("已取消")
+		}
+		return confirmed, nil
+	}
+
+	// 非 TTY 环境回退
+	defStr := "y/N"
+	if defaultVal {
+		defStr = "Y/n"
+	}
+	fmt.Fprintf(os.Stderr, "%s [%s]: ", message, defStr)
+	var input string
+	_, _ = fmt.Scanln(&input)
+	input = strings.TrimSpace(strings.ToLower(input))
+	if input == "" {
+		return defaultVal, nil
+	}
+	return input == "y" || input == "yes", nil
 }

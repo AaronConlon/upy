@@ -25,6 +25,7 @@ func printHelp() {
 		"  release [list|latest|<版本>]   从 GitHub Release 获取并部署 bundle",
 		"                                 (不带参数时交互选择版本)",
 		"  deploy [项目名称]              部署已登记项目的最新正式版本",
+		"  clean [项目名称]               清理项目数据 (Bundle 缓存、旧版本、临时目录、注销或清空)",
 		"  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)",
 		"  version                        查看当前版本并检查更新",
 		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
@@ -33,6 +34,12 @@ func printHelp() {
 		"选项:",
 		"  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载",
 		"  --root <目录>                  项目目录 (默认当前目录)",
+		"  --bundles                      clean 专用: 仅清理 Bundle 缓存压缩包",
+		"  --old-releases                 clean 专用: 仅清理历史旧版本与残留临时目录",
+		"  --all                          clean 专用: 常规瘦身 (清理缓存 + 旧版本 + 临时目录)",
+		"  --purge                        clean 专用: 彻底清空项目所有部署产物",
+		"  --unregister                   clean 专用: 从本地项目列表中注销此项目",
+		"  -y, --yes                      clean 专用: 跳过交互确认直接执行",
 		"  -V, --version                  打印版本后退出",
 		"  -h, --help                     打印帮助后退出",
 		"",
@@ -50,6 +57,9 @@ func printHelp() {
 		"  upy release latest            部署最新版本",
 		"  upy release v0.3.0            部署指定版本",
 		"  upy deploy codia              部署本机项目 codia 的最新版本",
+		"  upy clean                     交互式选择项目并清理数据",
+		"  upy clean codia               清理指定项目 codia 的数据",
+		"  upy clean --all -y            静默执行当前项目常规瘦身",
 		"  upy bundle ./bundle.zip       部署本地 bundle",
 		"  upy init ghp_xxx              设置默认全局 GitHub token",
 		"  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token",
@@ -64,13 +74,19 @@ type parsedArgs struct {
 	positional  []string
 	force       bool
 	root        string
+	bundles     bool
+	oldReleases bool
+	all         bool
+	purge       bool
+	unregister  bool
+	yes         bool
 	showVersion bool
 	showHelp    bool
 }
 
 func parseArgs(argv []string) parsedArgs {
 	var p parsedArgs
-	known := map[string]bool{"release": true, "deploy": true, "bundle": true, "version": true, "update": true, "init": true}
+	known := map[string]bool{"release": true, "deploy": true, "clean": true, "bundle": true, "version": true, "update": true, "init": true}
 	for i := 0; i < len(argv); i++ {
 		a := argv[i]
 		switch {
@@ -80,6 +96,18 @@ func parseArgs(argv []string) parsedArgs {
 			p.showVersion = true
 		case a == "--force":
 			p.force = true
+		case a == "--bundles":
+			p.bundles = true
+		case a == "--old-releases":
+			p.oldReleases = true
+		case a == "--all":
+			p.all = true
+		case a == "--purge":
+			p.purge = true
+		case a == "--unregister":
+			p.unregister = true
+		case a == "-y" || a == "--yes":
+			p.yes = true
 		case a == "--root":
 			if i+1 < len(argv) {
 				i++
@@ -152,6 +180,21 @@ func main() {
 			projectName = p.positional[0]
 		}
 		err = commands.Deploy(projectName, p.force, cmdStartedAt)
+	case "clean":
+		projectName := ""
+		if len(p.positional) > 0 {
+			projectName = p.positional[0]
+		}
+		err = commands.Clean(commands.CleanArgs{
+			ProjectName: projectName,
+			Root:        p.root,
+			Bundles:     p.bundles,
+			OldReleases: p.oldReleases,
+			All:         p.all,
+			Purge:       p.purge,
+			Unregister:  p.unregister,
+			Yes:         p.yes,
+		})
 	case "bundle":
 		file := ""
 		if len(p.positional) > 0 {

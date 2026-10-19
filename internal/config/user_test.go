@@ -7,7 +7,8 @@ import (
 )
 
 func TestLoadUserConfigMissing(t *testing.T) {
-	t.Setenv("UPLY_CONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("UPY_CONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("UPLY_CONFIG", "")
 	cfg, err := LoadUserConfig()
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +38,8 @@ func TestLoadUserConfigBarks(t *testing.T) {
 	if err := os.WriteFile(path, raw, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("UPLY_CONFIG", path)
+	t.Setenv("UPY_CONFIG", path)
+	t.Setenv("UPLY_CONFIG", "")
 	cfg, err := LoadUserConfig()
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +65,8 @@ func TestLookupGitHubTokenPrefersConfig(t *testing.T) {
 	if err := os.WriteFile(path, []byte("github: {token: from-file}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("UPLY_CONFIG", path)
+	t.Setenv("UPY_CONFIG", path)
+	t.Setenv("UPLY_CONFIG", "")
 	t.Setenv("DEPLOY_GITHUB_TOKEN", "from-env")
 	got, err := LookupGitHubToken()
 	if err != nil {
@@ -75,7 +78,8 @@ func TestLookupGitHubTokenPrefersConfig(t *testing.T) {
 }
 
 func TestLookupGitHubTokenFallsBackToEnv(t *testing.T) {
-	t.Setenv("UPLY_CONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("UPY_CONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("UPLY_CONFIG", "")
 	t.Setenv("DEPLOY_GITHUB_TOKEN", "from-env")
 	got, err := LookupGitHubToken()
 	if err != nil {
@@ -87,7 +91,8 @@ func TestLookupGitHubTokenFallsBackToEnv(t *testing.T) {
 }
 
 func TestResolveGitHubTokenMissing(t *testing.T) {
-	t.Setenv("UPLY_CONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("UPY_CONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("UPLY_CONFIG", "")
 	t.Setenv("DEPLOY_GITHUB_TOKEN", "")
 	_, err := ResolveGitHubToken()
 	if err == nil {
@@ -214,5 +219,41 @@ func TestLocalProjectsAreSavedAndStaleRootsAreCleaned(t *testing.T) {
 	}
 	if len(cfg.Projects) != 0 {
 		t.Fatalf("清理结果未写回配置: %+v", cfg.Projects)
+	}
+}
+
+func TestUnregisterLocalProject(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	t.Setenv("UPY_CONFIG", path)
+
+	rootA := filepath.Join(dir, "projectA")
+	_ = os.MkdirAll(rootA, 0o755)
+	_ = os.WriteFile(filepath.Join(rootA, "deploy.yaml"), []byte("name: projectA\n"), 0o644)
+
+	rootB := filepath.Join(dir, "projectB")
+	_ = os.MkdirAll(rootB, 0o755)
+	_ = os.WriteFile(filepath.Join(rootB, "deploy.yaml"), []byte("name: projectB\n"), 0o644)
+
+	if err := SaveLocalProject("projectA", rootA); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveLocalProject("projectB", rootB); err != nil {
+		t.Fatal(err)
+	}
+
+	projects, _ := ListLocalProjects()
+	if len(projects) != 2 {
+		t.Fatalf("期望 2 个项目, 得到: %d", len(projects))
+	}
+
+	// 注销 projectA
+	if err := UnregisterLocalProject("projectA", ""); err != nil {
+		t.Fatalf("UnregisterLocalProject 失败: %v", err)
+	}
+
+	projects, _ = ListLocalProjects()
+	if len(projects) != 1 || projects[0].Name != "projectB" {
+		t.Fatalf("期望仅剩 projectB, 得到: %+v", projects)
 	}
 }

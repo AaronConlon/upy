@@ -4,8 +4,11 @@ import (
 	"archive/zip"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
+
+	"github.com/AaronConlon/upy/internal/projectlock"
 )
 
 func TestMoveDir(t *testing.T) {
@@ -214,3 +217,46 @@ func TestDeployBundleAcceptsCustomStartedAt(t *testing.T) {
 		t.Fatalf("期望版本 2.0.0, 得到 %s", res.Version)
 	}
 }
+
+func TestDeployBundleRefusesWhenLocked(t *testing.T) {
+	root := t.TempDir()
+	bundlePath := filepath.Join(t.TempDir(), "bundle.zip")
+
+	f, err := os.Create(bundlePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(f)
+	w, err := zw.Create("deploy.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest := "name: test-lock\nversion: 1.0.0\ntype: static\n"
+	_, _ = w.Write([]byte(manifest))
+	wDist, _ := zw.Create("dist/index.html")
+	_, _ = wDist.Write([]byte("<h1>hello</h1>"))
+	_ = zw.Close()
+	_ = f.Close()
+
+	// 模拟外部清理进程持有锁
+	lockPath := filepath.Join(root, projectlock.LockFileName)
+	lockF, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lockF.Close()
+	if err := syscall.Flock(int(lockF.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	_, _ = lockF.WriteString("action: 清理中\npid: 88888\n")
+	_ = lockF.Sync()
+
+	// 部署应该由于冲突被明确拒绝
+	_, err = DeployBundle(bundlePath, Options{
+		Root: root,
+	})
+	if err == nil {
+		t.Fatal("期望 DeployBundle 报错拒绝（锁冲突），但成功执行了")
+	}
+}
+

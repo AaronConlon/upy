@@ -18,6 +18,7 @@ const (
 var completionCommands = []completionCommand{
 	{Name: "release", Description: "从 GitHub Release 部署 bundle"},
 	{Name: "deploy", Description: "部署已登记项目的最新版本"},
+	{Name: "clean", Description: "清理项目数据 (缓存/旧版本/临时文件)"},
 	{Name: "bundle", Description: "部署本地 bundle"},
 	{Name: "version", Description: "查看当前版本"},
 	{Name: "update", Description: "更新 upy"},

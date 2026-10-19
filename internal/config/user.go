@@ -326,6 +326,45 @@ func SaveLocalProject(name, root string) error {
 	return err
 }
 
+// UnregisterLocalProject 从已注册本地项目列表中移除匹配 name 或 root 的记录
+func UnregisterLocalProject(name, root string) error {
+	name = strings.TrimSpace(name)
+	root = strings.TrimSpace(root)
+	if name == "" && root == "" {
+		return nil
+	}
+	var absRoot string
+	if root != "" {
+		if abs, err := filepath.Abs(root); err == nil {
+			absRoot = abs
+		}
+	}
+
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		return err
+	}
+
+	filtered := make([]LocalProject, 0, len(cfg.Projects))
+	changed := false
+	for _, p := range cfg.Projects {
+		matchName := name != "" && p.Name == name
+		matchRoot := absRoot != "" && p.Root == absRoot
+		if matchName || matchRoot {
+			changed = true
+			continue
+		}
+		filtered = append(filtered, p)
+	}
+
+	if changed {
+		cfg.Projects = filtered
+		_, err = saveUserConfig(cfg)
+		return err
+	}
+	return nil
+}
+
 func filterDifferentProject(projects []LocalProject, name, root string) []LocalProject {
 	filtered := make([]LocalProject, 0, len(projects))
 	for _, project := range projects {
