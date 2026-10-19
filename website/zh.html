@@ -757,52 +757,62 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
 
           <div class="notify-showcase">
             <div class="showcase-steps">
-              <!-- Card 1: 项目级 deploy.yaml -->
+              <!-- Card 1: 写法一与写法二 -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">01 / 项目专属通知 <span>deploy.yaml</span></span>
+                  <span class="step-card-title">01 / 写法一与写法二 <span>极简列表与批量指定</span></span>
                   <span class="step-card-file">deploy.yaml</span>
                 </div>
-                <pre><code><span class="comment"># 项目级独立配置多接收人推送</span>
+                <pre><code><span class="comment"># 写法一：极简字符串列表（直接填 Token 或完整 URL）</span>
 <span class="keyword">notify</span>:
   <span class="string">bark</span>:
     - <span class="string">"DEVICE_KEY_ALICE"</span>
-    - <span class="string">"https://api.day.app/DEVICE_KEY_BOB"</span>
-    - <span class="string">name</span>: <span class="string">"运维负责人"</span>
+    - <span class="string">"DEVICE_KEY_BOB"</span>
+    - <span class="string">"https://api.day.app/DEVICE_KEY_CAROL"</span>
+
+<span class="comment"># 写法二：统一分组与铃声，指定多个 Token</span>
+<span class="keyword">notify</span>:
+  <span class="string">bark</span>:
+    <span class="string">serverUrl</span>: <span class="string">https://api.day.app</span>
+    <span class="string">group</span>: <span class="string">"payment-api"</span>
+    <span class="string">sound</span>: <span class="string">"chime"</span>
+    <span class="string">tokens</span>:
+      - <span class="string">"DEVICE_KEY_ALICE"</span>
+      - <span class="string">"DEVICE_KEY_BOB"</span></code></pre>
+              </div>
+
+              <!-- Card 2: 写法三 详细对象列表 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / 写法三 <span>按人定制独立属性与自建节点</span></span>
+                  <span class="step-card-file">deploy.yaml / ~/.upy/config.yaml</span>
+                </div>
+                <pre><code><span class="comment"># 写法三：详细对象列表（按人定制独立标签、铃声或私有节点）</span>
+<span class="keyword">notify</span>:
+  <span class="string">bark</span>:
+    - <span class="string">name</span>: <span class="string">"前端负责人"</span>
+      <span class="string">token</span>: <span class="string">"DEVICE_KEY_FRONTEND"</span>
+      <span class="string">sound</span>: <span class="string">"glass"</span>
+    - <span class="string">name</span>: <span class="string">"值班运维"</span>
       <span class="string">serverUrl</span>: <span class="string">https://bark.mycorp.internal</span>
       <span class="string">token</span>: <span class="string">"DEVICE_KEY_OPS"</span>
-      <span class="string">sound</span>: <span class="string">"chime"</span>
+      <span class="string">sound</span>: <span class="string">"minuet"</span>
       <span class="string">level</span>: <span class="string">"timeSensitive"</span></code></pre>
               </div>
 
-              <!-- Card 2: 机器级全局配置 ~/.upy/config.yaml -->
-              <div class="showcase-step-card">
-                <div class="step-card-header">
-                  <span class="step-card-title">02 / 全局兜底配置 <span>~/.upy/config.yaml</span></span>
-                  <span class="step-card-file">~/.upy/config.yaml</span>
-                </div>
-                <pre><code><span class="comment"># 机器级全局兜底通知（与项目配置自动合并去重）</span>
-<span class="keyword">notify</span>:
-  <span class="string">enabled</span>: <span class="keyword">true</span>
-  <span class="string">bark</span>:
-    - <span class="string">name</span>: <span class="string">"架构负责人"</span>
-      <span class="string">token</span>: <span class="string">"DEVICE_KEY_ARCH"</span>
-      <span class="string">sound</span>: <span class="string">"bell"</span></code></pre>
-              </div>
-
-              <!-- Card 3: 内核保障 -->
+              <!-- Card 3: 双层范围与内核保障 -->
               <div class="showcase-guarantees">
                 <div class="guarantee-item">
                   <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>多人并行广播：</strong>支持单次发布或备份事件同时推送给全组研发、测试或值班工程师设备。</div>
+                  <div><strong>项目与全局双层配置：</strong>项目专属配置（<code>deploy.yaml</code>）与机器全局兜底（<code>~/.upy/config.yaml</code>）协同运作。</div>
                 </div>
                 <div class="guarantee-item">
                   <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>智能合并与去重：</strong>当项目级与全局配置包含相同接收人时，自动合并并仅推送一次，杜绝重复扰民。</div>
+                  <div><strong>智能合并与自动去重：</strong>两处配置重叠的同一个 Token 自动去重仅推送一次，杜绝多条重复报警打扰。</div>
                 </div>
                 <div class="guarantee-item">
                   <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>纯粹零额外常驻：</strong>原生 Go HTTP 客户端直接与 Bark 通信，无 Redis、无中间网关、无后台守护进程。</div>
+                  <div><strong>项目独立静音开关：</strong>在项目的 <code>deploy.yaml</code> 中声明 <code>notify: { enabled: false }</code> 即可完全静音该项目。</div>
                 </div>
               </div>
             </div>
@@ -854,20 +864,20 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <!-- 快捷速查卡片 -->
               <div class="backup-cmd-grid">
                 <div class="backup-cmd-item">
-                  <code>deploy.yaml: notify.bark</code>
-                  <span>项目专属多人通知接收人列表</span>
+                  <code>写法一: [KEY1, KEY2]</code>
+                  <span>极简设备 Token / URL 列表</span>
                 </div>
                 <div class="backup-cmd-item">
-                  <code>~/.upy/config.yaml: notify</code>
-                  <span>机器级全局兜底告警渠道</span>
+                  <code>写法二: tokens: [...]</code>
+                  <span>统一分组、铃声与批量 Token</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>写法三: [{name, token...}]</code>
+                  <span>按人定制独立属性与自建节点</span>
                 </div>
                 <div class="backup-cmd-item">
                   <code>notify.enabled: false</code>
-                  <span>独立关闭指定项目的所有通知</span>
-                </div>
-                <div class="backup-cmd-item">
-                  <code>https://bark.day.app</code>
-                  <span>Bark 官方开源客户端与使用指南</span>
+                  <span>项目级独立静音屏蔽</span>
                 </div>
               </div>
             </div>

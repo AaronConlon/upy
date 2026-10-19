@@ -429,9 +429,53 @@ upy backup --all -y
 - **Independent Project Muting**: Silence notifications for a specific project at any time by declaring `notify: { enabled: false }` in its `deploy.yaml`.
 - **Rich Context & Diagnostics**: Notifications include project name, deployed version, stack type, elapsed execution time, and exact failure diagnostics if an error occurs.
 
-### Configuration Reference
+### Three Common Configuration Patterns
 
-#### 1. Project-Level (`<projectRoot>/deploy.yaml`)
+#### 1. Minimal String List (Recommended for Teams)
+Directly list individual Device Keys or full URLs copied from the Bark app:
+
+```yaml
+notify:
+  bark:
+    - "DEVICE_KEY_ALICE"
+    - "DEVICE_KEY_BOB"
+    - "https://api.day.app/DEVICE_KEY_CAROL" # Full URL is automatically parsed
+```
+
+#### 2. Shared Group & Sound with Batch Tokens
+When all teammates share the same notification sound, group name, or self-hosted server:
+
+```yaml
+notify:
+  bark:
+    serverUrl: "https://api.day.app" # Default official API, or private self-hosted URL
+    group: "payment-api"             # Push group title
+    sound: "chime"                   # Custom ringtone (bell, chime, glass, minuet, etc.)
+    tokens:
+      - "DEVICE_KEY_ALICE"
+      - "DEVICE_KEY_BOB"
+```
+
+#### 3. Detailed Channel Objects (Per-Recipient Customization)
+When individual members prefer custom tags, ringtones, or self-hosted Bark instances:
+
+```yaml
+notify:
+  bark:
+    - name: "Frontend Lead"
+      token: "DEVICE_KEY_FRONTEND"
+      sound: "glass"
+    - name: "DevOps On-Call"
+      serverUrl: "https://bark.mycorp.internal" # Private self-hosted Bark instance
+      token: "DEVICE_KEY_OPS"
+      sound: "minuet"
+      level: "timeSensitive"                     # Alert level (active / timeSensitive / critical)
+```
+
+### Configuration Scopes
+
+#### Scope 1: Project-Level (`<projectRoot>/deploy.yaml`)
+Receives notifications solely for this project. Recommended for project-specific developers and testers:
 
 ```yaml
 name: my-api-service
@@ -442,29 +486,32 @@ release:
 # Project-specific notification recipients
 notify:
   bark:
-    # Option A: Simple token string or full URL list
-    - "DEVICE_KEY_ALICE"
-    - "https://api.day.app/DEVICE_KEY_BOB"
-
-    # Option B: Advanced channel configuration
-    - name: "DevOps On-Call"
-      serverUrl: https://bark.mycorp.internal  # Self-hosted Bark server
-      token: "DEVICE_KEY_OPS"
-      group: "production-api"
-      sound: "chime"
-      level: "timeSensitive"
+    - "DEV_TOKEN_1"
+    - "DEV_TOKEN_2"
 ```
 
-#### 2. Global Machine-Level (`~/.upy/config.yaml`)
+> **Independent Project Muting**: If an internal test project does not require alerts, declare `notify: { enabled: false }` to silence all notifications for that project.
+
+#### Scope 2: Machine Global Fallback (`~/.upy/config.yaml`)
+Host-wide notification channels (e.g. SRE / DevOps on-call) active by default across all managed projects on the machine:
 
 ```yaml
+github:
+  token: ghp_xxxxxx
+
+# Host-wide fallback notifications
 notify:
   enabled: true
   bark:
-    - name: "Lead SRE"
-      token: "DEVICE_KEY_SRE"
+    - name: "SRE Lead"
+      token: "SRE_DEVICE_KEY"
       sound: "bell"
 ```
+
+### Automatic Merging & Deduplication
+
+- **Automatic Merging**: On deployment or backup completion, `upy` gathers channels from both the **current project's `deploy.yaml`** and the **global `~/.upy/config.yaml`**.
+- **Smart Deduplication**: If the same recipient (Server URL + Device Key) is configured in both scopes, `upy` **deduplicates and sends only 1 notification**, prioritizing project-level custom attributes.
 
 ---
 

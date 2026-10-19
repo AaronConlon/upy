@@ -759,52 +759,62 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
 
           <div class="notify-showcase">
             <div class="showcase-steps">
-              <!-- Card 1: Project-Level deploy.yaml -->
+              <!-- Card 1: Pattern 1 & Pattern 2 -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">01 / Project Routing <span>deploy.yaml</span></span>
+                  <span class="step-card-title">01 / Pattern 1 &amp; 2 <span>Minimal List &amp; Shared Tokens</span></span>
                   <span class="step-card-file">deploy.yaml</span>
                 </div>
-                <pre><code><span class="comment"># Project-level multi-recipient notifications</span>
+                <pre><code><span class="comment"># Pattern 1: Minimal string list (tokens or URLs)</span>
 <span class="keyword">notify</span>:
   <span class="string">bark</span>:
     - <span class="string">"DEVICE_KEY_ALICE"</span>
-    - <span class="string">"https://api.day.app/DEVICE_KEY_BOB"</span>
+    - <span class="string">"DEVICE_KEY_BOB"</span>
+    - <span class="string">"https://api.day.app/DEVICE_KEY_CAROL"</span>
+
+<span class="comment"># Pattern 2: Shared group &amp; sound with batch tokens</span>
+<span class="keyword">notify</span>:
+  <span class="string">bark</span>:
+    <span class="string">serverUrl</span>: <span class="string">https://api.day.app</span>
+    <span class="string">group</span>: <span class="string">"payment-api"</span>
+    <span class="string">sound</span>: <span class="string">"chime"</span>
+    <span class="string">tokens</span>:
+      - <span class="string">"DEVICE_KEY_ALICE"</span>
+      - <span class="string">"DEVICE_KEY_BOB"</span></code></pre>
+              </div>
+
+              <!-- Card 2: Pattern 3 Detailed Channel Objects -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / Pattern 3 <span>Detailed Per-Recipient Customization</span></span>
+                  <span class="step-card-file">deploy.yaml / ~/.upy/config.yaml</span>
+                </div>
+                <pre><code><span class="comment"># Pattern 3: Custom labels, ringtones &amp; private nodes</span>
+<span class="keyword">notify</span>:
+  <span class="string">bark</span>:
+    - <span class="string">name</span>: <span class="string">"Frontend Lead"</span>
+      <span class="string">token</span>: <span class="string">"DEVICE_KEY_FRONTEND"</span>
+      <span class="string">sound</span>: <span class="string">"glass"</span>
     - <span class="string">name</span>: <span class="string">"DevOps On-Call"</span>
       <span class="string">serverUrl</span>: <span class="string">https://bark.mycorp.internal</span>
       <span class="string">token</span>: <span class="string">"DEVICE_KEY_OPS"</span>
-      <span class="string">sound</span>: <span class="string">"chime"</span>
+      <span class="string">sound</span>: <span class="string">"minuet"</span>
       <span class="string">level</span>: <span class="string">"timeSensitive"</span></code></pre>
               </div>
 
-              <!-- Card 2: Global Configuration ~/.upy/config.yaml -->
-              <div class="showcase-step-card">
-                <div class="step-card-header">
-                  <span class="step-card-title">02 / Global Fallback <span>~/.upy/config.yaml</span></span>
-                  <span class="step-card-file">~/.upy/config.yaml</span>
-                </div>
-                <pre><code><span class="comment"># Host-wide fallback notifications (auto-deduplicated)</span>
-<span class="keyword">notify</span>:
-  <span class="string">enabled</span>: <span class="keyword">true</span>
-  <span class="string">bark</span>:
-    - <span class="string">name</span>: <span class="string">"Lead SRE"</span>
-      <span class="string">token</span>: <span class="string">"DEVICE_KEY_SRE"</span>
-      <span class="string">sound</span>: <span class="string">"bell"</span></code></pre>
-              </div>
-
-              <!-- Card 3: Guarantees -->
+              <!-- Card 3: Dual Scopes & Guarantees -->
               <div class="showcase-guarantees">
                 <div class="guarantee-item">
                   <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Multi-Recipient Broadcasting:</strong> Notify entire engineering teams, on-call groups, or testing devices in parallel with one event.</div>
+                  <div><strong>Dual Configuration Scopes:</strong> Project-specific routing in <code>deploy.yaml</code> and host-wide on-call fallback in <code>~/.upy/config.yaml</code>.</div>
                 </div>
                 <div class="guarantee-item">
                   <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Smart Deduplication:</strong> Overlapping recipients between project and global configs are merged and dispatched once.</div>
+                  <div><strong>Smart Merge &amp; Deduplication:</strong> Overlapping recipients between project and global configs are merged and dispatched once.</div>
                 </div>
                 <div class="guarantee-item">
                   <span class="guarantee-icon" aria-hidden="true">✓</span>
-                  <div><strong>Zero External Daemons:</strong> Pure Go HTTP client, zero Redis, zero node processes, and zero webhook gateway services.</div>
+                  <div><strong>Independent Project Muting:</strong> Set <code>notify: { enabled: false }</code> in <code>deploy.yaml</code> to silence alerts for a specific project.</div>
                 </div>
               </div>
             </div>
@@ -856,20 +866,20 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <!-- Command Grid -->
               <div class="backup-cmd-grid">
                 <div class="backup-cmd-item">
-                  <code>deploy.yaml: notify.bark</code>
-                  <span>Project-level multi-recipient list</span>
+                  <code>Pattern 1: [KEY1, KEY2]</code>
+                  <span>Minimal token / URL list</span>
                 </div>
                 <div class="backup-cmd-item">
-                  <code>~/.upy/config.yaml: notify</code>
-                  <span>Host-wide fallback alert channels</span>
+                  <code>Pattern 2: tokens: [...]</code>
+                  <span>Shared group, sound &amp; server</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>Pattern 3: [{name, token...}]</code>
+                  <span>Per-recipient custom settings</span>
                 </div>
                 <div class="backup-cmd-item">
                   <code>notify.enabled: false</code>
-                  <span>Mute alerts for specific project</span>
-                </div>
-                <div class="backup-cmd-item">
-                  <code>https://bark.day.app</code>
-                  <span>Official open-source Bark client</span>
+                  <span>Independent project muting</span>
                 </div>
               </div>
             </div>

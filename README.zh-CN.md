@@ -430,9 +430,53 @@ upy backup --all -y
 - **项目级静音开关**：如果某个内部项目无需推送通知，只需在项目的 `deploy.yaml` 中声明 `notify: { enabled: false }`，即可独立关闭该项目的所有通知。
 - **全方位运维上下文**：推送卡片自动携带项目名称、目标版本、部署类型、执行耗时；若发生异常失败，还会自动附带精准的排障失败原因。
 
-### 配置参考示例
+### 最常用的 3 种配置写法
 
-#### 1. 项目专属配置 (`<projectRoot>/deploy.yaml`)
+#### 1. 极简字符串列表（推荐多人团队使用）
+直接把每个人的 Device Key 或 Bark App 里复制的完整链接填成列表：
+
+```yaml
+notify:
+  bark:
+    - "DEVICE_KEY_ALICE"
+    - "DEVICE_KEY_BOB"
+    - "https://api.day.app/DEVICE_KEY_CAROL" # 粘贴完整 URL 也会自动解析
+```
+
+#### 2. 统一分组与铃声，指定多个 Token
+如果所有人共用同一分组、通知铃声或自建 Bark 节点，可以用 `tokens:` 批量指定：
+
+```yaml
+notify:
+  bark:
+    serverUrl: "https://api.day.app" # 默认为官方地址，自建节点可填私有域名
+    group: "payment-api"             # 推送分组
+    sound: "chime"                   # 自定义铃声 (如 bell, chime, glass, minuet 等)
+    tokens:
+      - "DEVICE_KEY_ALICE"
+      - "DEVICE_KEY_BOB"
+```
+
+#### 3. 详细对象列表（按人定制独立属性）
+如果不同成员需要定制不同的标签、铃声或不同的私有 Bark 服务端：
+
+```yaml
+notify:
+  bark:
+    - name: "前端负责人"
+      token: "DEVICE_KEY_FRONTEND"
+      sound: "glass"
+    - name: "值班运维"
+      serverUrl: "https://bark.mycorp.internal" # 支持私有自建 Bark 服务
+      token: "DEVICE_KEY_OPS"
+      sound: "minuet"
+      level: "timeSensitive"                     # 敏感等级 (active / timeSensitive / critical)
+```
+
+### 配置放置位置
+
+#### 位置 1：项目级专属配置（`<项目根目录>/deploy.yaml`）
+只接收该项目的部署与备份通知。建议将关注该项目的研发/测试人员配置在此处：
 
 ```yaml
 name: my-api-service
@@ -440,32 +484,35 @@ release:
   provider: github
   repository: owner/my-api-service
 
-# 项目级独立配置
+# 项目专属通知人
 notify:
   bark:
-    # 方式一: 多人 Token 或完整 URL 列表
-    - "DEVICE_KEY_ALICE"
-    - "https://api.day.app/DEVICE_KEY_BOB"
-
-    # 方式二: 高级对象形式 (自定义音效、分组与自建 Bark 节点)
-    - name: "运维负责人"
-      serverUrl: https://bark.mycorp.internal  # 私有部署 Bark 服务
-      token: "DEVICE_KEY_OPS"
-      group: "production-api"
-      sound: "chime"
-      level: "timeSensitive"
+    - "DEV_TOKEN_1"
+    - "DEV_TOKEN_2"
 ```
 
-#### 2. 机器级全局配置 (`~/.upy/config.yaml`)
+> **项目独立静音**：如果某个测试项目无需推送，配置 `notify: { enabled: false }` 即可屏蔽该项目的所有通知。
+
+#### 位置 2：机器全局兜底配置（`~/.upy/config.yaml`）
+整台服务器通用的通知渠道（例如运维大群或 SRE 负责人），对这台机器上所有纳管项目默认生效：
 
 ```yaml
+github:
+  token: ghp_xxxxxx
+
+# 机器全局通知渠道
 notify:
   enabled: true
   bark:
-    - name: "架构负责人"
-      token: "DEVICE_KEY_ARCH"
+    - name: "SRE Lead"
+      token: "SRE_DEVICE_KEY"
       sound: "bell"
 ```
+
+### 智能合并与去重机制
+
+- **自动合并**：触发部署或备份时，`upy` 会同时收集 **当前项目的 `deploy.yaml`** 与 **机器全局的 `~/.upy/config.yaml`**。
+- **智能去重**：如果同一个 Token（或相同服务端 + Token）在项目配置和全局配置中同时存在，`upy` 会**自动去重仅推送一次**，并以项目级的自定义配置优先。
 
 ---
 
