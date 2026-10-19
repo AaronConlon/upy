@@ -435,6 +435,10 @@ upy version
 
 ---
 
+## Agent Skill
+
+使用 [upy-project-adapter](skills/upy-project-adapter/SKILL.md) 让 Agent 为应用生成 upy 配置、部署 bundle 和 GitHub Actions Release，覆盖 SPA、Docker/Compose 与 system 服务。安装方式与调用示例见 [Skills 说明](skills/README.md)。
+
 ## 开源协议
 
 MIT License

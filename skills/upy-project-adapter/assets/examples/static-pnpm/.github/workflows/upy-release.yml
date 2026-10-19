@@ -1,0 +1,59 @@
+name: upy Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+      # 未提供项目测试脚本；集成时在此加入项目已确认的测试命令。
+      - name: Build and package
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash scripts/upy/build-bundle.sh "$RELEASE_TAG" artifacts/bundle.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-web-bundle
+          path: |
+            artifacts/bundle.zip
+            artifacts/bundle.zip.sha256
+          if-no-files-found: error
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: demo-web-bundle
+          path: artifacts
+      - name: Verify checksum
+        working-directory: artifacts
+        run: sha256sum -c bundle.zip.sha256
+      # 已有 Release 将导致 create 失败；不覆盖既有版本资产。
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" artifacts/bundle.zip artifacts/bundle.zip.sha256 --verify-tag --generate-notes

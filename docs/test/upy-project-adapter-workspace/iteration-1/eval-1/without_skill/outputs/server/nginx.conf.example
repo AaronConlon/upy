@@ -1,0 +1,18 @@
+# 示例：站点根路径部署；域名、TLS 和监听端口由运维按实际环境调整。
+server {
+    listen 80;
+    server_name demo-web.example.com;
+    # current 已指向 dist，不要再追加 /dist。
+    root /srv/demo-web/current;
+    index index.html;
+
+    location = /index.html {
+        add_header Cache-Control "no-cache" always;
+    }
+    location /assets/ {
+        try_files $uri =404;
+    }
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

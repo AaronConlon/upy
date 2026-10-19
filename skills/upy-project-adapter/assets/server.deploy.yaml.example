@@ -1,0 +1,10 @@
+# 服务器文件：复制到部署 root/deploy.yaml，不放入 bundle。
+name: example-app
+release:
+  provider: github
+  repository: owner/repository
+  asset: bundle-linux-arm64.zip
+service:
+  user: example-app
+  group: example-app
+  unit: example-app.service

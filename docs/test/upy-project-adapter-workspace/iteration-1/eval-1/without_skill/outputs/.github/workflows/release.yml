@@ -1,0 +1,52 @@
+name: Release SPA bundle
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Build and validate bundle
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash scripts/upy/build-bundle.sh "$RELEASE_TAG"
+      - name: Publish GitHub Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 重跑只补传到 draft；不覆盖已正式发布的不可变版本。
+          if gh release view "$RELEASE_TAG" --json isDraft > .upy-artifacts/release.json; then
+            python3 -c 'import json; assert json.load(open(".upy-artifacts/release.json"))["isDraft"], "该版本已发布，请使用新 tag"'
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" .upy-artifacts/bundle.zip .upy-artifacts/SHA256SUMS --clobber
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            gh release edit "$RELEASE_TAG" --prerelease --draft=false --latest=false
+          else
+            gh release edit "$RELEASE_TAG" --prerelease=false --draft=false
+          fi

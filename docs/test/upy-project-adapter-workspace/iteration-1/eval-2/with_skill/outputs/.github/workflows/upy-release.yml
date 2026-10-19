@@ -1,0 +1,88 @@
+name: upy Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+      - name: Test on runner architecture
+        env:
+          CGO_ENABLED: '0'
+        run: go test -mod=readonly ./...
+      - name: Build and inspect bundle
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" == v* ]]
+          bash scripts/upy/build-bundle.sh "${RELEASE_TAG#v}" "$TARGET_ARCH" artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-linux-${{ matrix.arch }}
+          path: |
+            artifacts/bundle-linux-${{ matrix.arch }}.zip
+            artifacts/bundle-linux-${{ matrix.arch }}.zip.sha256
+          if-no-files-found: error
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bundle-linux-*
+          path: artifacts
+          merge-multiple: true
+      - name: Verify all assets
+        run: |
+          set -euo pipefail
+          cd artifacts
+          test "$(find . -maxdepth 1 -type f | wc -l)" -eq 4
+          for arch in amd64 arm64; do
+            test -f "bundle-linux-$arch.zip"
+            sha256sum -c "bundle-linux-$arch.zip.sha256"
+          done
+      - name: Create immutable Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # 已有 Release 时停止；创建时也不使用 --clobber，拒绝覆盖。
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release already exists; publish a new version" >&2
+            exit 1
+          fi
+          extra=()
+          if [[ "${RELEASE_TAG#v}" == *-* ]]; then extra+=(--prerelease); fi
+          gh release create "$RELEASE_TAG" \
+            artifacts/bundle-linux-amd64.zip artifacts/bundle-linux-amd64.zip.sha256 \
+            artifacts/bundle-linux-arm64.zip artifacts/bundle-linux-arm64.zip.sha256 \
+            --verify-tag --generate-notes "${extra[@]}"

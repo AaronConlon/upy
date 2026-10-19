@@ -1,0 +1,12 @@
+# 服务器 /srv/demo-api/deploy.yaml；不要放进 bundle。
+name: demo-api
+release:
+  provider: github
+  repository: owner/demo-api
+  asset: bundle-linux-arm64.zip
+releases:
+  keep: 3
+service:
+  user: api
+  group: api
+  unit: demo-api.service

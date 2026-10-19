@@ -1,0 +1,8 @@
+# 仅用于服务器 /srv/demo-web/deploy.yaml，不进入 ZIP。
+name: demo-web
+release:
+  provider: github
+  repository: owner/demo-web
+  asset: bundle.zip
+releases:
+  keep: 3

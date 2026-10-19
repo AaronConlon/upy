@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "Bundle manifest 使用 type: static，包含 directory: dist",
+      "passed": true,
+      "evidence": "build-bundle.sh 写入 type: static 与 directory: dist，要求 dist/index.html"
+    },
+    {
+      "text": "使用 pnpm frozen-lockfile 而不是 npm 安装",
+      "passed": true,
+      "evidence": "build-bundle.sh 使用 pnpm install --frozen-lockfile"
+    },
+    {
+      "text": "服务器配置包含 release.provider/repository/asset，明确与 ZIP 清单分开",
+      "passed": true,
+      "evidence": "server/deploy.yaml 设置 github/owner/demo-web/bundle.zip，部署文档区分服务器与ZIP"
+    },
+    {
+      "text": "workflow 发布 ZIP 且发布 job 有 contents write",
+      "passed": true,
+      "evidence": "release.yml 继承全局 contents:write 并发布 bundle.zip；虽符合该断言，但权限范围偏大"
+    },
+    {
+      "text": "说明 SPA 路由与 current 目录，不编造 upy validate/rollback/status",
+      "passed": true,
+      "evidence": "nginx.conf.example 与部署文档说明 current 和路由回退，未编造CLI命令"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "无真实目标源码，使用给定事实生成；Go另用最小HTTP fixture执行构建。"
+    ],
+    "needs_review": [
+      "单场景单次生成，不能据此推断统计显著性。",
+      "全局contents:write、同draft重传允许clobber；权限范围与不可变策略值得收紧。"
+    ],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "当前断言主要覆盖接入契约；额外风险与版本清理误解独立记录，未隐瞒在高分之后。"
+  }
+}

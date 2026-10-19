@@ -1,0 +1,8 @@
+{
+  "name": "example-web",
+  "version": "1.2.3",
+  "type": "static",
+  "static": {
+    "directory": "dist"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "example-app",
+  "version": "1.2.3",
+  "type": "system",
+  "target": {
+    "os": "linux",
+    "arch": "arm64"
+  },
+  "system": {
+    "command": [
+      "./bin/server",
+      "--port",
+      "8080"
+    ]
+  },
+  "healthcheck": {
+    "url": "http://127.0.0.1:8080/health",
+    "timeout": "30s"
+  }
+}

@@ -625,22 +625,118 @@ upy clean --keep 3</code></pre>
           <div class="step-copy">
             <span class="step-number">03 / Backup</span>
             <h3>Convention backups with lock protection.</h3>
-            <p>
-              Follows convention over configuration, automatically detecting project <code>backup.sh</code> scripts and injecting runtime variables.
-              Acquires cross-process exclusive locks to guarantee data consistency, with retention rotation and Bark mobile notifications.
-            </p>
-            <a
-              href="https://github.com/AaronConlon/upy#常用命令速查"
-              class="text-link"
-              >View command reference ↗</a
-            >
+            <div class="step-copy-desc">
+              <p>
+                Follows convention over configuration, automatically detecting project <code>backup.sh</code> scripts and injecting standardized runtime variables.
+                Guarantees zero dirty snapshots via cross-process exclusive locks, bounded disk footprint through intelligent retention rotation, and instant mobile alerts.
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#convention-backups"
+                class="text-link"
+                >View backup documentation ↗</a
+              >
+            </div>
           </div>
-          <div class="command-list">
-            <div><code>upy backup</code><span>Run convention project backup</span></div>
-            <div><code>upy release latest</code><span>Deploy latest release to production</span></div>
-            <div><code>upy clean --bundles</code><span>Prune bundle archive cache</span></div>
-            <div><code>upy</code><span>Interactive project manager menu</span></div>
-            <div><code>upy update</code><span>Check and self-update upy</span></div>
+
+          <div class="backup-showcase">
+            <div class="showcase-steps">
+              <!-- Card 1: Convention Script -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / Convention Script <span>Auto-Discovery</span></span>
+                  <span class="step-card-file">backup.sh</span>
+                </div>
+                <pre><code><span class="comment">#!/usr/bin/env bash
+# Auto-injected: UPY_BACKUP_DIR, UPY_PROJECT_NAME, UPY_TIMESTAMP</span>
+<span class="keyword">mkdir</span> -p <span class="string">"${UPY_BACKUP_DIR}"</span>
+BACKUP_FILE=<span class="string">"${UPY_BACKUP_DIR}/dump-${UPY_PROJECT_NAME}-${UPY_TIMESTAMP}.sql.gz"</span>
+
+<span class="comment"># Execute dump inside container or on native host</span>
+docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWORD}"</span> <span class="string">"${DB_NAME}"</span> | gzip &gt; <span class="string">"${BACKUP_FILE}"</span></code></pre>
+              </div>
+
+              <!-- Card 2: Context & Rotation Configuration -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / Context &amp; Rotation <span>Optional Config</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
+                </div>
+                <pre><code><span class="comment"># Optional backup settings</span>
+<span class="keyword">backup</span>:
+  <span class="string">script</span>: <span class="string">backup.sh</span>            <span class="comment"># Auto-probes backup.sh if omitted</span>
+  <span class="string">dir</span>: <span class="string">backups</span>                 <span class="comment"># Output directory (&lt;root&gt;/backups)</span>
+  <span class="string">retention</span>: 7                 <span class="comment"># Keep latest 7 archives, auto-prune older</span>
+  <span class="string">timeout</span>: <span class="string">15m</span>                 <span class="comment"># Safety timeout (supports 30s, 5m, 1h)</span></code></pre>
+              </div>
+
+              <!-- Card 3: Guarantees -->
+              <div class="showcase-guarantees">
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>Cross-Process Mutual Exclusion:</strong> Acquires exclusive <code>.deploy.lock</code> (<code>action: 备份中</code>), strictly preventing dirty snapshots from concurrent releases or cleanups.</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>Automatic Retention Rotation:</strong> Automatically scans archive modification times and cleans snapshots past the threshold, keeping server disk usage bounded.</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>Observability &amp; Mobile Alerts:</strong> Pushes instant alerts with elapsed execution times, archive file sizes, and failure reasons to Bark mobile channels.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Terminal Window & Command Grid -->
+            <div class="showcase-terminal-col">
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots" aria-hidden="true">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">Terminal — upy backup</span>
+                  <button type="button" class="btn-terminal-copy" data-copy="term-backup-code">Copy Command</button>
+                </div>
+                <pre id="term-backup-code" class="sr-only">upy backup</pre>
+                <div class="terminal-body">
+                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy backup</span>
+<span class="t-step">-&gt; Preparing convention backup for project <span class="t-highlight">my-api-service</span>...</span>
+<span class="t-ok">✓ Discovered convention script: backup.sh (chmod 0755)</span>
+<span class="t-ok">✓ Acquired project exclusive lock (.deploy.lock)</span>
+<span class="t-step">-&gt; Executing backup with context (UPY_BACKUP_DIR=backups)...</span>
+<span class="t-dim">------------------------------------------------------------</span>
+<span class="t-info">Exporting database to backups/dump-my-api-service-20261019-120000.sql.gz...</span>
+<span class="t-ok">Database export completed successfully!</span>
+<span class="t-dim">------------------------------------------------------------</span>
+<span class="t-ok">✓ Project my-api-service backup finished successfully!</span>
+  <span class="t-highlight">📦 Archive:</span>  dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+  <span class="t-highlight">🛡️  Rotation:</span> Kept latest 7 archives (cleaned 1 older file)
+  <span class="t-time">⏱  Elapsed:</span>   2.4s
+  <span class="t-info">🔔 Pushed notification to Bark channel</span></pre>
+                </div>
+              </div>
+
+              <!-- Quick Command Reference Grid -->
+              <div class="backup-cmd-grid">
+                <div class="backup-cmd-item">
+                  <code>upy backup</code>
+                  <span>Interactive project backup</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>upy backup my-app --list</code>
+                  <span>View archive history &amp; file sizes</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>upy backup my-app --prune 5</code>
+                  <span>Retain latest 5 archives &amp; clean older</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>upy backup --all -y</code>
+                  <span>Batch backup all registered projects</span>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
       </section>

@@ -1,0 +1,8 @@
+# 仅放在服务器项目根目录 /srv/demo-web/deploy.yaml；不要打入 ZIP。
+name: demo-web
+release:
+  provider: github
+  repository: owner/demo-web
+  asset: bundle.zip
+releases:
+  keep: 1

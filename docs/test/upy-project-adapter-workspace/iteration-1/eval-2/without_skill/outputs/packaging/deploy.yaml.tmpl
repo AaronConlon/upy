@@ -1,0 +1,12 @@
+# 打包时替换两个占位符；本文件成为 ZIP 根目录 deploy.yaml。
+name: demo-api
+version: "@@VERSION@@"
+type: system
+target:
+  os: linux
+  arch: "@@ARCH@@"
+system:
+  command: ["./bin/demo-api"]
+healthcheck:
+  url: http://127.0.0.1:8080/health
+  timeout: 30s

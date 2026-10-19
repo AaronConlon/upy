@@ -1,0 +1,18 @@
+# 替换域名，并由服务器管理员配置 TLS 与站点启用。
+server {
+    listen 80;
+    server_name demo-web.example.com;
+    root /srv/demo-web/current;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    # 缺失资源返回 404，避免被 SPA HTML 掩盖。
+    location /assets/ {
+        try_files $uri =404;
+    }
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "files": [
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/without_skill/outputs/server/deploy.yaml",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/without_skill/outputs/scripts/package-release.sh",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/without_skill/outputs/.github/workflows/release.yml",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/with_skill/outputs/.github/workflows/upy-release.yml",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/with_skill/outputs/scripts/upy/build-bundle.sh",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/with_skill/outputs/scripts/upy/pack_bundle.py",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-2/with_skill/outputs/deploy/upy/server.deploy.yaml.example",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/without_skill/outputs/server/deploy.yaml",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/without_skill/outputs/.github/workflows/release.yml",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/without_skill/outputs/scripts/upy/build-bundle.sh",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/with_skill/outputs/.github/workflows/upy-release.yml",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/with_skill/outputs/scripts/upy/build-bundle.sh",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/with_skill/outputs/scripts/upy/pack_bundle.py",
+    "docs/test/upy-project-adapter-workspace/iteration-1/eval-1/with_skill/outputs/deploy/upy/server.deploy.yaml.example"
+  ]
+}

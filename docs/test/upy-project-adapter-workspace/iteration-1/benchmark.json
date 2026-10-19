@@ -1,0 +1,241 @@
+{
+  "metadata": {
+    "skill_name": "upy-project-adapter",
+    "skill_path": "/Users/aaron/repos/upy/skills/upy-project-adapter",
+    "timestamp": "2026-10-19",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "static-spa",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "pass_rate": 1.0,
+        "time_seconds": null,
+        "tokens": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Bundle manifest 使用 type: static，包含 directory: dist",
+          "passed": true,
+          "evidence": "build-bundle.sh 生成 JSON static manifest，复制 dist，要求 dist/index.html"
+        },
+        {
+          "text": "使用 pnpm frozen-lockfile 而不是 npm 安装",
+          "passed": true,
+          "evidence": "build-bundle.sh 执行 pnpm install --frozen-lockfile 并锁定9.15.0"
+        },
+        {
+          "text": "服务器配置包含 release.provider/repository/asset，明确与 ZIP 清单分开",
+          "passed": true,
+          "evidence": "server.deploy.yaml.example 独立设置 github/owner/demo-web/bundle.zip，README明确不放ZIP"
+        },
+        {
+          "text": "workflow 发布 ZIP 且发布 job 有 contents write",
+          "passed": true,
+          "evidence": "upy-release.yml build只读、release job contents:write，发布bundle.zip与sha256"
+        },
+        {
+          "text": "说明 SPA 路由与 current 目录，不编造 upy validate/rollback/status",
+          "passed": true,
+          "evidence": "docs/upy-deployment.md 包含 Nginx current 与 SPA 回退，未生成不存在的CLI命令"
+        }
+      ],
+      "notes": [
+        "单场景单次生成，不能据此推断统计显著性。",
+        "初稿曾错误描述releases.keep；评估原件保留，最终Skill和分发示例已经修正，未重跑完整Agent评估。"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "static-spa",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "pass_rate": 1.0,
+        "time_seconds": null,
+        "tokens": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Bundle manifest 使用 type: static，包含 directory: dist",
+          "passed": true,
+          "evidence": "build-bundle.sh 写入 type: static 与 directory: dist，要求 dist/index.html"
+        },
+        {
+          "text": "使用 pnpm frozen-lockfile 而不是 npm 安装",
+          "passed": true,
+          "evidence": "build-bundle.sh 使用 pnpm install --frozen-lockfile"
+        },
+        {
+          "text": "服务器配置包含 release.provider/repository/asset，明确与 ZIP 清单分开",
+          "passed": true,
+          "evidence": "server/deploy.yaml 设置 github/owner/demo-web/bundle.zip，部署文档区分服务器与ZIP"
+        },
+        {
+          "text": "workflow 发布 ZIP 且发布 job 有 contents write",
+          "passed": true,
+          "evidence": "release.yml 继承全局 contents:write 并发布 bundle.zip；虽符合该断言，但权限范围偏大"
+        },
+        {
+          "text": "说明 SPA 路由与 current 目录，不编造 upy validate/rollback/status",
+          "passed": true,
+          "evidence": "nginx.conf.example 与部署文档说明 current 和路由回退，未编造CLI命令"
+        }
+      ],
+      "notes": [
+        "单场景单次生成，不能据此推断统计显著性。",
+        "全局contents:write、同draft重传允许clobber；权限范围与不可变策略值得收紧。"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "system-multiarch",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "pass_rate": 1.0,
+        "time_seconds": null,
+        "tokens": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "system command 数组且构建 ./cmd/api 的 Linux 二进制",
+          "passed": true,
+          "evidence": "build-bundle.sh 构建 ./cmd/api 并生成 [./bin/server] 数组，fixture 实际构建成功"
+        },
+        {
+          "text": "manifest target 与 matrix arch 对应，二进制保留可执行权限",
+          "passed": true,
+          "evidence": "matrix arch 与 target一致，chmod0755且ZIP权限校验；fixture双架构ELF检查通过"
+        },
+        {
+          "text": "Release 收集并发布两种不同资产，服务器选择 arm64",
+          "passed": true,
+          "evidence": "两种 bundle-linux-*.zip 经release job收集发布，server精确选择arm64"
+        },
+        {
+          "text": "service 用户配置位于服务器文件，说明 shared/service.env 和 shared/data",
+          "passed": true,
+          "evidence": "service api身份在server文件，README说明shared/service.env和shared/data及权限"
+        },
+        {
+          "text": "说明未执行真实部署，服务器使用 DEPLOY_GITHUB_TOKEN，不能把 upy bundle 当打包命令",
+          "passed": true,
+          "evidence": "README声明无真实部署，并使用 DEPLOY_GITHUB_TOKEN；upy bundle仅作为真实离线部署"
+        }
+      ],
+      "notes": [
+        "单场景单次生成，不能据此推断统计显著性。",
+        "初稿曾错误描述releases.keep；评估原件保留，最终Skill和分发示例已经修正，未重跑完整Agent评估。"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "system-multiarch",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "pass_rate": 0.8,
+        "time_seconds": null,
+        "tokens": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "system command 数组且构建 ./cmd/api 的 Linux 二进制",
+          "passed": true,
+          "evidence": "package-release.sh 构建 ./cmd/api，manifest数组启动./bin/demo-api；fixture实际构建成功"
+        },
+        {
+          "text": "manifest target 与 matrix arch 对应，二进制保留可执行权限",
+          "passed": true,
+          "evidence": "脚本循环amd64/arm64生成对应target，chmod0755且fixture ZIP executable通过"
+        },
+        {
+          "text": "Release 收集并发布两种不同资产，服务器选择 arm64",
+          "passed": true,
+          "evidence": "publish job发布两个demo-api-linux-*.zip，server精确选择arm64"
+        },
+        {
+          "text": "service 用户配置位于服务器文件，说明 shared/service.env 和 shared/data",
+          "passed": false,
+          "evidence": "api身份和shared/service.env正确，但未明确shared/data路径及写权限，只泛称数据另行设计"
+        },
+        {
+          "text": "说明未执行真实部署，服务器使用 DEPLOY_GITHUB_TOKEN，不能把 upy bundle 当打包命令",
+          "passed": true,
+          "evidence": "README明确未真实构建部署，使用DEPLOY_GITHUB_TOKEN；没有误用upy bundle打包"
+        }
+      ],
+      "notes": [
+        "单场景单次生成，不能据此推断统计显著性。"
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": null,
+        "stddev": null
+      },
+      "tokens": {
+        "mean": null,
+        "stddev": null
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.9,
+        "stddev": 0.09999999999999998,
+        "min": 0.8,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": null,
+        "stddev": null
+      },
+      "tokens": {
+        "mean": null,
+        "stddev": null
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.10",
+      "time_seconds": "unavailable",
+      "tokens": "unavailable"
+    }
+  },
+  "notes": [
+    "执行平台未返回token用量与精确独立时长，使用null，不将缺失值伪装成0。",
+    "with_skill 10/10，without_skill 9/10，仅做初步契约覆盖检查。",
+    "初稿版本保留描述错误已由源码复核纠正；现有Agent输出是修正前的历史记录。"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "example-api",
+  "version": "1.2.3",
+  "type": "docker",
+  "docker": {
+    "mode": "compose",
+    "composeFile": "compose.yaml"
+  },
+  "healthcheck": {
+    "url": "http://127.0.0.1:8080/health",
+    "timeout": "30s"
+  }
+}

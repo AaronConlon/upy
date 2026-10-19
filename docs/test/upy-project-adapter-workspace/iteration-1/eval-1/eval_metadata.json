@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "static-spa",
+  "prompt": "为 owner/demo-web 接入 upy。项目是 Vite Vue SPA，packageManager pnpm@9.15.0，有 pnpm-lock.yaml，Node20，build 输出 dist。生成服务器配置样例、构建打包脚本、tag v* 的 GitHub Actions Release workflow 和部署说明。不要发布或运行部署。",
+  "assertions": [
+    "Bundle manifest 使用 type: static，包含 directory: dist",
+    "使用 pnpm frozen-lockfile 而不是 npm 安装",
+    "服务器配置包含 release.provider/repository/asset，明确与 ZIP 清单分开",
+    "workflow 发布 ZIP 且发布 job 有 contents write",
+    "说明 SPA 路由与 current 目录，不编造 upy validate/rollback/status"
+  ]
+}

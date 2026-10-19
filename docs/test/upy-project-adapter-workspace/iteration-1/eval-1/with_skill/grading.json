@@ -1,0 +1,48 @@
+{
+  "expectations": [
+    {
+      "text": "Bundle manifest 使用 type: static，包含 directory: dist",
+      "passed": true,
+      "evidence": "build-bundle.sh 生成 JSON static manifest，复制 dist，要求 dist/index.html"
+    },
+    {
+      "text": "使用 pnpm frozen-lockfile 而不是 npm 安装",
+      "passed": true,
+      "evidence": "build-bundle.sh 执行 pnpm install --frozen-lockfile 并锁定9.15.0"
+    },
+    {
+      "text": "服务器配置包含 release.provider/repository/asset，明确与 ZIP 清单分开",
+      "passed": true,
+      "evidence": "server.deploy.yaml.example 独立设置 github/owner/demo-web/bundle.zip，README明确不放ZIP"
+    },
+    {
+      "text": "workflow 发布 ZIP 且发布 job 有 contents write",
+      "passed": true,
+      "evidence": "upy-release.yml build只读、release job contents:write，发布bundle.zip与sha256"
+    },
+    {
+      "text": "说明 SPA 路由与 current 目录，不编造 upy validate/rollback/status",
+      "passed": true,
+      "evidence": "docs/upy-deployment.md 包含 Nginx current 与 SPA 回退，未生成不存在的CLI命令"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "无真实目标源码，使用给定事实生成；Go另用最小HTTP fixture执行构建。"
+    ],
+    "needs_review": [
+      "单场景单次生成，不能据此推断统计显著性。",
+      "初稿曾错误描述releases.keep；评估原件保留，最终Skill和分发示例已经修正，未重跑完整Agent评估。"
+    ],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "当前断言主要覆盖接入契约；额外风险与版本清理误解独立记录，未隐瞒在高分之后。"
+  }
+}

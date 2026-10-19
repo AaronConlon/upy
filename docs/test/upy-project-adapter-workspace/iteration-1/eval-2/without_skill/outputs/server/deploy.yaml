@@ -1,0 +1,10 @@
+# 仅供服务器项目根目录使用，不放进 bundle。
+name: demo-api
+release:
+  provider: github
+  repository: owner/demo-api
+  asset: demo-api-linux-arm64.zip
+service:
+  user: api
+  group: api
+  unit: upy-demo-api.service

@@ -434,6 +434,10 @@ upy version
 
 ---
 
+## Agent Skill
+
+Use [upy-project-adapter](skills/upy-project-adapter/SKILL.md) to generate application deployment configs, bundles, and GitHub Actions Releases for SPA, Docker/Compose, and system services. See [installation and usage](skills/README.md).
+
 ## License
 
 MIT License

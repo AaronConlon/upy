@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "system-multiarch",
+  "prompt": "为 owner/demo-api 接入 upy system。Go1.25 main 在 ./cmd/api，无 CGO，监听8080，/health 已存在。要 Linux amd64/arm64 两份 Release 资产，tag v*。服务器 arm64，使用现有 api 用户和组。生成配置、构建打包脚本、Actions、说明。认证来自服务器环境，不能提交凭据。没有可用测试服务器，不要发布或运行部署。",
+  "assertions": [
+    "system command 数组且构建 ./cmd/api 的 Linux 二进制",
+    "manifest target 与 matrix arch 对应，二进制保留可执行权限",
+    "Release 收集并发布两种不同资产，服务器选择 arm64",
+    "service 用户配置位于服务器文件，说明 shared/service.env 和 shared/data",
+    "说明未执行真实部署，服务器使用 DEPLOY_GITHUB_TOKEN，不能把 upy bundle 当打包命令"
+  ]
+}

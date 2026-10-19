@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "system command 数组且构建 ./cmd/api 的 Linux 二进制",
+      "passed": true,
+      "evidence": "package-release.sh 构建 ./cmd/api，manifest数组启动./bin/demo-api；fixture实际构建成功"
+    },
+    {
+      "text": "manifest target 与 matrix arch 对应，二进制保留可执行权限",
+      "passed": true,
+      "evidence": "脚本循环amd64/arm64生成对应target，chmod0755且fixture ZIP executable通过"
+    },
+    {
+      "text": "Release 收集并发布两种不同资产，服务器选择 arm64",
+      "passed": true,
+      "evidence": "publish job发布两个demo-api-linux-*.zip，server精确选择arm64"
+    },
+    {
+      "text": "service 用户配置位于服务器文件，说明 shared/service.env 和 shared/data",
+      "passed": false,
+      "evidence": "api身份和shared/service.env正确，但未明确shared/data路径及写权限，只泛称数据另行设计"
+    },
+    {
+      "text": "说明未执行真实部署，服务器使用 DEPLOY_GITHUB_TOKEN，不能把 upy bundle 当打包命令",
+      "passed": true,
+      "evidence": "README明确未真实构建部署，使用DEPLOY_GITHUB_TOKEN；没有误用upy bundle打包"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "user_notes_summary": {
+    "uncertainties": [
+      "无真实目标源码，使用给定事实生成；Go另用最小HTTP fixture执行构建。"
+    ],
+    "needs_review": [
+      "单场景单次生成，不能据此推断统计显著性。"
+    ],
+    "workarounds": []
+  },
+  "eval_feedback": {
+    "overall": "当前断言主要覆盖接入契约；额外风险与版本清理误解独立记录，未隐瞒在高分之后。"
+  }
+}

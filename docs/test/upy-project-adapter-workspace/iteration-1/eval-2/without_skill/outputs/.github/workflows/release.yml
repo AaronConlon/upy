@@ -1,0 +1,59 @@
+name: Release bundles
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+      - name: Test application
+        run: go test ./...
+        env:
+          CGO_ENABLED: '0'
+      - name: Build both Linux bundles
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash scripts/package-release.sh "$RELEASE_TAG"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-bundles
+          path: |
+            dist/demo-api-linux-amd64.zip
+            dist/demo-api-linux-arm64.zip
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-bundles
+          path: dist
+      - name: Create draft, upload both bundles, then publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 已存在的 Release 不自动覆盖，失败后由维护者检查再决定处理方式。
+          gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --generate-notes
+          gh release upload "$RELEASE_TAG" dist/demo-api-linux-amd64.zip dist/demo-api-linux-arm64.zip
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            gh release edit "$RELEASE_TAG" --prerelease --draft=false
+          else
+            gh release edit "$RELEASE_TAG" --draft=false
+          fi

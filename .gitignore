@@ -216,4 +216,8 @@ go.work
 # upy build
 /dist/
 upy-*
+!skills/upy-project-adapter/
+!skills/upy-project-adapter/**
+!docs/test/upy-project-adapter-workspace/
+!docs/test/upy-project-adapter-workspace/**
 *.zip

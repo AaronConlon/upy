@@ -622,23 +622,119 @@ upy clean --keep 3</code></pre>
         <article class="step last" data-step>
           <div class="step-copy">
             <span class="step-number">03 / 备份</span>
-            <h3>约定式数据备份，跨进程互斥保护。</h3>
-            <p>
-              遵循约定优先原则，自动识别项目中的 <code>backup.sh</code> 脚本并注入环境变量。
-              备份期间自动施加排他互斥锁，确保数据一致性；支持保留份数轮转策略与 Bark 移动端通知。
-            </p>
-            <a
-              href="https://github.com/AaronConlon/upy#常用命令速查"
-              class="text-link"
-              >查看常用命令 ↗</a
-            >
+            <h3>约定式数据备份，全流程加锁防护。</h3>
+            <div class="step-copy-desc">
+              <p>
+                遵循约定优先原则，自动识别项目中的 <code>backup.sh</code> 脚本并注入环境变量。
+                执行期间自动施加跨进程排他互斥锁，严防并发写入产生脏数据；支持智能保留轮转策略与 Bark 移动端实时告警。
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#如何备份与归档"
+                class="text-link"
+                >查阅备份与归档文档 ↗</a
+              >
+            </div>
           </div>
-          <div class="command-list">
-            <div><code>upy backup</code><span>执行项目约定备份</span></div>
-            <div><code>upy release latest</code><span>部署项目最新版本</span></div>
-            <div><code>upy clean --bundles</code><span>清理历史 bundle 缓存</span></div>
-            <div><code>upy</code><span>项目交互调度菜单</span></div>
-            <div><code>upy update</code><span>检查并自升级工具</span></div>
+
+          <div class="backup-showcase">
+            <div class="showcase-steps">
+              <!-- Card 1: 约定脚本 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / 约定备份脚本 <span>零配置探测</span></span>
+                  <span class="step-card-file">backup.sh</span>
+                </div>
+                <pre><code><span class="comment">#!/usr/bin/env bash
+# 环境变量由 upy 自动注入: UPY_BACKUP_DIR, UPY_PROJECT_NAME, UPY_TIMESTAMP</span>
+<span class="keyword">mkdir</span> -p <span class="string">"${UPY_BACKUP_DIR}"</span>
+BACKUP_FILE=<span class="string">"${UPY_BACKUP_DIR}/dump-${UPY_PROJECT_NAME}-${UPY_TIMESTAMP}.sql.gz"</span>
+
+<span class="comment"># 在容器内安全执行 mysqldump 导出并压缩</span>
+docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWORD}"</span> <span class="string">"${DB_NAME}"</span> | gzip &gt; <span class="string">"${BACKUP_FILE}"</span></code></pre>
+              </div>
+
+              <!-- Card 2: 声明清单 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / 上下文与轮转 <span>可选进阶配置</span></span>
+                  <span class="step-card-file">deploy.yaml</span>
+                </div>
+                <pre><code><span class="comment"># 备份功能配置（可选）</span>
+<span class="keyword">backup</span>:
+  <span class="string">script</span>: <span class="string">backup.sh</span>            <span class="comment"># 自定义脚本路径（缺省自动探测）</span>
+  <span class="string">dir</span>: <span class="string">backups</span>                 <span class="comment"># 备份产物归档目录（默认 backups/）</span>
+  <span class="string">retention</span>: 7                 <span class="comment"># 自动轮转保留的最大备份份数（默认 7）</span>
+  <span class="string">timeout</span>: <span class="string">15m</span>                 <span class="comment"># 备份最大超时时间（默认 15m，支持 30s, 5m, 1h）</span></code></pre>
+              </div>
+
+              <!-- Card 3: 内核保障 -->
+              <div class="showcase-guarantees">
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>跨进程排他互斥（.deploy.lock）：</strong>备份期间获取排他锁（<code>action: 备份中</code>），严格互斥正在进行的部署或磁盘清理，杜绝产生半更新脏数据。</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>智能自动轮转防爆盘：</strong>按修改时间排序自动剔除超出保留阈值的旧备份（默认 7 份），防止历史备份文件无限膨胀撑爆服务器磁盘。</div>
+                </div>
+                <div class="guarantee-item">
+                  <span class="guarantee-icon" aria-hidden="true">✓</span>
+                  <div><strong>通知告警实时推送：</strong>备份完成后自动汇总耗时、产物文件体积，并通过 Bark 等渠道实时推送备份结果与告警。</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: 终端日志与命令速查 -->
+            <div class="showcase-terminal-col">
+              <div class="terminal-window">
+                <div class="terminal-bar">
+                  <div class="terminal-dots" aria-hidden="true">
+                    <span class="dot-red"></span>
+                    <span class="dot-yellow"></span>
+                    <span class="dot-green"></span>
+                  </div>
+                  <span class="terminal-title">终端执行 — upy backup</span>
+                  <button type="button" class="btn-terminal-copy" data-copy="term-backup-code-zh">复制执行命令</button>
+                </div>
+                <pre id="term-backup-code-zh" class="sr-only">upy backup</pre>
+                <div class="terminal-body">
+                  <pre><span class="t-prompt">$</span> <span class="t-cmd">upy backup</span>
+<span class="t-step">-&gt; 正在对项目 <span class="t-highlight">my-api-service</span> 执行约定备份...</span>
+<span class="t-ok">✓ 发现约定脚本: backup.sh (chmod 0755)</span>
+<span class="t-ok">✓ 已获取项目排他锁 (.deploy.lock)</span>
+<span class="t-step">-&gt; 正在驱动执行备份脚本 (UPY_BACKUP_DIR=backups)...</span>
+<span class="t-dim">------------------------------------------------------------</span>
+<span class="t-info">正在导出数据库到: /opt/my-api-service/backups/dump-my-api-service-20261019-120000.sql.gz...</span>
+<span class="t-ok">数据库导出成功！</span>
+<span class="t-dim">------------------------------------------------------------</span>
+<span class="t-ok">✓ 项目 my-api-service 备份执行完成！</span>
+  <span class="t-highlight">📦 归档产物:</span> dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+  <span class="t-highlight">🛡️  自动轮转:</span> 保留最近 7 份（已清理 1 份历史旧备份）
+  <span class="t-time">⏱  总耗时:</span>   2.4s
+  <span class="t-info">🔔 已向 Bark 渠道推送备份完成通知</span></pre>
+                </div>
+              </div>
+
+              <!-- 快捷命令卡片列表 -->
+              <div class="backup-cmd-grid">
+                <div class="backup-cmd-item">
+                  <code>upy backup</code>
+                  <span>交互式选择已登记项目执行备份</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>upy backup my-app --list</code>
+                  <span>查看项目历史备份列表与占用体积</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>upy backup my-app --prune 5</code>
+                  <span>手动触发轮转，保留最近 5 份备份</span>
+                </div>
+                <div class="backup-cmd-item">
+                  <code>upy backup --all -y</code>
+                  <span>一键批量备份所有已登记项目</span>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
       </section>

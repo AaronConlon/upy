@@ -1,0 +1,46 @@
+{
+  "with_skill": [
+    {
+      "asset": "bundle-linux-amd64.zip",
+      "target": {
+        "os": "linux",
+        "arch": "amd64"
+      },
+      "version": "1.2.3",
+      "zip_permissions": "executable",
+      "elf": true
+    },
+    {
+      "asset": "bundle-linux-arm64.zip",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "version": "1.2.3",
+      "zip_permissions": "executable",
+      "elf": true
+    }
+  ],
+  "without_skill": [
+    {
+      "asset": "demo-api-linux-amd64.zip",
+      "target": {
+        "os": "linux",
+        "arch": "amd64"
+      },
+      "version": "v1.2.3",
+      "zip_permissions": "executable",
+      "elf": true
+    },
+    {
+      "asset": "demo-api-linux-arm64.zip",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "version": "v1.2.3",
+      "zip_permissions": "executable",
+      "elf": true
+    }
+  ]
+}
