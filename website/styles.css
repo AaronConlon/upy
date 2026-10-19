@@ -141,6 +141,21 @@ nav a,
   font-size: 14px;
   font-weight: 500;
 }
+.lang-switch {
+  padding: 4px 10px;
+  border: 1px solid var(--color-rule);
+  color: var(--color-ink);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  min-height: 32px;
+  align-self: center;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.lang-switch:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-surface);
+}
 nav a,
 .text-link {
   transition: color var(--dur-fast) var(--ease-out);
@@ -172,11 +187,11 @@ nav a:hover,
   padding-bottom: 10px;
 }
 h1 {
-  font-size: clamp(52px, 5.5vw, 78px);
-  letter-spacing: -0.065em;
-  line-height: 1.22;
+  font-size: clamp(38px, 4.3vw, 62px);
+  letter-spacing: -0.04em;
+  line-height: 1.15;
   font-weight: 600;
-  margin: 0 0 26px;
+  margin: 0 0 22px;
 }
 h1 > span {
   display: block;
@@ -272,6 +287,8 @@ h1 > span {
   height: auto;
   max-height: 88%;
   object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(0, 110, 135, 0.12));
+  will-change: transform;
 }
 .drawing-note {
   position: absolute;
@@ -572,7 +589,8 @@ figcaption > span:last-child {
 }
 .footer > div {
   display: flex;
-  gap: 25px;
+  flex-wrap: wrap;
+  gap: 16px 25px;
 }
 .footer > div a {
   font-size: 13px;
@@ -647,8 +665,9 @@ figcaption > span:last-child {
     gap: 32px;
   }
   h1 {
-    font-size: 56px;
-    margin-bottom: 22px;
+    font-size: 42px;
+    line-height: 1.15;
+    margin-bottom: 20px;
   }
   .intro {
     font-size: 17px;
@@ -741,7 +760,8 @@ figcaption > span:last-child {
   }
   .footer > div {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 20px;
   }
   pre {
     font-size: 12px;
@@ -761,7 +781,8 @@ figcaption > span:last-child {
     font-size: 11px;
   }
   h1 {
-    font-size: 48px;
+    font-size: 34px;
+    line-height: 1.18;
   }
   .hero-actions {
     gap: 15px;

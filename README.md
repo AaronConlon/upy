@@ -4,14 +4,14 @@
 
 <h1 align="center">upy</h1>
 
-<p align="center">把部署滑顺一点。
+<p align="center">一个二进制，从 Release 直达生产。
 <br>
 <a href="https://aaronconlon.github.io/upy/">官网</a> · <a href="https://github.com/AaronConlon/upy/releases">下载</a> · <a href="#如何安装">开始使用</a>
 </p>
 
-轻量级 Web 项目自动化部署工具（Go 单二进制，零外部依赖，极速部署）。
+Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内存占用）。
 
-支持 **SPA 前端静态站点**（原子软链切换、Web 服务器权限自适应）与 **Docker / Docker Compose 容器项目**（平滑启停、健康检查与失败自动回滚），兼具 GitHub Release 自动化拉取与本地离线包部署能力。
+支持 **极速部署**（GitHub Releases / 本地 bundle、SPA 原子软链切换、Docker 平滑启停与失败自动回滚）、**磁盘清理**（空间分析、活跃版本保护、缓存释放）与 **约定备份**（脚本探测、跨进程加锁、自动轮转），构筑简洁可靠的单机运维闭环。
 
 ---
 

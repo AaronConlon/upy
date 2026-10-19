@@ -1,26 +1,36 @@
 // 使用 Clipboard API；权限不可用时选中命令，保留手动复制路径。
 const status = document.querySelector("#copy-status");
+const isZh = document.documentElement.lang.startsWith("zh");
+const textCopy = isZh ? "复制命令" : "Copy";
+const textCopied = isZh ? "已复制" : "Copied!";
+const textManual = isZh ? "请手动复制" : "Copy manually";
+const textSuccessMsg = isZh
+  ? "安装命令已复制到剪贴板。"
+  : "Install command copied to clipboard.";
+const textFailMsg = isZh
+  ? "无法自动复制，已选中安装命令，请使用系统复制快捷键。"
+  : "Could not copy automatically. Command selected, please use Ctrl+C / Cmd+C.";
+
 for (const button of document.querySelectorAll("[data-copy]")) {
   button.addEventListener("click", async () => {
     const source = document.getElementById(button.dataset.copy);
     button.disabled = true;
     try {
       await navigator.clipboard.writeText(source.textContent.trim());
-      button.textContent = "已复制";
-      status.textContent = "安装命令已复制到剪贴板。";
+      button.textContent = textCopied;
+      status.textContent = textSuccessMsg;
     } catch {
       const range = document.createRange();
       range.selectNodeContents(source);
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
-      button.textContent = "请手动复制";
-      status.textContent =
-        "无法自动复制，已选中安装命令，请使用系统复制快捷键。";
+      button.textContent = textManual;
+      status.textContent = textFailMsg;
     } finally {
       button.disabled = false;
       window.setTimeout(() => {
-        button.textContent = "复制命令";
+        button.textContent = textCopy;
       }, 3000);
     }
   });
@@ -63,7 +73,70 @@ if (window.gsap && window.ScrollTrigger) {
           ".mascot-stage img",
           { x: -65, rotation: -6, opacity: 0, duration: 0.85 },
           0.25,
-        );
+        )
+        .add(() => {
+          // 持续丝滑巡航：轻微浮动与角度微摆，模拟踩滑板的平稳滑行感
+          const cruise = gsap.to(".mascot-stage img", {
+            y: -8,
+            x: 4,
+            rotation: 1.6,
+            duration: 3.2,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+
+          // 工程辅助圆平滑旋转，赋予图纸动态生命力
+          gsap.to(".construction circle", {
+            rotation: 360,
+            transformOrigin: "280px 214px",
+            duration: 90,
+            repeat: -1,
+            ease: "none",
+          });
+
+          // 定位十字微弱明暗呼吸
+          gsap.to(".crosses path", {
+            opacity: 0.5,
+            duration: 2.6,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+            stagger: 0.15,
+          });
+
+          // 鼠标在图纸区域内滑动的交互式微视差跟随
+          const stage = document.querySelector(".drawing-field");
+          const mascot = document.querySelector(".mascot-stage img");
+          if (stage && mascot) {
+            stage.addEventListener("mousemove", (e) => {
+              const rect = stage.getBoundingClientRect();
+              const relX = (e.clientX - rect.left) / rect.width - 0.5;
+              const relY = (e.clientY - rect.top) / rect.height - 0.5;
+              gsap.to(mascot, {
+                x: relX * 24,
+                y: relY * 16,
+                rotation: relX * 3.5,
+                duration: 0.45,
+                ease: "power2.out",
+                overwrite: "auto",
+              });
+            });
+            stage.addEventListener("mouseleave", () => {
+              gsap.to(mascot, {
+                x: 0,
+                y: 0,
+                rotation: 0,
+                duration: 0.9,
+                ease: "sine.out",
+                overwrite: "auto",
+                onComplete: () => {
+                  cruise.play();
+                },
+              });
+            });
+          }
+        });
       for (const section of document.querySelectorAll(
         ".installation, .section-heading, .step, .deploy-types, .closing-inner",
       )) {

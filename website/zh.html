@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f7f6" />
+    <title>upy — 一个二进制，从 Release 直达生产</title>
+    <meta
+      name="description"
+      content="Go 单二进制 Web 部署与运维工具。零外部依赖、极低内存占用，支持 GitHub Releases 部署、SPA 原子软链切换、Docker 容器平滑启停、磁盘清理与约定式数据备份。"
+    />
+    <meta property="og:title" content="upy — 一个二进制，从 Release 直达生产" />
+    <meta
+      property="og:description"
+      content="Go 单二进制，零外部依赖，极低内存占用。快速将 GitHub Releases 或本地 bundle 部署至服务器，支持 SPA 静态站点与 Docker 容器。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aaronconlon.github.io/upy/zh.html" />
+    <meta
+      property="og:image"
+      content="https://aaronconlon.github.io/upy/assets/gopher.png"
+    />
+    <link rel="canonical" href="https://aaronconlon.github.io/upy/zh.html" />
+    <link rel="alternate" hreflang="en" href="https://aaronconlon.github.io/upy/" />
+    <link rel="alternate" hreflang="zh-CN" href="https://aaronconlon.github.io/upy/zh.html" />
+    <link rel="alternate" hreflang="x-default" href="https://aaronconlon.github.io/upy/" />
+    <link rel="icon" type="image/png" href="./assets/gopher.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./vendor/gsap.min.js" defer></script>
+    <script src="./vendor/ScrollTrigger.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="masthead wrap">
+      <a class="wordmark" href="./zh.html" aria-label="upy 首页"
+        >upy<span aria-hidden="true">↗</span></a
+      ><span class="brand-caption">单二进制 Web 部署工具</span>
+      <nav aria-label="主导航">
+        <a href="#features">功能特性</a
+        ><a href="#start">快速安装</a
+        ><a href="https://github.com/AaronConlon/upy#readme">文档 ↗</a
+        ><a href="https://github.com/AaronConlon/upy">GitHub ↗</a>
+        <a href="./" class="lang-switch" aria-label="Switch to English">English</a>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <h1 id="hero-title">
+              <span>一个二进制，</span
+              ><span>从 Release 直达生产<span class="period">。</span></span>
+            </h1>
+            <p class="intro">
+              Go 单二进制，零外部依赖，极低内存占用。<br />快速将 GitHub Releases 或本地 bundle 部署至服务器，原生支持 SPA 与 Docker 项目。
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#start"
+                >开始使用 <span aria-hidden="true">↗</span></a
+              ><a
+                class="text-link"
+                href="https://github.com/AaronConlon/upy/releases"
+                >下载二进制 <span aria-hidden="true">↗</span></a
+              >
+            </div>
+            <p class="platforms">Linux / macOS <span>·</span> x86_64 / arm64 <span>·</span> 零外部依赖</p>
+          </div>
+          <figure class="mascot-stage">
+            <div class="drawing-meta">
+              <span>构建产物 → upy 调度 → 生产环境</span>
+            </div>
+            <div class="drawing-field">
+              <svg
+                class="draft-lines"
+                viewBox="0 0 560 430"
+                fill="none"
+                aria-hidden="true"
+              >
+                <g class="construction">
+                  <path d="M40 42H520M40 388H520M64 20V410M496 20V410" />
+                  <path d="M280 20V410M40 215H520" stroke-dasharray="4 7" />
+                  <circle cx="280" cy="214" r="156" stroke-dasharray="3 6" />
+                </g>
+                <g class="dimension">
+                  <path d="M84 405H476M84 398V412M476 398V412" />
+                </g>
+                <g class="crosses">
+                  <path
+                    d="M55 42H73M64 33V51M487 42H505M496 33V51M55 388H73M64 379V397M487 388H505M496 379V397"
+                  />
+                </g>
+              </svg>
+              <img
+                src="./assets/gopher.png"
+                width="1280"
+                height="1280"
+                alt="蓝色 Go Gopher 踩着滑板，放置在工程辅助线之间"
+                fetchpriority="high"
+              />
+            </div>
+            <figcaption
+              class="deployment-route"
+              aria-label="从 GitHub Release 或本地 bundle，经 upy 部署至生产环境"
+            >
+              <span>Release Bundle</span><span aria-hidden="true">→</span
+              ><strong>upy</strong><span aria-hidden="true">→</span
+              ><span>生产环境</span>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <div class="capability-band">
+        <div class="wrap capability-inner">
+          <span><i aria-hidden="true">01</i> 极速部署</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">02</i> 磁盘清理</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">03</i> 约定备份</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">04</i> 极低内存占用</span>
+        </div>
+      </div>
+      <section
+        class="installation wrap"
+        id="start"
+        aria-labelledby="install-title"
+      >
+        <div>
+          <p class="eyebrow">安装</p>
+          <h2 id="install-title">单行命令安装。</h2>
+          <p>
+            自动识别系统架构并配置 Shell Tab 命令补全。<br />单二进制零依赖，无后台常驻进程。
+          </p>
+          <a
+            class="text-link"
+            href="https://github.com/AaronConlon/upy#如何安装"
+            >查看安装文档 ↗</a
+          >
+        </div>
+        <div class="install-command">
+          <div class="code-label">
+            <span>安装脚本</span
+            ><button
+              type="button"
+              data-copy="install-code"
+              aria-label="复制安装命令"
+            >
+              复制命令
+            </button>
+          </div>
+          <pre><code id="install-code">curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash</code></pre>
+          <p>默认安装至 /usr/local/bin，支持通过 INSTALL_DIR 指定安装路径。</p>
+        </div>
+      </section>
+      <section
+        class="workflow wrap"
+        id="features"
+        aria-labelledby="workflow-title"
+      >
+        <div class="section-heading">
+          <p class="eyebrow">核心功能</p>
+          <h2 id="workflow-title">部署、清理与备份。</h2>
+          <p>覆盖应用发布、磁盘空间维护与关键数据备份，构建单机运维闭环。</p>
+        </div>
+        <div class="workflow-track" aria-hidden="true">
+          <span class="workflow-progress"></span>
+        </div>
+        <article class="step" data-step>
+          <div class="step-copy">
+            <span class="step-number">01 / 部署</span>
+            <h3>从 Release 到生产，原子秒级切换。</h3>
+            <p>
+              在终端交互选择 GitHub Releases 资产包，或一行命令直接部署最新版本。
+              支持断点续传与 SHA-256 完整性校验；离线环境下支持本地 bundle 文件。
+            </p>
+            <a
+              href="https://github.com/AaronConlon/upy#如何部署"
+              class="text-link"
+              >查看部署指南 ↗</a
+            >
+          </div>
+          <div class="example">
+            <span class="file-label">部署命令</span>
+            <pre><code><span class="comment"># 交互选择 Release 资产</span>
+upy release
+
+<span class="comment"># 部署最新正式版</span>
+upy release latest
+
+<span class="comment"># 部署本地 bundle 文件</span>
+upy bundle ./bundle.zip</code></pre>
+          </div>
+        </article>
+        <div class="deploy-types">
+          <article>
+            <span class="eyebrow">SPA 静态站点</span>
+            <h3>原子软链切换，自适应权限规整。</h3>
+            <p>
+              解压至独立版本目录，通过 <code>current</code> 软链原子切换。
+              自动将目录与文件规整为 <code>0755/0644</code> 权限，避免 Nginx / Caddy 出现 403 权限错误。
+            </p>
+          </article>
+          <article>
+            <span class="eyebrow">Docker / Compose 容器项目</span>
+            <h3>平滑启停，失败自动回滚。</h3>
+            <p>
+              新版本镜像与配置就绪后再停止旧容器并释放端口，避免端口冲突。
+              内置健康检查机制，启动异常时自动回滚至上一可用版本。
+            </p>
+          </article>
+        </div>
+        <article class="step" data-step>
+          <div class="step-copy">
+            <span class="step-number">02 / 清理</span>
+            <h3>磁盘空间分析与安全清理。</h3>
+            <p>
+              扫描项目磁盘占用（MB/GB），支持交互式清理历史 bundle 缓存与陈旧版本。
+              内置双重活跃版本保护，禁止删除 <code>current</code> 正在运行的版本；通过跨进程互斥锁避免并发冲突。
+            </p>
+            <a
+              href="https://github.com/AaronConlon/upy#如何清理与维护"
+              class="text-link"
+              >查看清理文档 ↗</a
+            >
+          </div>
+          <div class="example cyan">
+            <span class="file-label">清理命令</span>
+            <pre><code><span class="comment"># 交互式清理菜单（支持空间分析）</span>
+upy clean
+
+<span class="comment"># 清理历史 bundle 压缩包缓存</span>
+upy clean --bundles
+
+<span class="comment"># 仅保留最近 3 个历史版本</span>
+upy clean --keep 3</code></pre>
+          </div>
+        </article>
+        <article class="step last" data-step>
+          <div class="step-copy">
+            <span class="step-number">03 / 备份</span>
+            <h3>约定式数据备份，跨进程互斥保护。</h3>
+            <p>
+              遵循约定优先原则，自动识别项目中的 <code>backup.sh</code> 脚本并注入环境变量。
+              备份期间自动施加排他互斥锁，确保数据一致性；支持保留份数轮转策略与 Bark 移动端通知。
+            </p>
+            <a
+              href="https://github.com/AaronConlon/upy#常用命令速查"
+              class="text-link"
+              >查看常用命令 ↗</a
+            >
+          </div>
+          <div class="command-list">
+            <div><code>upy backup</code><span>执行项目约定备份</span></div>
+            <div><code>upy release latest</code><span>部署项目最新版本</span></div>
+            <div><code>upy clean --bundles</code><span>清理历史 bundle 缓存</span></div>
+            <div><code>upy</code><span>项目交互调度菜单</span></div>
+            <div><code>upy update</code><span>检查并自升级工具</span></div>
+          </div>
+        </article>
+      </section>
+      <section class="closing">
+        <div class="wrap closing-inner">
+          <div>
+            <h2>一个二进制，<br />轻量交付。</h2>
+          </div>
+          <div>
+            <p>开源（MIT 协议）。<br />单二进制、零外部依赖、极低内存占用。</p>
+            <a class="button" href="https://github.com/AaronConlon/upy#readme"
+              >阅读完整文档 ↗</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="wrap footer">
+      <a class="wordmark" href="./zh.html">upy<span aria-hidden="true">↗</span></a>
+      <div>
+        <a href="https://x.com/intent/follow?screen_name=AaronConlonDev" target="_blank" rel="noopener noreferrer">关注作者 @AaronConlonDev ↗</a>
+        <a href="https://i5lin.top/" target="_blank" rel="noopener noreferrer">作者博客 ↗</a>
+        <a href="https://github.com/AaronConlon/upy/issues" target="_blank" rel="noopener noreferrer">反馈问题 ↗</a>
+        <a href="https://github.com/AaronConlon/upy#开源协议" target="_blank" rel="noopener noreferrer">MIT License ↗</a>
+      </div>
+    </footer>
+    <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
+  </body>
+</html>

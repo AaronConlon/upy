@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f5f7f6" />
-    <title>upy — 把部署滑顺一点</title>
+    <title>upy — A Single Binary, Straight from Release to Production</title>
     <meta
       name="description"
-      content="Go 编写的轻量 Web 部署工具。一个二进制，从 GitHub Release 或本地 Bundle 部署 SPA、Docker 与 Docker Compose 项目。"
+      content="Lightweight single-binary Web deployment tool written in Go. Zero dependencies, low memory footprint. Ships SPAs with atomic symlinks, Docker apps with graceful rollbacks, plus automated cleanup and convention backups."
     />
-    <meta property="og:title" content="upy — 把部署滑顺一点" />
+    <meta property="og:title" content="upy — A Single Binary, Straight from Release to Production" />
     <meta
       property="og:description"
-      content="一个 Go 二进制，让 Web 项目从 Release 到上线。支持 SPA、Docker 和 Compose。"
+      content="Single Go binary, zero dependencies, minimal memory footprint. Swiftly deploy GitHub Releases or local bundles to servers for SPAs and Docker containers."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://aaronconlon.github.io/upy/" />
@@ -21,11 +21,14 @@
       content="https://aaronconlon.github.io/upy/assets/gopher.png"
     />
     <link rel="canonical" href="https://aaronconlon.github.io/upy/" />
+    <link rel="alternate" hreflang="en" href="https://aaronconlon.github.io/upy/" />
+    <link rel="alternate" hreflang="zh-CN" href="https://aaronconlon.github.io/upy/zh.html" />
+    <link rel="alternate" hreflang="x-default" href="https://aaronconlon.github.io/upy/" />
     <link rel="icon" type="image/png" href="./assets/gopher.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
@@ -34,15 +37,17 @@
     <script src="./app.js" defer></script>
   </head>
   <body>
-    <a class="skip-link" href="#main">跳到正文</a>
+    <a class="skip-link" href="#main">Skip to content</a>
     <header class="masthead wrap">
-      <a class="wordmark" href="./" aria-label="upy 首页"
+      <a class="wordmark" href="./" aria-label="upy Homepage"
         >upy<span aria-hidden="true">↗</span></a
-      ><span class="brand-caption">轻量 Web 部署工具</span>
-      <nav aria-label="主导航">
-        <a href="#start">开始使用</a
-        ><a href="https://github.com/AaronConlon/upy#readme">文档 ↗</a
+      ><span class="brand-caption">Single-binary Web deployment tool</span>
+      <nav aria-label="Main navigation">
+        <a href="#features">Features</a
+        ><a href="#start">Install</a
+        ><a href="https://github.com/AaronConlon/upy#readme">Docs ↗</a
         ><a href="https://github.com/AaronConlon/upy">GitHub ↗</a>
+        <a href="./zh.html" class="lang-switch" aria-label="切换到中文版本">中文</a>
       </nav>
     </header>
     <main id="main">
@@ -50,26 +55,26 @@
         <div class="hero-layout">
           <div class="hero-copy">
             <h1 id="hero-title">
-              <span>把部署</span
-              ><span>滑顺一点<span class="period">。</span></span>
+              <span>A single binary,</span><span> straight from Release to production<span class="period">.</span></span>
             </h1>
             <p class="intro">
-              一个 Go 二进制，<br />把 Web 项目从 Release 带到线上。
+              Single Go binary, zero runtime dependencies, minimal memory footprint.<br />
+              Swiftly deploy GitHub Releases or local bundles to servers for SPAs and Docker containers.
             </p>
             <div class="hero-actions">
               <a class="button primary" href="#start"
-                >开始部署 <span aria-hidden="true">↗</span></a
+                >Get Started <span aria-hidden="true">↗</span></a
               ><a
                 class="text-link"
                 href="https://github.com/AaronConlon/upy/releases"
-                >下载二进制 <span aria-hidden="true">↗</span></a
+                >Download Binary <span aria-hidden="true">↗</span></a
               >
             </div>
-            <p class="platforms">Linux / macOS <span>·</span> amd64 / arm64</p>
+            <p class="platforms">Linux / macOS <span>·</span> x86_64 / arm64 <span>·</span> Zero dependencies</p>
           </div>
           <figure class="mascot-stage">
             <div class="drawing-meta">
-              <span>从构建产物，到运行版本</span>
+              <span>Build Artifact → upy Runner → Production</span>
             </div>
             <div class="drawing-field">
               <svg
@@ -96,30 +101,30 @@
                 src="./assets/gopher.png"
                 width="1280"
                 height="1280"
-                alt="蓝色 Go Gopher 踩着滑板，放置在工程辅助线之间"
+                alt="Blue Go Gopher on a skateboard, aligned within engineering drafting guides"
                 fetchpriority="high"
               />
             </div>
             <figcaption
               class="deployment-route"
-              aria-label="从 Release 或 Bundle，经 upy 部署到服务器"
+              aria-label="From GitHub Release or local bundle, deployed to production via upy"
             >
-              <span>Release / Bundle</span><span aria-hidden="true">→</span
+              <span>Release Bundle</span><span aria-hidden="true">→</span
               ><strong>upy</strong><span aria-hidden="true">→</span
-              ><span>服务器</span>
+              ><span>Production</span>
             </figcaption>
           </figure>
         </div>
       </section>
       <div class="capability-band">
         <div class="wrap capability-inner">
-          <span><i aria-hidden="true">01</i> 一个二进制</span
+          <span><i aria-hidden="true">01</i> Fast Deploy</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">02</i> SPA 原子切换</span
+          ><span><i aria-hidden="true">02</i> Disk Clean</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">03</i> Docker & Compose</span
+          ><span><i aria-hidden="true">03</i> Convention Backup</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">04</i> Release 或离线包</span>
+          ><span><i aria-hidden="true">04</i> Low Memory Footprint</span>
         </div>
       </div>
       <section
@@ -128,140 +133,147 @@
         aria-labelledby="install-title"
       >
         <div>
-          <p class="eyebrow">开始使用 / 安装</p>
-          <h2 id="install-title">先装上，再出发。</h2>
+          <p class="eyebrow">Installation</p>
+          <h2 id="install-title">Install with a single command.</h2>
           <p>
-            Linux / macOS 打开终端，运行安装脚本。<br />自动识别架构，并配置
-            Shell 命令补全。
+            Automatically detects system architecture and configures Shell Tab completions.<br />Single standalone binary, no background daemon required.
           </p>
           <a
             class="text-link"
             href="https://github.com/AaronConlon/upy#如何安装"
-            >查看安装选项 ↗</a
+            >View installation docs ↗</a
           >
         </div>
         <div class="install-command">
           <div class="code-label">
-            <span>安装 upy</span
+            <span>Install script</span
             ><button
               type="button"
               data-copy="install-code"
-              aria-label="复制安装命令"
+              aria-label="Copy install command"
             >
-              复制命令
+              Copy
             </button>
           </div>
           <pre><code id="install-code">curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash</code></pre>
-          <p>默认安装到 /usr/local/bin，必要时会请求 sudo 权限。</p>
+          <p>Installed to /usr/local/bin by default. Override via INSTALL_DIR.</p>
         </div>
       </section>
       <section
         class="workflow wrap"
-        id="workflow"
+        id="features"
         aria-labelledby="workflow-title"
       >
         <div class="section-heading">
-          <p class="eyebrow">部署流程</p>
-          <h2 id="workflow-title">发布，有一条清楚的路。</h2>
-          <p>CI 负责构建和打包，upy 负责服务器上的部署。</p>
+          <p class="eyebrow">Core Features</p>
+          <h2 id="workflow-title">Deploy, clean, and backup.</h2>
+          <p>Covering application delivery, disk space maintenance, and baseline data backups in a unified binary.</p>
         </div>
         <div class="workflow-track" aria-hidden="true">
           <span class="workflow-progress"></span>
         </div>
         <article class="step" data-step>
           <div class="step-copy">
-            <span class="step-number">01 / 关联项目</span>
-            <h3>告诉它，项目在哪里。</h3>
+            <span class="step-number">01 / Deploy</span>
+            <h3>Atomic switching from Release to production.</h3>
             <p>
-              在服务器的项目目录里放一份 <code>deploy.yaml</code>，关联 GitHub
-              仓库。私有仓库通过 <code>upy init</code> 配置
-              Token，支持按组织分别设置。
+              Interactively pick a GitHub Release asset in the terminal, or deploy latest with a single command.
+              Supports SHA-256 integrity verification, resumable downloads, and offline local bundles.
             </p>
             <a
-              href="https://github.com/AaronConlon/upy#如何初始化"
+              href="https://github.com/AaronConlon/upy#如何部署"
               class="text-link"
-              >配置私有仓库 ↗</a
+              >View deployment guide ↗</a
             >
           </div>
           <div class="example">
-            <span class="file-label">deploy.yaml · 服务器端</span>
-            <pre><code>name: my-app
-release:
-  provider: github
-  repository: owner/my-app
-  asset: bundle.zip</code></pre>
-          </div>
-        </article>
-        <article class="step" data-step>
-          <div class="step-copy">
-            <span class="step-number">02 / 发布版本</span>
-            <h3>选一个版本，然后上线。</h3>
-            <p>
-              从 GitHub Release
-              选择版本，或直接部署最新正式版。没有外网？传入本地
-              Bundle，同样可以部署。
-            </p>
-            <p class="aside">构建产物里记得带上部署清单。</p>
-          </div>
-          <div class="example cyan">
-            <span class="file-label">在项目目录运行</span>
-            <pre><code><span class="comment"># 交互选择 Release</span>
+            <span class="file-label">Deploy commands</span>
+            <pre><code><span class="comment"># Interactively pick a Release asset</span>
 upy release
 
-<span class="comment"># 部署最新正式版</span>
+<span class="comment"># Deploy latest official release</span>
 upy release latest
 
-<span class="comment"># 直接部署离线包</span>
+<span class="comment"># Deploy local offline bundle</span>
 upy bundle ./bundle.zip</code></pre>
           </div>
         </article>
         <div class="deploy-types">
           <article>
-            <span class="eyebrow">静态站点</span>
-            <h3>静态站点，原子切换。</h3>
+            <span class="eyebrow">SPA Static Sites</span>
+            <h3>Atomic symlinks with automatic permission fixes.</h3>
             <p>
-              SPA 资源安装到版本目录，通过 <code>current</code> 软链切换。让
-              Nginx 或 Caddy 指向它，后续发布沿用同一入口。
+              Extracted into isolated release folders and switched atomically via the <code>current</code> symlink.
+              Automatically standardizes permissions to <code>0755/0644</code> to prevent 403 Forbidden errors in Nginx and Caddy.
             </p>
           </article>
           <article>
-            <span class="eyebrow">容器应用</span>
-            <h3>容器项目，按流程交接。</h3>
+            <span class="eyebrow">Docker / Compose Applications</span>
+            <h3>Graceful handover with automated rollbacks.</h3>
             <p>
-              准备新镜像、停止旧服务、启动新服务。配置健康检查后，检查失败会尝试回滚。服务器需预先安装
-              Docker。
+              Prepares new images and configurations before stopping previous containers to prevent port conflicts.
+              Includes built-in health checks that automatically rollback on startup failure.
             </p>
           </article>
         </div>
+        <article class="step" data-step>
+          <div class="step-copy">
+            <span class="step-number">02 / Clean</span>
+            <h3>Disk space analysis and safe pruning.</h3>
+            <p>
+              Scans disk usage with human-readable formatting (MB/GB) and interactively prunes stale bundle caches and obsolete releases.
+              Dual-layer active protection ensures the active <code>current</code> version is never deleted, backed by cross-process locks against concurrent operations.
+            </p>
+            <a
+              href="https://github.com/AaronConlon/upy#如何清理与维护"
+              class="text-link"
+              >View cleanup docs ↗</a
+            >
+          </div>
+          <div class="example cyan">
+            <span class="file-label">Clean commands</span>
+            <pre><code><span class="comment"># Interactive clean menu with usage breakdown</span>
+upy clean
+
+<span class="comment"># Purge downloaded bundle archives</span>
+upy clean --bundles
+
+<span class="comment"># Keep only the 3 most recent releases</span>
+upy clean --keep 3</code></pre>
+          </div>
+        </article>
         <article class="step last" data-step>
           <div class="step-copy">
-            <span class="step-number">03 / 日常维护</span>
-            <h3>下次发布，少做几步。</h3>
+            <span class="step-number">03 / Backup</span>
+            <h3>Convention backups with lock protection.</h3>
             <p>
-              成功部署后自动登记本地项目。之后在任意目录运行
-              <code>upy</code
-              >，选择项目即可继续部署。也可以指定项目、清理缓存，或更新工具。
+              Follows convention over configuration, automatically detecting project <code>backup.sh</code> scripts and injecting runtime variables.
+              Acquires cross-process exclusive locks to guarantee data consistency, with retention rotation and Bark mobile notifications.
             </p>
+            <a
+              href="https://github.com/AaronConlon/upy#常用命令速查"
+              class="text-link"
+              >View command reference ↗</a
+            >
           </div>
           <div class="command-list">
-            <div><code>upy</code><span>选择已登记的项目</span></div>
-            <div>
-              <code>upy deploy my-app</code><span>部署项目最新版本</span>
-            </div>
-            <div><code>upy clean --bundles</code><span>清理下载缓存</span></div>
-            <div><code>upy update</code><span>更新 upy</span></div>
+            <div><code>upy backup</code><span>Run convention project backup</span></div>
+            <div><code>upy release latest</code><span>Deploy latest release to production</span></div>
+            <div><code>upy clean --bundles</code><span>Prune bundle archive cache</span></div>
+            <div><code>upy</code><span>Interactive project manager menu</span></div>
+            <div><code>upy update</code><span>Check and self-update upy</span></div>
           </div>
         </article>
       </section>
       <section class="closing">
         <div class="wrap closing-inner">
           <div>
-            <h2>下一次发布，<br />轻装出发。</h2>
+            <h2>A single binary,<br />built for delivery.</h2>
           </div>
           <div>
-            <p>开源，MIT 协议。<br />从一个项目开始，也能照顾多个项目。</p>
+            <p>Open source (MIT License).<br />Standalone binary, zero external dependencies, low memory footprint.</p>
             <a class="button" href="https://github.com/AaronConlon/upy#readme"
-              >阅读完整文档 ↗</a
+              >Read Full Documentation ↗</a
             >
           </div>
         </div>
@@ -270,10 +282,10 @@ upy bundle ./bundle.zip</code></pre>
     <footer class="wrap footer">
       <a class="wordmark" href="./">upy<span aria-hidden="true">↗</span></a>
       <div>
-        <a href="https://github.com/AaronConlon/upy/issues">反馈问题 ↗</a
-        ><a href="https://github.com/AaronConlon/upy#开源协议"
-          >MIT License ↗</a
-        >
+        <a href="https://x.com/intent/follow?screen_name=AaronConlonDev" target="_blank" rel="noopener noreferrer">Follow @AaronConlonDev ↗</a>
+        <a href="https://i5lin.top/" target="_blank" rel="noopener noreferrer">Blog ↗</a>
+        <a href="https://github.com/AaronConlon/upy/issues" target="_blank" rel="noopener noreferrer">Issues ↗</a>
+        <a href="https://github.com/AaronConlon/upy#license" target="_blank" rel="noopener noreferrer">MIT License ↗</a>
       </div>
     </footer>
     <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
