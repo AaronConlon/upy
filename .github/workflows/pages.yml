@@ -6,6 +6,7 @@ on:
     paths:
       - 'website/**'
       - 'assets/upy-gopher-skateboard-logo.png'
+      - 'assets/upy-gopher-skateboard-logo-no-pupils.png'
       - 'tokens.css'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -32,6 +33,7 @@ jobs:
         run: |
           cp tokens.css website/tokens.css
           cp assets/upy-gopher-skateboard-logo.png website/assets/gopher.png
+          cp assets/upy-gopher-skateboard-logo-no-pupils.png website/assets/gopher-no-pupils.png
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

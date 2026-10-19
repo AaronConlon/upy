@@ -58,6 +58,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <script src="./vendor/gsap.min.js" defer></script>
     <script src="./vendor/ScrollTrigger.min.js" defer></script>
+    <script src="./mascot-eyes.js" defer></script>
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -121,13 +122,16 @@
                   />
                 </g>
               </svg>
-              <img
-                src="./assets/gopher.png"
-                width="1280"
-                height="1280"
-                alt="Blue Go Gopher on a skateboard, aligned within engineering drafting guides"
-                fetchpriority="high"
-              />
+              <div class="mascot-motion">
+                <img
+                  src="./assets/gopher-no-pupils.png"
+                  width="1280"
+                  height="1280"
+                  alt="Blue Go Gopher on a skateboard, aligned within engineering drafting guides"
+                  fetchpriority="high"
+                />
+                <canvas class="mascot-eyes" width="1280" height="1280" aria-hidden="true"></canvas>
+              </div>
             </div>
             <figcaption
               class="deployment-route"

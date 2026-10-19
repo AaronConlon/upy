@@ -42,7 +42,8 @@ if (window.gsap && window.ScrollTrigger) {
   let media;
   const startMotion = () => {
     media = gsap.matchMedia();
-    media.add("(prefers-reduced-motion: no-preference)", () => {
+    media.add("(prefers-reduced-motion: no-preference)", (context) => {
+      const cleanups = [];
       const entry = gsap.timeline({ defaults: { ease: "power2.out" } });
       const inkLine = document.querySelector(".construction path");
       const lineLength = inkLine.getTotalLength();
@@ -70,73 +71,71 @@ if (window.gsap && window.ScrollTrigger) {
           0.1,
         )
         .from(
-          ".mascot-stage img",
+          ".mascot-motion",
           { x: -65, rotation: -6, opacity: 0, duration: 0.85 },
           0.25,
         )
-        .add(() => {
-          // 持续丝滑巡航：轻微浮动与角度微摆，模拟踩滑板的平稳滑行感
-          const cruise = gsap.to(".mascot-stage img", {
-            y: -8,
-            x: 4,
-            rotation: 1.6,
-            duration: 3.2,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut",
-          });
-
-          // 工程辅助圆平滑旋转，赋予图纸动态生命力
-          gsap.to(".construction circle", {
-            rotation: 360,
-            transformOrigin: "280px 214px",
-            duration: 90,
-            repeat: -1,
-            ease: "none",
-          });
-
-          // 定位十字微弱明暗呼吸
-          gsap.to(".crosses path", {
-            opacity: 0.5,
-            duration: 2.6,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut",
-            stagger: 0.15,
-          });
-
-          // 鼠标在图纸区域内滑动的交互式微视差跟随
-          const stage = document.querySelector(".drawing-field");
-          const mascot = document.querySelector(".mascot-stage img");
-          if (stage && mascot) {
-            stage.addEventListener("mousemove", (e) => {
-              const rect = stage.getBoundingClientRect();
-              const relX = (e.clientX - rect.left) / rect.width - 0.5;
-              const relY = (e.clientY - rect.top) / rect.height - 0.5;
-              gsap.to(mascot, {
-                x: relX * 24,
-                y: relY * 16,
-                rotation: relX * 3.5,
-                duration: 0.45,
-                ease: "power2.out",
-                overwrite: "auto",
-              });
-            });
-            stage.addEventListener("mouseleave", () => {
-              gsap.to(mascot, {
-                x: 0,
-                y: 0,
-                rotation: 0,
-                duration: 0.9,
-                ease: "sine.out",
-                overwrite: "auto",
-                onComplete: () => {
-                  cruise.play();
-                },
-              });
-            });
-          }
+        .add(() => context.startCruise());
+      // 命名上下文让延迟创建的巡航动画和事件动画也能随偏好切换撤销。
+      context.add("startCruise", () => {
+        const cruise = gsap.to(".mascot-motion", {
+          y: -8,
+          x: 4,
+          rotation: 1.6,
+          duration: 3.2,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
         });
+        gsap.to(".construction circle", {
+          rotation: 360,
+          transformOrigin: "280px 214px",
+          duration: 90,
+          repeat: -1,
+          ease: "none",
+        });
+        gsap.to(".crosses path", {
+          opacity: 0.5,
+          duration: 2.6,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          stagger: 0.15,
+        });
+        const stage = document.querySelector(".drawing-field");
+        const mascot = document.querySelector(".mascot-motion");
+        context.add("moveMascot", (event) => {
+          cruise.pause();
+          const rect = stage.getBoundingClientRect();
+          const x = (event.clientX - rect.left) / rect.width - 0.5;
+          const y = (event.clientY - rect.top) / rect.height - 0.5;
+          gsap.to(mascot, {
+            x: x * 24,
+            y: y * 16,
+            rotation: x * 3.5,
+            duration: 0.45,
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+        });
+        context.add("leaveMascot", () => {
+          gsap.to(mascot, {
+            x: 0,
+            y: 0,
+            rotation: 0,
+            duration: 0.9,
+            ease: "sine.out",
+            overwrite: "auto",
+            onComplete: () => cruise.invalidate().restart(),
+          });
+        });
+        stage.addEventListener("mousemove", context.moveMascot);
+        stage.addEventListener("mouseleave", context.leaveMascot);
+        cleanups.push(() => {
+          stage.removeEventListener("mousemove", context.moveMascot);
+          stage.removeEventListener("mouseleave", context.leaveMascot);
+        });
+      });
       for (const section of document.querySelectorAll(
         ".installation, .section-heading, .step, .deploy-types, .closing-inner",
       )) {
@@ -168,6 +167,7 @@ if (window.gsap && window.ScrollTrigger) {
           toggleClass: "is-active",
         });
       }
+      return () => cleanups.forEach((cleanup) => cleanup());
     });
   };
   startMotion();
