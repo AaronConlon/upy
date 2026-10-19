@@ -1,105 +1,125 @@
 <p align="center">
-  <img src="assets/upy-gopher-skateboard-logo.png" width="220" alt="踩着滑板的 Go Gopher，upy 项目 Logo">
+  <img src="assets/upy-gopher-skateboard-logo.png" width="220" alt="Go Gopher on a skateboard, upy project logo">
 </p>
 
 <h1 align="center">upy</h1>
 
-<p align="center">一个二进制，从 Release 直达生产。
+<p align="center">
+One single binary, from Release to production.
 <br>
-<a href="https://aaronconlon.github.io/upy/">官网</a> · <a href="https://github.com/AaronConlon/upy/releases">下载</a> · <a href="#如何安装">开始使用</a>
+<a href="https://aaronconlon.github.io/upy/">Website</a> · <a href="https://github.com/AaronConlon/upy/releases">Releases</a> · <a href="#installation">Quick Start</a>
+<br><br>
+<b>English</b> · <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内存占用）。
+A lightweight, single-binary Web deployment and ops tool written in Go (~8.5MB, zero external dependencies, minimal memory footprint).
 
-支持 **极速部署**（GitHub Releases / 本地 bundle、SPA 原子软链切换、Docker 平滑启停与失败自动回滚）、**磁盘清理**（空间分析、活跃版本保护、缓存释放）与 **约定备份**（脚本探测、跨进程加锁、自动轮转），构筑简洁可靠的单机运维闭环。
+Designed for single-machine production environments with minimal cognitive overhead, `upy` natively supports **three core deployment modes**:
 
----
+1. **SPA Static Sites**: Single Page Applications (Vue, React, Svelte, Vite, etc.) extracted to immutable version folders, switched atomically in milliseconds via the `current` symlink, with automatic permission normalization (`0755/0644`) to eliminate Nginx / Caddy `403 Forbidden` errors.
+2. **Docker / Compose Applications**: Smooth handover by preparing new images and configurations before stopping previous containers to prevent port conflicts, backed by built-in health probes and automatic rollback on failure.
+3. **Systemd Native Services (Go / Rust / Binary Web Services)**: Clean production architecture (**upy manages releases $\longleftrightarrow$ systemd manages processes & cgroups $\longleftrightarrow$ Nginx/Caddy manages ingress & SSL**). Features immutable release directory archives, 100% argument fidelity, strict user/group pre-flight checks (rejecting silent root escalation), port listener PID verification, and zero-loss automatic rollback.
 
-## 目录
-
-- [这是什么](#这是什么)
-- [如何安装](#如何安装)
-- [如何初始化](#如何初始化)
-- [如何部署](#如何部署)
-  - [1. 服务器端项目配置](#1-服务器端项目配置)
-  - [2. 常用部署命令](#2-常用部署命令)
-  - [3. bundle.zip 打包规范](#3-bundlezip-打包规范)
-- [如何清理与维护](#如何清理与维护)
-- [如何升级](#如何升级)
-- [常用命令速查](#常用命令速查)
+Paired with intelligent **disk space pruning and active version protection** (`upy clean`), **cross-process mutual exclusion locks**, and **convention-based backups**, `upy` forms a concise and reliable single-host operations loop.
 
 ---
 
-## 这是什么
+## Table of Contents
 
-`upy` 专为轻量级、低心智负担的 Web 应用发布流程而设计：
-
-- **单二进制零依赖**：体积仅 ~8.5MB，开箱即用，无需 Node.js、Python 或任何额外运行时环境。
-- **静态 SPA 原子部署**：通过 `current` 软链实现无感知秒级切换；自动规整目录与文件权限（`0755` / `0644`），彻底避免 Nginx / Caddy 出现 `403 Forbidden`。
-- **Go 二进制原生服务纳管**：深度结合 Linux systemd（`type: system`），支持不可变版本归档、参数原样保真、运行账号权限预检、原子 Unit 切换、真实 HTTP 存活检查与失败自动回滚。
-- **Docker / Compose 容器管理**：新版本镜像准备就绪后，平滑停止旧栈释放端口，新栈健康检查不通过时自动回滚上一版本。
-- **GitHub Release 驱动**：支持公开与私有仓库，多组织 Token 自动匹配路由，断点续传与 SHA-256 完整性强校验。
-- **本地项目快速调度**：在任意路径直接运行 `upy`，即可列出本机已纳管的项目并交互式选择部署。
-- **通知与观测**：内置全流程真实耗时统计与 Bark 移动端推送。
+- [Three Deployment Modes](#three-deployment-modes)
+- [Core Features](#core-features)
+- [Installation](#installation)
+- [Initialization](#initialization)
+- [How to Deploy](#how-to-deploy)
+  - [1. Server-Side Project Configuration](#1-server-side-project-configuration)
+  - [2. Common Deployment Commands](#2-common-deployment-commands)
+  - [3. Packaging Specifications (bundle.zip)](#3-packaging-specifications-bundlezip)
+    - [A. Frontend Static Applications (SPA)](#a-frontend-static-applications-spa)
+    - [B. Docker / Compose Containers](#b-docker--compose-containers)
+    - [C. Native Systemd Services (Go Binary Web Services)](#c-native-systemd-services-go-binary-web-services)
+- [Disk Maintenance & Pruning](#disk-maintenance--pruning)
+- [Self-Update](#self-update)
+- [Command Cheat Sheet](#command-cheat-sheet)
+- [License](#license)
 
 ---
 
-## 如何安装
+## Three Deployment Modes
 
-在 Linux / macOS 终端执行以下一键安装脚本，自动识别系统架构（x64 / arm64）并安装到系统路径：
+| Deployment Mode | Typical Stacks | Architecture & Guarantees | Failure Recovery |
+| :--- | :--- | :--- | :--- |
+| **SPA Static Sites**<br>`type: static` | Vue, React, Vite, Astro, Static HTML | Extracted into `releases/<version>`; atomic `current` symlink switch; auto permission normalization to `0755/0644` | Symlink instantly points back to previous version |
+| **Docker Containers**<br>`type: docker` | Containerized Web apps, Docker Compose stacks | Pulls and prepares new containers before stopping old ones; frees host ports gracefully | Automatically starts previous working image & compose stack |
+| **Systemd Native Services**<br>`type: system` | Go, Rust, Node, C++ compiled binaries | Generates and switches systemd unit atomically; immutable version isolation; `shared/` persistence; strict user check prevents root escalation | Stops failed service, restores prior unit, restarts old process, and verifies HTTP health |
+
+---
+
+## Core Features
+
+- **Single Binary, Zero Dependencies**: Only ~8.5MB. Runs out of the box without requiring Node.js, Python, or host daemon locks.
+- **Three Deployment Stacks in One**: SPA static sites, Docker Compose stacks, and native systemd binaries share a unified CLI workflow and release lifecycle.
+- **GitHub Release Driven**: Supports both public and private repositories, multi-org/user token routing, resumable chunked downloads, and SHA-256 checksum verification.
+- **Robust Failure Safety**: Strict pre-flight checks during `Prepare` (permissions, target architecture, binary validity, service user existence). Prepare failures never touch existing running services.
+- **Disk Analysis & Safe Pruning**: `upy clean` analyzes disk footprint and frees Bundle archives while strictly protecting both the current active version, the previous rollback version, and live unit references.
+- **Cross-Project Global Dispatching**: Run `upy` in any directory to interactively list and deploy across all managed projects on the host.
+- **Observability & Alerts**: Built-in accurate step-by-step elapsed time tracking and Bark mobile push notifications.
+
+---
+
+## Installation
+
+Run the one-line installation script on Linux or macOS to automatically detect architecture (x64 / arm64) and install `upy`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 ```
 
-> **说明**：默认安装至 `/usr/local/bin`（必要时自动请求 sudo 权限）。脚本会自动为 `zsh`、`bash`、`fish` 配置 Tab 命令补全，新开终端窗口后生效。
+> **Note**: Default install location is `/usr/local/bin` (requests sudo when needed). The installer automatically configures shell tab completions for `zsh`, `bash`, and `fish`.
 
-### 自定义安装选项
+### Custom Installation Options
 
-支持通过环境变量指定安装路径或固定版本：
+You can specify custom install paths or pin specific release versions:
 
 ```bash
-# 安装到用户个人目录（无需 root 权限）
+# Install to user home directory (no root required)
 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 
-# 安装指定版本
-VERSION=v0.1.11 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+# Install a specific version
+VERSION=v0.2.0 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
 ```
 
 ---
 
-## 如何初始化
+## Initialization
 
-如果你的项目托管在 **GitHub 私有仓库**，需要配置 GitHub Token 才能拉取 Release 资产。`upy` 支持全局默认 Token 以及按组织/个人归属的多 Token 自动路由。
+If your project is hosted in a **private GitHub repository**, configure your GitHub Token to allow `upy` to download Release assets. `upy` supports a global fallback token as well as multi-token routing based on organization or username.
 
-### 1. 命令行快速配置
+### 1. Quick CLI Setup
 
 ```bash
-# 设置全局默认 Token
+# Set global default token
 upy init ghp_your_default_token
 
-# 为指定组织（如 MyOrg）设置专属 Token
+# Set organization-specific token (e.g., MyOrg)
 upy init MyOrg ghp_org_token
 
-# 为个人用户名（如 AaronConlon）设置专属 Token
+# Set user-specific token (e.g., AaronConlon)
 upy init AaronConlon ghp_personal_token
 
-# 交互式引导配置（密码密文输入）
+# Interactive setup (masked password input)
 upy init
 ```
 
-配置会自动保存至 `~/.upy/config.yaml` 并将权限严格限制为 `600`。
+Configuration is securely written to `~/.upy/config.yaml` with file permissions restricted to `600`.
 
-### 2. 配置文件说明 (`~/.upy/config.yaml`)
-
-可手动新建或修改配置文件，同时支持配置部署完成后的通知推送：
+### 2. Configuration Reference (`~/.upy/config.yaml`)
 
 ```yaml
 github:
-  # 全局默认兜底 Token（可选）
+  # Global fallback token (optional)
   token: ghp_default_xxx
 
-  # 多组织 / 个人专属 Token 映射（可选，拉取对应仓库时优先使用）
+  # Organization / user-specific tokens (optional, prioritized by repo owner)
   tokens:
     MyOrg: ghp_org_xxx
     AaronConlon: ghp_personal_xxx
@@ -114,59 +134,65 @@ notify:
 
 ---
 
-## 如何部署
+## How to Deploy
 
-### 1. 服务器端项目配置
+### 1. Server-Side Project Configuration
 
-在目标服务器的项目根目录（例如 `/var/www/my-app`）下创建一个 `deploy.yaml` 文件：
+Create a `deploy.yaml` in your project's server root directory (e.g., `/var/www/my-app` or `/opt/my-api`):
 
 ```yaml
 name: my-app
 release:
   provider: github
-  repository: owner/repo      # GitHub 仓库路径 (组织/仓库名)
-  asset: bundle.zip          # 资产文件名（可选，默认 bundle.zip，支持正则/模糊匹配）
+  repository: owner/repo      # GitHub repo (owner/name)
+  asset: bundle.zip          # Asset name (defaults to bundle.zip, supports regex/wildcard)
+
+# Optional for system native services: dedicated service account to prevent root escalation
+service:
+  user: my-app
+  group: my-app
+  unit: upy-my-app.service
 ```
 
-> **Nginx 配置提示（SPA 静态站点）**：  
-> 将 Nginx 的 `root` 指向项目根目录下的 `current` 软链即可，例如：`root /var/www/my-app/current;`。每次发布新版本，`upy` 会自动原子切换该软链。
+> **Nginx Tip for SPA Sites**:  
+> Point Nginx's `root` directive to the `current` symlink in your project folder: `root /var/www/my-app/current;`. `upy` switches this symlink atomically during deployment.
 
-### 2. 常用部署命令
+### 2. Common Deployment Commands
 
-在服务器项目根目录下执行：
+Execute inside your server project directory:
 
 ```bash
-# 1. 交互式选择要部署的 Release 版本（推荐）
+# 1. Interactively select a Release version to deploy (recommended)
 upy release
 
-# 2. 直接部署最新正式版本
+# 2. Deploy latest official release directly
 upy release latest
 
-# 3. 部署指定版本
+# 3. Deploy a specific version
 upy release v1.0.0
 
-# 4. 查看仓库的 Release 发布历史
+# 4. View GitHub Release history
 upy release list
 
-# 5. 强制重新下载并部署（即使当前已是该版本）
+# 5. Force re-download and re-deploy (even if version is already active)
 upy release latest --force
 ```
 
-#### 跨项目与全局快捷操作
+#### Cross-Project Global Operations
 
-一旦在某个目录成功执行过一次部署，`upy` 会自动登记该项目。之后你可以在**服务器的任何路径**快速操作：
+Once a project has been deployed, `upy` automatically registers it. You can deploy it from **any directory** on your server:
 
 ```bash
-# 在任意目录输入 upy，直接交互选择已登记的项目并部署
+# Launch interactive selector across all registered projects
 upy
 
-# 快捷为指定项目部署最新版本
+# Directly deploy latest release for a registered project
 upy deploy my-app
 ```
 
-#### 本地离线包部署
+#### Offline Local Bundle Deployment
 
-如果服务器无法连通外网 GitHub，也可以直接部署本地传入的 zip 压缩包：
+If the server cannot access GitHub, deploy locally uploaded `.zip` archives directly:
 
 ```bash
 upy bundle ./bundle.zip
@@ -174,13 +200,13 @@ upy bundle ./bundle.zip
 
 ---
 
-### 3. bundle.zip 打包规范
+### 3. Packaging Specifications (bundle.zip)
 
-在 CI/CD（如 GitHub Actions）构建产物并打包发布时，压缩包内部需包含应用文件以及一份描述清单 `deploy.yaml`：
+When building artifacts in CI/CD (e.g., GitHub Actions), package your application along with a manifest `deploy.yaml` inside `bundle.zip`:
 
-#### A. 前端静态应用（SPA）
+#### A. Frontend Static Applications (SPA)
 
-压缩包内结构：
+Bundle structure:
 ```text
 bundle.zip
 ├── deploy.yaml
@@ -190,18 +216,18 @@ bundle.zip
     └── ...
 ```
 
-清单 `deploy.yaml` 格式：
+Manifest `deploy.yaml`:
 ```yaml
 name: my-spa-app
 version: 1.0.0
 type: static
 static:
-  directory: dist   # 静态资源所在目录，默认 dist
+  directory: dist   # Static files directory inside the bundle (defaults to dist)
 ```
 
-#### B. Docker / Compose 容器项目
+#### B. Docker / Compose Containers
 
-压缩包内结构：
+Bundle structure:
 ```text
 bundle.zip
 ├── deploy.yaml
@@ -209,7 +235,7 @@ bundle.zip
 └── ...
 ```
 
-清单 `deploy.yaml` 格式：
+Manifest `deploy.yaml`:
 ```yaml
 name: my-api-service
 version: 1.0.0
@@ -219,14 +245,14 @@ docker:
   composeFile: docker-compose.yml
 healthcheck:
   url: http://localhost:8080/health
-  timeout: 30s      # 健康检查超时，支持 30s 或数字秒
+  timeout: 30s      # Healthcheck timeout (supports duration string or seconds integer)
 ```
 
-#### C. 原生系统服务（system / Go 二进制 Web 服务）
+#### C. Native Systemd Services (Go Binary Web Services)
 
-适用于轻量级 Go/Rust/Node 等单二进制或本地常驻 Web 服务。采用标准轻量生产架构：**upy 管版本与发布，systemd 管进程守护与 cgroups，Nginx/Caddy 管公网入口与 SSL**。
+Best suited for lightweight single-binary or daemon Web applications (Go, Rust, Node, etc.). Implements the battle-tested lightweight production pattern: **upy manages releases $\longleftrightarrow$ systemd manages processes & cgroups $\longleftrightarrow$ Nginx/Caddy manages ingress & SSL**.
 
-压缩包内结构：
+Bundle structure:
 ```text
 bundle.zip
 ├── deploy.yaml
@@ -234,108 +260,91 @@ bundle.zip
     └── my-api
 ```
 
-清单 `deploy.yaml` 格式：
+Manifest `deploy.yaml`:
 ```yaml
 name: my-api
 version: 1.0.0
-type: system             # 原生系统服务（支持 service 别名）
+type: system             # Native systemd service (also accepts alias: service)
 target:
   os: linux
-  arch: amd64            # 平台与硬件架构严格校验
+  arch: amd64            # Strict target OS and architecture verification
 system:
-  command: ["./bin/my-api"]  # 启动命令及参数列表（原样保真传递）
-  workingDir: ""             # 可选，默认指向当前版本目录
+  command: ["./bin/my-api"]  # Command arguments (fidelity preserved, empty strings & whitespace retained)
+  workingDir: ""             # Optional, defaults to current release directory
 healthcheck:
   url: http://127.0.0.1:8080/health
-  timeout: 30s               # 健康检查超时（单次请求 3s 保护）
+  timeout: 30s               # Healthcheck timeout (with bounded 3s per-request limit)
 ```
 
-服务器端 `deploy.yaml` 运维账号配置（可选）：
-```yaml
-name: my-api
-release:
-  provider: github
-  repository: owner/my-api
-service:
-  user: my-api           # 服务运行专属系统账号（防 root 提权，不存在时严格阻断）
-  group: my-api
-  unit: upy-my-api.service
-```
-
-> **持久化与数据隔离规范**：  
-> 在服务器项目目录下通过 `/opt/my-api/shared/service.env` 提供环境变量（如 `LISTEN_ADDR=127.0.0.1:8080` 与 `DATA_DIR=/opt/my-api/shared/data`），程序持久化业务数据写入 `shared/data/`。版本目录 `releases/<version>` 保持纯净与不可变，支持秒级无损回滚。
+> **Data Persistence & Shared Environment**:  
+> Configure persistent runtime variables in `/opt/my-api/shared/service.env` (e.g., `LISTEN_ADDR=127.0.0.1:8080` and `DATA_DIR=/opt/my-api/shared/data`). Write persistent state (SQLite, user uploads) to `shared/data/`. Release directories `releases/<version>` remain immutable, enabling instant zero-loss rollbacks.
 
 ---
 
-## 如何清理与维护
+## Disk Maintenance & Pruning
 
-随着持续迭代部署，项目目录下会产生历史 Bundle 压缩包与历史发布版本。通过 `upy clean` 可以随时进行可视化磁盘分析与安全清理：
+As deployments accumulate, cached bundle archives and legacy release directories consume disk space. Use `upy clean` for visual disk inspection and safe pruning:
 
 ```bash
-# 1. 交互式选择项目与清理内容（推荐，自动分析磁盘占用）
+# 1. Interactively inspect disk usage and choose pruning targets (recommended)
 upy clean
 
-# 2. 清理指定项目的数据
+# 2. Prune a specific project
 upy clean my-app
 
-# 3. 仅清理下载的 Bundle 缓存压缩包
+# 3. Only delete downloaded Bundle zip caches
 upy clean --bundles
 
-# 4. 仅清理历史非当前版本与中断残留目录
+# 4. Only delete old releases and interrupted temporary folders
 upy clean --old-releases
 
-# 5. 一键常规瘦身并跳过确认（清理缓存 + 旧版本 + 临时目录，安全保留当前生效版本）
+# 5. One-click routine pruning without confirmation (caches + old releases, preserves active version)
 upy clean --all -y
 ```
 
-> **安全保护**：`upy clean` 受到**活跃版本保护机制**约束，默认不会影响 `current` 软链所指向的当前线上服务。若需彻底重置项目，可在交互菜单中选择“彻底清空部署产物”。
+> **Safety Safeguards**:  
+> - **Dual Version Protection**: `upy clean` enforces active version protection, safeguarding both the active version (`CurrentVersion`) and the immediate previous version (`PreviousVersion`) to guarantee rollback readiness.
+> - **Live Unit Reference Protection**: If a deployment was abruptly killed while systemd had already switched to a new release, `clean` inspects the live systemd unit to protect the actively referenced directory from deletion.
+> - **Full Service Uninstallation (`--purge`)**: Using `upy clean --purge` safely stops the service, unregisters the unit, and deletes deployment artifacts while keeping `shared/` persistent data intact.
 
 ---
 
-## 如何升级
+## Self-Update
 
-`upy` 拥有完善的跨分区自更新与在运行进程替换机制，随时保持工具最新：
+`upy` includes built-in cross-partition self-updates with in-place execution replacement:
 
 ```bash
-# 检查并自动升级到最新版本
+# Check and upgrade to the latest version
 upy update
 
-# 更新或回滚到指定版本
-upy update v0.1.11
+# Switch or downgrade to a specific version
+upy update v0.2.0
 
-# 强制重新下载并覆盖更新
+# Force re-download and overwrite
 upy update --force
 
-# 查看当前运行版本及环境
+# Display current version and environment
 upy version
 ```
 
 ---
 
-## 常用命令速查
+## Command Cheat Sheet
 
-| 命令 | 说明 |
+| Command | Description |
 | :--- | :--- |
-| `upy` | 在任意目录唤起已登记项目列表，交互选择项目并部署 |
-| `upy release [latest\|<版本>]` | 在项目目录下从 GitHub Release 拉取并部署（缺省参数时交互选版） |
-| `upy release list` | 查看当前项目的 GitHub Release 版本历史与资产信息 |
-| `upy deploy <项目名>` | 快捷为已登记的本地项目部署最新正式版本 |
-| `upy clean [项目名]` | 可视化分析并清理项目数据 (Bundle 缓存、旧版本、临时目录或注销) |
-| `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
-| `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |
-| `upy update [版本]` | 自更新到最新版本或切换至指定版本 |
-| `upy version` | 打印当前版本并检查是否有新版本可用 |
+| `upy` | Open interactive menu in any directory to select and deploy registered projects |
+| `upy release [latest\|<version>]` | Pull and deploy Release from GitHub (interactive menu if version omitted) |
+| `upy release list` | List GitHub Releases and asset availability for the current project |
+| `upy deploy <project>` | Quickly deploy the latest release of a registered local project |
+| `upy clean [project]` | Visually analyze and clean project data (bundles, old releases, or purge) |
+| `upy bundle <file>` | Deploy a local `.zip` bundle directly (offline mode, no GitHub connection) |
+| `upy init [owner] <token>` | Initialize or configure GitHub personal/organization access tokens |
+| `upy update [version]` | Self-update to latest release or switch to a target version |
+| `upy version` | Print current version and check for newer releases |
 
 ---
 
-## 开源协议
+## License
 
 MIT License
-
-## 官网维护
-
-官网源码位于 `website/`，使用原生 HTML、CSS 和 JavaScript。共享设计变量位于根目录 `tokens.css`，Logo 位于 `assets/upy-gopher-skateboard-logo.png`；发布时自动同步到站点目录。
-
-推送官网相关文件到 `main` 后，`.github/workflows/pages.yml` 会自动部署到 [GitHub Pages](https://aaronconlon.github.io/upy/)，也可以在 Actions 中手动运行。仓库 Pages 的发布来源为 GitHub Actions。
-
-本地预览：在仓库根目录运行 `python3 -m http.server 8080 --directory website`，然后打开 `http://localhost:8080`。
