@@ -1,4 +1,13 @@
-# upy
+<p align="center">
+  <img src="assets/upy-gopher-skateboard-logo.png" width="220" alt="踩着滑板的 Go Gopher，upy 项目 Logo">
+</p>
+
+<h1 align="center">upy</h1>
+
+<p align="center">把部署滑顺一点。
+<br>
+<a href="https://aaronconlon.github.io/upy/">官网</a> · <a href="https://github.com/AaronConlon/upy/releases">下载</a> · <a href="#如何安装">开始使用</a>
+</p>
 
 轻量级 Web 项目自动化部署工具（Go 单二进制，零外部依赖，极速部署）。
 
@@ -278,3 +287,11 @@ upy version
 ## 开源协议
 
 MIT License
+
+## 官网维护
+
+官网源码位于 `website/`，使用原生 HTML、CSS 和 JavaScript。共享设计变量位于根目录 `tokens.css`，Logo 位于 `assets/upy-gopher-skateboard-logo.png`；发布时自动同步到站点目录。
+
+推送官网相关文件到 `main` 后，`.github/workflows/pages.yml` 会自动部署到 [GitHub Pages](https://aaronconlon.github.io/upy/)，也可以在 Actions 中手动运行。仓库 Pages 的发布来源为 GitHub Actions。
+
+本地预览：在仓库根目录运行 `python3 -m http.server 8080 --directory website`，然后打开 `http://localhost:8080`。

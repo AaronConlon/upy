@@ -1,0 +1,22 @@
+/* Hallmark · Hum palette · shared website design tokens */
+:root {
+  --color-paper: #faf9f2;
+  --color-ink: #192d34;
+  --color-muted: #54676d;
+  --color-rule: #d9dfd7;
+  --color-cyan: #bceef4;
+  --color-accent: #08778b;
+  --color-pear: #e8f29c;
+  --color-peach: #ffe1bf;
+  --color-code: #20363e;
+  --color-code-text: #e3f0e9;
+  --color-code-comment: #a8c5c1;
+  --font-display: 'Bricolage Grotesque', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Geist', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-card: 24px;
+  --radius-pill: 999px;
+  --ease-out: cubic-bezier(.2,.7,.3,1);
+  --dur-fast: 160ms;
+  --space-section: clamp(64px, 9vw, 120px);
+}
