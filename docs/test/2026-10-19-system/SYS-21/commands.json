@@ -1,0 +1,64 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue21"
+    ],
+    "rc": 0,
+    "seconds": 1.631,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue21:ue21",
+      "/opt/upy-e2e/case-21/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": ""
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 149, in <module>\n    caseid=f'SYS-{n:02d}'\n        ^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 118, in t21\n    class Handler(http.server.BaseHTTPRequestHandler):\n                  ^^^^^^^^^^^\nAttributeError: 'function' object has no attribute 'server'\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-21.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.013,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-21.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.01,
+    "output": "-- No entries --\n"
+  }
+]

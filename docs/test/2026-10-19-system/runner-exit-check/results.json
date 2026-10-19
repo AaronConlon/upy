@@ -1,0 +1,9 @@
+[
+  {
+    "id": "SYS-10",
+    "name": "missing-user",
+    "status": "FAIL",
+    "seconds": 2.26,
+    "error": "missing user accepted; observed HTTP {'args': [], 'cwd': '/opt/upy-e2e/case-10/releases/1.0.0', 'data_dir': '/opt/upy-e2e/case-10/shared/data', 'mode': 'healthy', 'pid': 6466, 'uid': 0, 'version': '1.0.0'}"
+  }
+]

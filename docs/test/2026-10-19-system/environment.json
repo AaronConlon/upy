@@ -1,0 +1,73 @@
+{
+  "host": "macOS arm64",
+  "docker_context": "orbstack",
+  "image": "sha256:71d6bb631b2b1b1375f5098d6d84e07dc07b55072263865ee9a27d740cf82423",
+  "container": "upy-system-e2e-20261019",
+  "kernel": "Linux 933258e13e54 7.0.14-orbstack-00380-ga7e0a2dc9535 #1 SMP PREEMPT Fri Aug  7 03:48:40 UTC 2026 aarch64 GNU/Linux",
+  "pid1": "systemd",
+  "systemd": "systemd 252 (252.39-1~deb12u2)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified",
+  "system_state": "running",
+  "upy_binary_sha256": "48415465c54545ba1b85aab76af7ffd90a2443e3cb900c681b183a02e08d4417",
+  "private_repo": {
+    "isPrivate": true,
+    "nameWithOwner": "AaronConlon/upy-test",
+    "url": "https://github.com/AaronConlon/upy-test"
+  },
+  "release": {
+    "assets": [
+      {
+        "apiUrl": "https://api.github.com/repos/AaronConlon/upy-test/releases/assets/655121046",
+        "contentType": "application/zip",
+        "createdAt": "2026-10-19T03:23:18Z",
+        "downloadCount": 0,
+        "id": "RA_kwDOVPClZ84nDFqW",
+        "label": "",
+        "name": "bundle-linux-amd64.zip",
+        "size": 2480524,
+        "state": "uploaded",
+        "updatedAt": "2026-10-19T03:23:19Z",
+        "url": "https://github.com/AaronConlon/upy-test/releases/download/system-v1.0.0/bundle-linux-amd64.zip"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/AaronConlon/upy-test/releases/assets/655121051",
+        "contentType": "application/octet-stream",
+        "createdAt": "2026-10-19T03:23:18Z",
+        "downloadCount": 0,
+        "id": "RA_kwDOVPClZ84nDFqb",
+        "label": "",
+        "name": "bundle-linux-amd64.zip.sha256",
+        "size": 89,
+        "state": "uploaded",
+        "updatedAt": "2026-10-19T03:23:18Z",
+        "url": "https://github.com/AaronConlon/upy-test/releases/download/system-v1.0.0/bundle-linux-amd64.zip.sha256"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/AaronConlon/upy-test/releases/assets/655121054",
+        "contentType": "application/zip",
+        "createdAt": "2026-10-19T03:23:18Z",
+        "downloadCount": 0,
+        "id": "RA_kwDOVPClZ84nDFqe",
+        "label": "",
+        "name": "bundle-linux-arm64.zip",
+        "size": 2242575,
+        "state": "uploaded",
+        "updatedAt": "2026-10-19T03:23:18Z",
+        "url": "https://github.com/AaronConlon/upy-test/releases/download/system-v1.0.0/bundle-linux-arm64.zip"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/AaronConlon/upy-test/releases/assets/655121049",
+        "contentType": "application/octet-stream",
+        "createdAt": "2026-10-19T03:23:18Z",
+        "downloadCount": 0,
+        "id": "RA_kwDOVPClZ84nDFqZ",
+        "label": "",
+        "name": "bundle-linux-arm64.zip.sha256",
+        "size": 89,
+        "state": "uploaded",
+        "updatedAt": "2026-10-19T03:23:18Z",
+        "url": "https://github.com/AaronConlon/upy-test/releases/download/system-v1.0.0/bundle-linux-arm64.zip.sha256"
+      }
+    ],
+    "url": "https://github.com/AaronConlon/upy-test/releases/tag/system-v1.0.0"
+  }
+}

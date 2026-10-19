@@ -1,0 +1,23 @@
+[
+  {
+    "id": "SYS-17",
+    "name": "clean-previous",
+    "status": "PASS",
+    "seconds": 1.27,
+    "error": ""
+  },
+  {
+    "id": "SYS-18",
+    "name": "purge-service",
+    "status": "PASS",
+    "seconds": 1.09,
+    "error": ""
+  },
+  {
+    "id": "SYS-22",
+    "name": "interrupted-deploy",
+    "status": "FAIL",
+    "seconds": 1.37,
+    "error": "clean deleted new version still referenced by systemd after interrupted deploy"
+  }
+]

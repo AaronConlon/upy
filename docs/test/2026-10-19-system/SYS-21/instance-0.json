@@ -1,0 +1,10 @@
+{
+  "root": "/opt/upy-e2e/case-21",
+  "unit": "upy-e2e-21.service",
+  "port": 18310,
+  "state": null,
+  "unit_content": null,
+  "releases": [],
+  "systemctl": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n",
+  "journal": "-- No entries --\n"
+}

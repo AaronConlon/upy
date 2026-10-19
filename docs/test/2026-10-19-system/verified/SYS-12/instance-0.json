@@ -1,0 +1,12 @@
+{
+  "root": "/opt/upy-e2e/case-12",
+  "unit": "upy-e2e-12.service",
+  "port": 18220,
+  "state": null,
+  "unit_content": null,
+  "releases": [
+    "1.0.0"
+  ],
+  "systemctl": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n",
+  "journal": "Oct 19 03:25:44 933258e13e54 systemd[1]: Started upy-e2e-12.service - external fixture.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopping upy-e2e-12.service - external fixture...\nOct 19 03:25:44 933258e13e54 systemd[1]: upy-e2e-12.service: Deactivated successfully.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopped upy-e2e-12.service - external fixture.\nOct 19 03:29:11 933258e13e54 systemd[1]: Started upy-e2e-12.service - external fixture.\nOct 19 03:29:11 933258e13e54 systemd[1]: Stopping upy-e2e-12.service - external fixture...\nOct 19 03:29:11 933258e13e54 systemd[1]: upy-e2e-12.service: Deactivated successfully.\nOct 19 03:29:11 933258e13e54 systemd[1]: Stopped upy-e2e-12.service - external fixture.\n"
+}

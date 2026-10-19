@@ -2,6 +2,7 @@ package cleaner
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -337,5 +338,72 @@ func TestFormatBytes(t *testing.T) {
 		if got != c.want {
 			t.Errorf("FormatBytes(%d) = %s, want %s", c.bytes, got, c.want)
 		}
+	}
+}
+
+func TestAnalyzeProject_ProtectsPreviousVersion(t *testing.T) {
+	root := t.TempDir()
+	releasesDir := filepath.Join(root, "releases")
+	_ = os.MkdirAll(filepath.Join(releasesDir, "v1.0.0"), 0o755)
+	_ = os.MkdirAll(filepath.Join(releasesDir, "v1.1.0"), 0o755)
+	_ = os.MkdirAll(filepath.Join(releasesDir, "v0.9.0"), 0o755)
+
+	_ = state.WriteAtomic(root, &state.State{
+		CurrentVersion:  "v1.1.0",
+		PreviousVersion: "v1.0.0",
+	})
+	_ = os.Symlink(filepath.Join(releasesDir, "v1.1.0"), filepath.Join(root, "current"))
+
+	stats, err := AnalyzeProject(root)
+	if err != nil {
+		t.Fatalf("AnalyzeProject failed: %v", err)
+	}
+
+	// 验证 v1.1.0 和 v1.0.0 都在 ProtectedVersions 中
+	if len(stats.OldReleases) != 1 || stats.OldReleases[0] != "v0.9.0" {
+		t.Fatalf("Expected OldReleases to only contain v0.9.0, got: %v", stats.OldReleases)
+	}
+
+	freed, cleaned, err := CleanOldReleases(root)
+	if err != nil {
+		t.Fatalf("CleanOldReleases failed: %v", err)
+	}
+	if len(cleaned) != 1 || cleaned[0] != "v0.9.0" {
+		t.Errorf("Expected only v0.9.0 cleaned, got: %v (freed=%d)", cleaned, freed)
+	}
+
+	if _, err := os.Stat(filepath.Join(releasesDir, "v1.0.0")); err != nil {
+		t.Errorf("PreviousVersion v1.0.0 must be protected and not deleted")
+	}
+	if _, err := os.Stat(filepath.Join(releasesDir, "v1.1.0")); err != nil {
+		t.Errorf("CurrentVersion v1.1.0 must be protected and not deleted")
+	}
+}
+
+func TestPurgeProject_SystemdCleanup(t *testing.T) {
+	root := t.TempDir()
+	sysDir := t.TempDir()
+	t.Setenv("UPY_SYSTEMD_DIR", sysDir)
+
+	unitFile := filepath.Join(sysDir, "upy-test-app.service")
+	unitContent := fmt.Sprintf("# Managed by upy - DO NOT EDIT MANUALLY\n# X-Upy-Root: %s\n[Unit]\nDescription=test-app managed by upy\n", root)
+	_ = os.WriteFile(unitFile, []byte(unitContent), 0o644)
+
+	_ = state.WriteAtomic(root, &state.State{
+		CurrentVersion: "v1.0.0",
+		UnitName:       "upy-test-app.service",
+	})
+
+	releasesDir := filepath.Join(root, "releases", "v1.0.0")
+	_ = os.MkdirAll(releasesDir, 0o755)
+
+	_, err := PurgeProject(root)
+	if err != nil {
+		t.Fatalf("PurgeProject failed: %v", err)
+	}
+
+	// 验证 unit 文件已被删除
+	if _, err := os.Stat(unitFile); !os.IsNotExist(err) {
+		t.Errorf("Expected unit file to be deleted during PurgeProject")
 	}
 }

@@ -1,0 +1,115 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-21.service"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-21.service"
+    ],
+    "rc": 0,
+    "seconds": 0.052,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.057,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-21.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to reset failed state of unit upy-e2e-21.service: Unit upy-e2e-21.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue21"
+    ],
+    "rc": 9,
+    "seconds": 0.006,
+    "output": "useradd: user 'ue21' already exists\n"
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue21:ue21",
+      "/opt/upy-e2e/case-21/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/21-1.0.0-unhealthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-21"
+    ],
+    "rc": 0,
+    "seconds": 0.432,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-21\n  📁 目录: /opt/upy-e2e/case-21\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/21-1.0.0-unhealthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-21 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-21/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-21.service)\n  -> 正在健康检查 http://127.0.0.1:18311/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-21.service → /etc/systemd/system/upy-e2e-21.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-21 1.0.0\n  project layout:\n    /opt/upy-e2e/case-21\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.4s\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 163, in <module>\n    try:globals()[f't{n:02d}']()\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 124, in t21\n    try:r=deploy(c,bundle(c,mode='unhealthy',healthport=decoyport));check(r['rc']!=0,'unhealthy version accepted using unrelated HTTP 200')\n                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 24, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: unhealthy version accepted using unrelated HTTP 200\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-21.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.078,
+    "output": "MainPID=5195\nExecStart={ path=/opt/upy-e2e/case-21/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-21/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue21\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-21.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-21.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "Oct 19 03:26:54 933258e13e54 systemd[1]: Starting upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:26:54 933258e13e54 systemd[1]: Started upy-e2e-21.service - upy-e2e-21 managed by upy.\nOct 19 03:26:54 933258e13e54 web[2406]: 2026/10/19 03:26:54 version=1.0.0 mode=unhealthy uid=978 listen=127.0.0.1:18310\nOct 19 03:26:55 933258e13e54 systemd[1]: Stopping upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:26:55 933258e13e54 web[2406]: 2026/10/19 03:26:55 SIGTERM received; graceful shutdown\nOct 19 03:26:55 933258e13e54 systemd[1]: upy-e2e-21.service: Deactivated successfully.\nOct 19 03:26:55 933258e13e54 systemd[1]: Stopped upy-e2e-21.service - upy-e2e-21 managed by upy.\nOct 19 03:29:46 933258e13e54 systemd[1]: Starting upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:29:46 933258e13e54 systemd[1]: Started upy-e2e-21.service - upy-e2e-21 managed by upy.\nOct 19 03:29:46 933258e13e54 web[5195]: 2026/10/19 03:29:46 version=1.0.0 mode=unhealthy uid=978 listen=127.0.0.1:18310\n"
+  }
+]

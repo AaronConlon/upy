@@ -1,0 +1,9 @@
+{
+  "changed_since_snapshot": [
+    "internal/cleaner/cleaner.go",
+    "internal/cleaner/cleaner_test.go",
+    "internal/config/manifest_test.go",
+    "internal/deployer/system_test.go"
+  ],
+  "note": "测试结果只对应 source-snapshot.json 固定快照，后续工作区改动未混入本次执行。"
+}

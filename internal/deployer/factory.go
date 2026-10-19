@@ -17,6 +17,8 @@ func CreateDeployer(ctx *DeployContext) (Deployer, error) {
 			return NewDockerCompose(ctx), nil
 		}
 		return NewDockerContainer(ctx), nil
+	case "system", "service":
+		return NewSystem(ctx), nil
 	}
 	return nil, fmt.Errorf("无法创建部署器: 未知类型 '%s'", ctx.Manifest.Type)
 }

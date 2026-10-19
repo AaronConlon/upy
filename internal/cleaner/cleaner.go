@@ -9,6 +9,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/cmdrun"
+	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/deployer"
 	"github.com/AaronConlon/upy/internal/projectlock"
 	"github.com/AaronConlon/upy/internal/state"
 )
@@ -54,13 +57,21 @@ func AnalyzeProject(root string) (*ProjectStats, error) {
 
 	stats := &ProjectStats{}
 
-	// 1. 获取并核对活跃版本 (CLEAN-001: 分别解析 state.json 与 current 软链)
+	// 1. 获取并核对活跃版本 (CLEAN-001: 分别解析 state.json 与 current 软链; SYS-004: 保护 PreviousVersion)
 	var protected []string
 	st, err := state.Read(absRoot)
-	if err == nil && st != nil && strings.TrimSpace(st.CurrentVersion) != "" {
-		cur := strings.TrimSpace(st.CurrentVersion)
-		stats.CurrentVersion = cur
-		protected = append(protected, cur)
+	if err == nil && st != nil {
+		if strings.TrimSpace(st.CurrentVersion) != "" {
+			cur := strings.TrimSpace(st.CurrentVersion)
+			stats.CurrentVersion = cur
+			protected = append(protected, cur)
+		}
+		if strings.TrimSpace(st.PreviousVersion) != "" {
+			prev := strings.TrimSpace(st.PreviousVersion)
+			if !slices.Contains(protected, prev) {
+				protected = append(protected, prev)
+			}
+		}
 	}
 
 	symlinkVer := resolveCurrentVersionFromSymlink(absRoot)
@@ -72,6 +83,12 @@ func AnalyzeProject(root string) (*ProjectStats, error) {
 		if stats.CurrentVersion == "" {
 			stats.CurrentVersion = symlinkVer
 		}
+	}
+
+	// SYS-022: 检查系统服务 Unit 文件当前实际指向的版本（防止部署被强杀中断后，Unit 指向新版本而 state 仍为旧版本导致误删）
+	unitVer := resolveVersionFromUnit(absRoot, st)
+	if unitVer != "" && !slices.Contains(protected, unitVer) {
+		protected = append(protected, unitVer)
 	}
 
 	if stats.CurrentVersion != "" && stats.SymlinkVersion != "" && stats.CurrentVersion != stats.SymlinkVersion {
@@ -265,6 +282,41 @@ func PurgeProject(root string) (int64, error) {
 	var totalFreed int64
 	var errs []error
 
+	// 0. 卸载可能纳管的 systemd unit (SYS-004)
+	unitDir := os.Getenv("UPY_SYSTEMD_DIR")
+	if unitDir == "" {
+		unitDir = "/etc/systemd/system"
+	}
+	unitName := ""
+	if st, err := state.Read(absRoot); err == nil && st != nil && st.UnitName != "" {
+		unitName = st.UnitName
+	}
+	if unitName == "" {
+		if cfg, err := config.ReadProjectConfig(absRoot); err == nil && cfg != nil {
+			if cfg.Service != nil && cfg.Service.Unit != "" {
+				unitName = cfg.Service.Unit
+			} else if cfg.Name != "" {
+				unitName = fmt.Sprintf("upy-%s.service", deployer.Slug(cfg.Name))
+			}
+		}
+	}
+	if unitName != "" {
+		unitPath := filepath.Join(unitDir, unitName)
+		if content, err := os.ReadFile(unitPath); err == nil {
+			text := string(content)
+			if strings.Contains(text, "managed by upy") || strings.Contains(text, absRoot) {
+				_ = cmdrun.Run("systemctl", []string{"stop", unitName}, cmdrun.Options{AllowNonZero: true})
+				_ = cmdrun.Run("systemctl", []string{"disable", unitName}, cmdrun.Options{AllowNonZero: true})
+				if err := os.Remove(unitPath); err != nil {
+					errs = append(errs, fmt.Errorf("删除 unit 文件 %s 失败: %w", unitPath, err))
+				}
+				_ = cmdrun.Run("systemctl", []string{"daemon-reload"}, cmdrun.Options{})
+				_ = cmdrun.Run("systemctl", []string{"reset-failed", unitName}, cmdrun.Options{AllowNonZero: true})
+			}
+		}
+	}
+	_ = os.Remove(filepath.Join(absRoot, ".deploy.unit.bak"))
+
 	// 1. releases/
 	releasesDir := filepath.Join(absRoot, "releases")
 	if size, _ := dirSize(releasesDir); size > 0 {
@@ -369,4 +421,73 @@ func dirSize(path string) (int64, error) {
 		return nil
 	})
 	return size, err
+}
+
+// resolveVersionFromUnit 检查系统服务 Unit 文件当前实际指向的版本（防止部署被强杀中断后，Unit 指向新版本而 state 仍为旧版本导致误删 - SYS-22）
+func resolveVersionFromUnit(root string, st *state.State) string {
+	unitDir := os.Getenv("UPY_SYSTEMD_DIR")
+	if unitDir == "" {
+		unitDir = "/etc/systemd/system"
+	}
+	unitName := ""
+	if st != nil && st.UnitName != "" {
+		unitName = st.UnitName
+	}
+	if unitName == "" {
+		if cfg, err := config.ReadProjectConfig(root); err == nil && cfg != nil {
+			if cfg.Service != nil && cfg.Service.Unit != "" {
+				unitName = cfg.Service.Unit
+			} else if cfg.Name != "" {
+				unitName = fmt.Sprintf("upy-%s.service", deployer.Slug(cfg.Name))
+			}
+		}
+	}
+	if unitName == "" {
+		return ""
+	}
+
+	unitPath := filepath.Join(unitDir, unitName)
+	content, err := os.ReadFile(unitPath)
+	if err != nil {
+		return ""
+	}
+	text := string(content)
+
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		absRoot = root
+	}
+	// 校验 Unit 归属
+	if !strings.Contains(text, "managed by upy") && !strings.Contains(text, absRoot) {
+		return ""
+	}
+
+	releasesPrefix := filepath.Join(absRoot, "releases")
+	lines := strings.Split(text, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "WorkingDirectory=") {
+			wd := strings.TrimSpace(strings.TrimPrefix(trimmed, "WorkingDirectory="))
+			if rel, err := filepath.Rel(releasesPrefix, wd); err == nil {
+				parts := strings.Split(filepath.ToSlash(rel), "/")
+				if len(parts) > 0 && parts[0] != "" && parts[0] != "." && !strings.HasPrefix(parts[0], "..") {
+					return parts[0]
+				}
+			}
+		}
+		if strings.HasPrefix(trimmed, "ExecStart=") {
+			exec := strings.TrimSpace(strings.TrimPrefix(trimmed, "ExecStart="))
+			fields := strings.Fields(exec)
+			if len(fields) > 0 {
+				target := strings.Trim(fields[0], `"`)
+				if rel, err := filepath.Rel(releasesPrefix, target); err == nil {
+					parts := strings.Split(filepath.ToSlash(rel), "/")
+					if len(parts) > 0 && parts[0] != "" && parts[0] != "." && !strings.HasPrefix(parts[0], "..") {
+						return parts[0]
+					}
+				}
+			}
+		}
+	}
+	return ""
 }

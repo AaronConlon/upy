@@ -1,0 +1,23 @@
+[
+  {
+    "id": "SYS-17",
+    "name": "clean-previous",
+    "status": "PASS",
+    "seconds": 2.08,
+    "error": ""
+  },
+  {
+    "id": "SYS-18",
+    "name": "purge-service",
+    "status": "FAIL",
+    "seconds": 0.68,
+    "error": "'PosixPath' object is not callable"
+  },
+  {
+    "id": "SYS-22",
+    "name": "interrupted-deploy",
+    "status": "FAIL",
+    "seconds": 0.9,
+    "error": "'PosixPath' object is not callable"
+  }
+]

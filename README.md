@@ -36,6 +36,7 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
 
 - **单二进制零依赖**：体积仅 ~8.5MB，开箱即用，无需 Node.js、Python 或任何额外运行时环境。
 - **静态 SPA 原子部署**：通过 `current` 软链实现无感知秒级切换；自动规整目录与文件权限（`0755` / `0644`），彻底避免 Nginx / Caddy 出现 `403 Forbidden`。
+- **Go 二进制原生服务纳管**：深度结合 Linux systemd（`type: system`），支持不可变版本归档、参数原样保真、运行账号权限预检、原子 Unit 切换、真实 HTTP 存活检查与失败自动回滚。
 - **Docker / Compose 容器管理**：新版本镜像准备就绪后，平滑停止旧栈释放端口，新栈健康检查不通过时自动回滚上一版本。
 - **GitHub Release 驱动**：支持公开与私有仓库，多组织 Token 自动匹配路由，断点续传与 SHA-256 完整性强校验。
 - **本地项目快速调度**：在任意路径直接运行 `upy`，即可列出本机已纳管的项目并交互式选择部署。
@@ -220,6 +221,49 @@ healthcheck:
   url: http://localhost:8080/health
   timeout: 30s      # 健康检查超时，支持 30s 或数字秒
 ```
+
+#### C. 原生系统服务（system / Go 二进制 Web 服务）
+
+适用于轻量级 Go/Rust/Node 等单二进制或本地常驻 Web 服务。采用标准轻量生产架构：**upy 管版本与发布，systemd 管进程守护与 cgroups，Nginx/Caddy 管公网入口与 SSL**。
+
+压缩包内结构：
+```text
+bundle.zip
+├── deploy.yaml
+└── bin/
+    └── my-api
+```
+
+清单 `deploy.yaml` 格式：
+```yaml
+name: my-api
+version: 1.0.0
+type: system             # 原生系统服务（支持 service 别名）
+target:
+  os: linux
+  arch: amd64            # 平台与硬件架构严格校验
+system:
+  command: ["./bin/my-api"]  # 启动命令及参数列表（原样保真传递）
+  workingDir: ""             # 可选，默认指向当前版本目录
+healthcheck:
+  url: http://127.0.0.1:8080/health
+  timeout: 30s               # 健康检查超时（单次请求 3s 保护）
+```
+
+服务器端 `deploy.yaml` 运维账号配置（可选）：
+```yaml
+name: my-api
+release:
+  provider: github
+  repository: owner/my-api
+service:
+  user: my-api           # 服务运行专属系统账号（防 root 提权，不存在时严格阻断）
+  group: my-api
+  unit: upy-my-api.service
+```
+
+> **持久化与数据隔离规范**：  
+> 在服务器项目目录下通过 `/opt/my-api/shared/service.env` 提供环境变量（如 `LISTEN_ADDR=127.0.0.1:8080` 与 `DATA_DIR=/opt/my-api/shared/data`），程序持久化业务数据写入 `shared/data/`。版本目录 `releases/<version>` 保持纯净与不可变，支持秒级无损回滚。
 
 ---
 

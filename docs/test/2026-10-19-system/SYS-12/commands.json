@@ -1,0 +1,108 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue12"
+    ],
+    "rc": 0,
+    "seconds": 0.054,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue12:ue12",
+      "/opt/upy-e2e/case-12/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.002,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.041,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "start",
+      "upy-e2e-12.service"
+    ],
+    "rc": 0,
+    "seconds": 0.008,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-12.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.01,
+    "output": "1220\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/12-1.0.0-healthy-5.zip",
+      "--root",
+      "/opt/upy-e2e/case-12"
+    ],
+    "rc": 1,
+    "seconds": 0.184,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-12\n  📁 目录: /opt/upy-e2e/case-12\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/12-1.0.0-healthy-5.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-12 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-12/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-12.service...\nFailed to reset failed state of unit upy-e2e-12.service: Unit upy-e2e-12.service not loaded.\nFailed to reset failed state of unit upy-e2e-12.service: Unit upy-e2e-12.service not loaded.\n  ✓ 首次部署失败，已清理新生成的 systemd unit\n  错误: systemd 服务 /etc/systemd/system/upy-e2e-12.service 已存在但非 upy 纳管（缺少 upy 标记），拒绝接管或覆盖\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 149, in <module>\n    caseid=f'SYS-{n:02d}'\n        ^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 93, in t12\n    c=fixture(12);original='[Unit]\\nDescription=external fixture\\n[Service]\\nType=simple\\nExecStart=/bin/sleep infinity\\n';unitpath(c).write_text(original);cmd(['systemctl','daemon-reload']);cmd(['systemctl','start',c['unit']]);old=pid(c);r=deploy(c,bundle(c));check(r['rc']!=0,'external unit accepted');check(unitpath(c).exists() and unitpath(c).read_text()==original,'external unit deleted or replaced');check(pid(c)==old and active(c),'external service stopped')\n                                                                                                                                                                                                                                                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 22, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: external unit deleted or replaced\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-12.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-12.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "Oct 19 03:25:44 933258e13e54 systemd[1]: Started upy-e2e-12.service - external fixture.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopping upy-e2e-12.service - external fixture...\nOct 19 03:25:44 933258e13e54 systemd[1]: upy-e2e-12.service: Deactivated successfully.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopped upy-e2e-12.service - external fixture.\n"
+  }
+]

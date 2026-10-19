@@ -1,0 +1,8 @@
+{
+  "release": "system-v1.0.0",
+  "asset": "bundle-linux-arm64.zip",
+  "expected_sha256": "49e750ff1b316ef13bad239c2c4e81bbe3214c44f21c953a0da0e8df240621ab",
+  "downloaded_sha256": "49e750ff1b316ef13bad239c2c4e81bbe3214c44f21c953a0da0e8df240621ab",
+  "matched": true,
+  "note": "测试工具独立验证下载文件与 CI 校验文件一致；不是断言 upy 内部已执行校验。"
+}

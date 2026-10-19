@@ -1,0 +1,170 @@
+[
+  {
+    "id": "SYS-01",
+    "name": "private-release",
+    "status": "PASS",
+    "seconds": 11.71,
+    "error": ""
+  },
+  {
+    "id": "SYS-02",
+    "name": "upgrade-persistence",
+    "status": "PASS",
+    "seconds": 1.17,
+    "error": ""
+  },
+  {
+    "id": "SYS-03",
+    "name": "same-version-skip",
+    "status": "PASS",
+    "seconds": 0.84,
+    "error": ""
+  },
+  {
+    "id": "SYS-04",
+    "name": "health-rollback",
+    "status": "PASS",
+    "seconds": 6.38,
+    "error": ""
+  },
+  {
+    "id": "SYS-05",
+    "name": "crash-rollback",
+    "status": "PASS",
+    "seconds": 1.34,
+    "error": ""
+  },
+  {
+    "id": "SYS-06",
+    "name": "first-failure",
+    "status": "PASS",
+    "seconds": 5.69,
+    "error": ""
+  },
+  {
+    "id": "SYS-07",
+    "name": "missing-binary",
+    "status": "FAIL",
+    "seconds": 0.78,
+    "error": "prepare failure stopped old process"
+  },
+  {
+    "id": "SYS-08",
+    "name": "wrong-arch",
+    "status": "PASS",
+    "seconds": 4.71,
+    "error": ""
+  },
+  {
+    "id": "SYS-09",
+    "name": "stopped-rollback",
+    "status": "PASS",
+    "seconds": 8.63,
+    "error": ""
+  },
+  {
+    "id": "SYS-10",
+    "name": "missing-user",
+    "status": "FAIL",
+    "seconds": 3.04,
+    "error": "missing user accepted; observed HTTP {'args': [], 'cwd': '/opt/upy-e2e/case-10/releases/1.0.0', 'data_dir': '/opt/upy-e2e/case-10/shared/data', 'mode': 'healthy', 'pid': 3865, 'uid': 0, 'version': '1.0.0'}"
+  },
+  {
+    "id": "SYS-11",
+    "name": "root-ownership",
+    "status": "FAIL",
+    "seconds": 1.49,
+    "error": "ownership rejection damaged original service"
+  },
+  {
+    "id": "SYS-12",
+    "name": "foreign-unit",
+    "status": "FAIL",
+    "seconds": 0.57,
+    "error": "external unit deleted or replaced"
+  },
+  {
+    "id": "SYS-13",
+    "name": "argument-fidelity",
+    "status": "FAIL",
+    "seconds": 5.37,
+    "error": "argv changed: ['hello world', 'quote\"value', 'cash$HOME', 'percent%H', 'padded']"
+  },
+  {
+    "id": "SYS-14",
+    "name": "space-root",
+    "status": "PASS",
+    "seconds": 4.04,
+    "error": ""
+  },
+  {
+    "id": "SYS-15",
+    "name": "force-rollback",
+    "status": "FAIL",
+    "seconds": 6.67,
+    "error": "HTTP Error 503: Service Unavailable"
+  },
+  {
+    "id": "SYS-16",
+    "name": "retain-previous",
+    "status": "PASS",
+    "seconds": 2.85,
+    "error": ""
+  },
+  {
+    "id": "SYS-17",
+    "name": "clean-previous",
+    "status": "FAIL",
+    "seconds": 2.58,
+    "error": "manual clean deleted previousVersion"
+  },
+  {
+    "id": "SYS-18",
+    "name": "purge-service",
+    "status": "FAIL",
+    "seconds": 0.59,
+    "error": "purge left systemd unit referencing removed release"
+  },
+  {
+    "id": "SYS-19",
+    "name": "lock-conflict",
+    "status": "PASS",
+    "seconds": 0.78,
+    "error": ""
+  },
+  {
+    "id": "SYS-20",
+    "name": "hung-health",
+    "status": "PASS",
+    "seconds": 10.58,
+    "error": ""
+  },
+  {
+    "id": "SYS-21",
+    "name": "probe-identity",
+    "status": "FAIL",
+    "seconds": 1.64,
+    "error": "unhealthy version accepted using unrelated HTTP 200"
+  },
+  {
+    "id": "SYS-22",
+    "name": "interrupted-deploy",
+    "status": "FAIL",
+    "seconds": 2.63,
+    "error": "clean deleted new version still referenced by systemd after interrupted deploy"
+  },
+  {
+    "id": "SYS-23",
+    "name": "unprivileged-prepare",
+    "status": "PASS",
+    "seconds": 2.23,
+    "error": ""
+  },
+  {
+    "id": "SYS-24",
+    "name": "service-alias",
+    "status": "PASS",
+    "seconds": 0.73,
+    "error": ""
+  }
+]

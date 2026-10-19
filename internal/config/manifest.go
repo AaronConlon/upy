@@ -36,14 +36,22 @@ type ManifestTarget struct {
 	Arch string `yaml:"arch"`
 }
 
+// ManifestSystem system 服务配置
+type ManifestSystem struct {
+	Command          any                  `yaml:"command"`    // 启动命令: string 或 []string
+	WorkingDirectory string               `yaml:"workingDir"` // 可选工作目录, 默认 releases/<version>
+	Healthcheck      *ManifestHealthcheck `yaml:"healthcheck"`
+}
+
 // Manifest bundle manifest
 type Manifest struct {
 	Name        string               `yaml:"name"`
 	Version     string               `yaml:"version"`
-	Type        string               `yaml:"type"` // static | docker
+	Type        string               `yaml:"type"` // static | docker | system (或 service)
 	Target      *ManifestTarget      `yaml:"target"`
 	Static      *ManifestStatic      `yaml:"static"`
 	Docker      *ManifestDocker      `yaml:"docker"`
+	System      *ManifestSystem      `yaml:"system"`
 	Healthcheck *ManifestHealthcheck `yaml:"healthcheck"`
 }
 
@@ -61,15 +69,15 @@ func ParseManifest(content []byte) (*Manifest, error) {
 	}
 	switch m.Type {
 	case "static":
-		if m.Docker != nil {
-			return nil, fmt.Errorf("bundle 清单无效: static 类型不允许携带 docker 配置")
+		if m.Docker != nil || m.System != nil {
+			return nil, fmt.Errorf("bundle 清单无效: static 类型不允许携带 docker 或 system 配置")
 		}
 		if m.Static == nil || strings.TrimSpace(m.Static.Directory) == "" {
 			m.Static = &ManifestStatic{Directory: "dist"}
 		}
 	case "docker":
-		if m.Static != nil {
-			return nil, fmt.Errorf("bundle 清单无效: docker 类型不允许携带 static 配置")
+		if m.Static != nil || m.System != nil {
+			return nil, fmt.Errorf("bundle 清单无效: docker 类型不允许携带 static 或 system 配置")
 		}
 		if m.Docker == nil {
 			return nil, fmt.Errorf("bundle 清单无效: type 为 docker 但缺少 docker 配置")
@@ -86,8 +94,26 @@ func ParseManifest(content []byte) (*Manifest, error) {
 		default:
 			return nil, fmt.Errorf("bundle 清单无效: docker.mode 必须为 'container' 或 'compose'，当前为 '%s'", m.Docker.Mode)
 		}
+	case "system", "service":
+		if m.Static != nil || m.Docker != nil {
+			return nil, fmt.Errorf("bundle 清单无效: %s 类型不允许携带 static 或 docker 配置", m.Type)
+		}
+		if m.System == nil {
+			return nil, fmt.Errorf("bundle 清单无效: type 为 %s 但缺少 system 配置", m.Type)
+		}
+		m.Type = "system"
+		cmdList, err := ParseCommand(m.System.Command)
+		if err != nil {
+			return nil, fmt.Errorf("bundle 清单无效: %v", err)
+		}
+		if len(cmdList) == 0 {
+			return nil, fmt.Errorf("bundle 清单无效: system.command 不能为空")
+		}
+		if m.Healthcheck == nil && m.System.Healthcheck != nil {
+			m.Healthcheck = m.System.Healthcheck
+		}
 	default:
-		return nil, fmt.Errorf("bundle 清单无效: type 必须为 'static' 或 'docker'，当前为 '%s'", m.Type)
+		return nil, fmt.Errorf("bundle 清单无效: type 必须为 'static'、'docker' 或 'system'，当前为 '%s'", m.Type)
 	}
 	// 健康检查 timeout 校验
 	if m.Healthcheck != nil {
@@ -101,6 +127,71 @@ func ParseManifest(content []byte) (*Manifest, error) {
 		m.Healthcheck.Timeout = sec
 	}
 	return &m, nil
+}
+
+// ParseCommand 解析 system.command 配置为参数列表，并严格校验控制字符
+func ParseCommand(v any) ([]string, error) {
+	var rawList []string
+	switch t := v.(type) {
+	case string:
+		rawList = strings.Fields(strings.TrimSpace(t))
+	case []string:
+		rawList = t
+	case []any:
+		for _, item := range t {
+			if s, ok := item.(string); ok {
+				rawList = append(rawList, s)
+			}
+		}
+	default:
+		return nil, fmt.Errorf("system.command 必须是字符串或字符串列表")
+	}
+
+	if len(rawList) == 0 {
+		return nil, fmt.Errorf("system.command 不能为空")
+	}
+
+	exec := strings.TrimSpace(rawList[0])
+	if exec == "" {
+		return nil, fmt.Errorf("可执行文件路径不能为空")
+	}
+	if strings.ContainsAny(exec, "\r\n\x00") {
+		return nil, fmt.Errorf("system.command 参数包含非法控制字符或换行符: %q", exec)
+	}
+
+	res := []string{exec}
+	// 后续参数原样保留 (SYS-13: 包含空字符串 '' 与含首尾空白的字符串 '  padded  ')
+	for i := 1; i < len(rawList); i++ {
+		arg := rawList[i]
+		if strings.ContainsAny(arg, "\r\n\x00") {
+			return nil, fmt.Errorf("system.command 参数包含非法控制字符或换行符: %q", arg)
+		}
+		res = append(res, arg)
+	}
+	return res, nil
+}
+
+// EscapeSystemdArg 对单个 systemd ExecStart 参数进行转义与防护
+func EscapeSystemdArg(arg string) (string, error) {
+	if strings.ContainsAny(arg, "\r\n\x00") {
+		return "", fmt.Errorf("参数包含非法控制字符或换行符: %q", arg)
+	}
+	if arg == "" {
+		return `""`, nil
+	}
+	// 转义 % 为 %%，避免触发 systemd specifier
+	escaped := strings.ReplaceAll(arg, "%", "%%")
+	// 转义 $ 为 $$，避免触发 systemd 环境变量自动展开
+	escaped = strings.ReplaceAll(escaped, "$", "$$")
+	// 转义反斜杠和双引号
+	escaped = strings.ReplaceAll(escaped, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+
+	// 若包含空格、制表符或双引号，外层包裹双引号
+	if strings.ContainsAny(escaped, " \t\"") {
+		return `"` + escaped + `"`, nil
+	}
+	return escaped, nil
 }
 
 // ParseTimeout 解析 healthcheck.timeout: 数字秒 或 "30s" / "1m" 字符串; 默认 30s

@@ -1,0 +1,124 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-20.service"
+    ],
+    "rc": 5,
+    "seconds": 0.003,
+    "output": "Failed to stop upy-e2e-20.service: Unit upy-e2e-20.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-20.service"
+    ],
+    "rc": 1,
+    "seconds": 0.009,
+    "output": "Failed to disable unit: Unit file upy-e2e-20.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.052,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-20.service"
+    ],
+    "rc": 1,
+    "seconds": 0.007,
+    "output": "Failed to reset failed state of unit upy-e2e-20.service: Unit upy-e2e-20.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue20"
+    ],
+    "rc": 0,
+    "seconds": 0.061,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue20:ue20",
+      "/opt/upy-e2e/case-20/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/20-1.0.0-healthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-20"
+    ],
+    "rc": 0,
+    "seconds": 0.17,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-20\n  📁 目录: /opt/upy-e2e/case-20\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/20-1.0.0-healthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-20 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-20/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-20.service)\n  -> 正在健康检查 http://127.0.0.1:18300/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-20.service → /etc/systemd/system/upy-e2e-20.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-20 1.0.0\n  project layout:\n    /opt/upy-e2e/case-20\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.2s\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/20-2.0.0-hang-7.zip",
+      "--root",
+      "/opt/upy-e2e/case-20"
+    ],
+    "rc": 1,
+    "seconds": 8.34,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-20\n  📁 目录: /opt/upy-e2e/case-20\n  🧩 类型: system\n  🏷 当前版本: 1.0.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/20-2.0.0-hang-7.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-20 v2.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-20/releases/2.0.0\n  -> 正在安装版本 2.0.0...\n  ✓ 版本已安装到 releases/2.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在停止上一版本系统服务 (upy-e2e-20.service)...\n  ✓ 上一版本服务已停止\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-20.service)\n  -> 正在健康检查 http://127.0.0.1:18300/health (超时 5s)...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-20.service...\n  -> 正在重新启动上一版本系统服务 (1.0.0)...\n  ✓ 已成功恢复上一版本系统服务 (1.0.0)\n  错误: 健康检查超时（5s）: Get \"http://127.0.0.1:18300/health\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-20.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.018,
+    "output": "MainPID=2355\nExecStart={ path=/opt/upy-e2e/case-20/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-20/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[Mon 2026-10-19 03:51:52 UTC] ; stop_time=[n/a] ; pid=2355 ; code=(null) ; status=0/0 }\nUser=ue20\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-20.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-20.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.011,
+    "output": "Oct 19 03:51:45 1c6c596a0717 systemd[1]: Starting upy-e2e-20.service - upy-e2e-20 managed by upy...\nOct 19 03:51:45 1c6c596a0717 systemd[1]: Started upy-e2e-20.service - upy-e2e-20 managed by upy.\nOct 19 03:51:45 1c6c596a0717 web[2271]: 2026/10/19 03:51:45 version=1.0.0 mode=healthy uid=979 listen=127.0.0.1:18300\nOct 19 03:51:45 1c6c596a0717 systemd[1]: Stopping upy-e2e-20.service - upy-e2e-20 managed by upy...\nOct 19 03:51:45 1c6c596a0717 web[2271]: 2026/10/19 03:51:45 SIGTERM received; graceful shutdown\nOct 19 03:51:45 1c6c596a0717 systemd[1]: upy-e2e-20.service: Deactivated successfully.\nOct 19 03:51:45 1c6c596a0717 systemd[1]: Stopped upy-e2e-20.service - upy-e2e-20 managed by upy.\nOct 19 03:51:45 1c6c596a0717 systemd[1]: Starting upy-e2e-20.service - upy-e2e-20 managed by upy...\nOct 19 03:51:45 1c6c596a0717 systemd[1]: Started upy-e2e-20.service - upy-e2e-20 managed by upy.\nOct 19 03:51:45 1c6c596a0717 web[2323]: 2026/10/19 03:51:45 version=2.0.0 mode=hang uid=979 listen=127.0.0.1:18300\nOct 19 03:51:52 1c6c596a0717 web[2323]: 2026/10/19 03:51:52 SIGTERM received; graceful shutdown\nOct 19 03:51:52 1c6c596a0717 systemd[1]: Stopping upy-e2e-20.service - upy-e2e-20 managed by upy...\nOct 19 03:51:52 1c6c596a0717 systemd[1]: upy-e2e-20.service: Deactivated successfully.\nOct 19 03:51:52 1c6c596a0717 systemd[1]: Stopped upy-e2e-20.service - upy-e2e-20 managed by upy.\nOct 19 03:51:52 1c6c596a0717 systemd[1]: Starting upy-e2e-20.service - upy-e2e-20 managed by upy...\nOct 19 03:51:52 1c6c596a0717 systemd[1]: Started upy-e2e-20.service - upy-e2e-20 managed by upy.\nOct 19 03:51:52 1c6c596a0717 web[2355]: 2026/10/19 03:51:52 version=1.0.0 mode=healthy uid=979 listen=127.0.0.1:18300\n"
+  }
+]

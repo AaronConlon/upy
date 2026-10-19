@@ -1,0 +1,12 @@
+{
+  "root": "/opt/upy-e2e/case-12",
+  "unit": "upy-e2e-12.service",
+  "port": 18220,
+  "state": null,
+  "unit_content": "[Unit]\nDescription=external fixture\n[Service]\nType=simple\nExecStart=/bin/sleep infinity\n",
+  "releases": [
+    "1.0.0"
+  ],
+  "systemctl": "MainPID=1356\nExecStart={ path=/bin/sleep ; argv[]=/bin/sleep infinity ; ignore_errors=no ; start_time=[Mon 2026-10-19 03:51:31 UTC] ; stop_time=[n/a] ; pid=1356 ; code=(null) ; status=0/0 }\nUser=\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-12.service\n",
+  "journal": "Oct 19 03:51:31 1c6c596a0717 systemd[1]: Started upy-e2e-12.service - external fixture.\n"
+}

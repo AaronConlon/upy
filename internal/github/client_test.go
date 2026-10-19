@@ -252,6 +252,3 @@ func TestDownloadAssetResumeOnDisconnect(t *testing.T) {
 		t.Fatalf("期望发生重试与续传，实际请求次数: %d", attempts)
 	}
 }
-
-
-

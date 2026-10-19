@@ -1,0 +1,212 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-11.service"
+    ],
+    "rc": 5,
+    "seconds": 0.006,
+    "output": "Failed to stop upy-e2e-11.service: Unit upy-e2e-11.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-11.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to disable unit: Unit file upy-e2e-11.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.053,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-11.service"
+    ],
+    "rc": 1,
+    "seconds": 0.011,
+    "output": "Failed to reset failed state of unit upy-e2e-11.service: Unit upy-e2e-11.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue11"
+    ],
+    "rc": 9,
+    "seconds": 0.025,
+    "output": "useradd: user 'ue11' already exists\n"
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue11:ue11",
+      "/opt/upy-e2e/case-11/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.008,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/11-1.0.0-healthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-11"
+    ],
+    "rc": 0,
+    "seconds": 0.324,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-11\n  📁 目录: /opt/upy-e2e/case-11\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/11-1.0.0-healthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-11 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-11/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-11.service)\n  -> 正在健康检查 http://127.0.0.1:18210/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-11.service → /etc/systemd/system/upy-e2e-11.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-11 1.0.0\n  project layout:\n    /opt/upy-e2e/case-11\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.3s\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-11.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.019,
+    "output": "3951\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue11"
+    ],
+    "rc": 9,
+    "seconds": 0.006,
+    "output": "useradd: user 'ue11' already exists\n"
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue11:ue11",
+      "/opt/upy-e2e/case-11-other/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.004,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/11-2.0.0-healthy-10.zip",
+      "--root",
+      "/opt/upy-e2e/case-11-other"
+    ],
+    "rc": 1,
+    "seconds": 0.364,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-11\n  📁 目录: /opt/upy-e2e/case-11-other\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/11-2.0.0-healthy-10.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-11 v2.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-11-other/releases/2.0.0\n  -> 正在安装版本 2.0.0...\n  ✓ 版本已安装到 releases/2.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-11.service...\nRemoved \"/etc/systemd/system/multi-user.target.wants/upy-e2e-11.service\".\nFailed to reset failed state of unit upy-e2e-11.service: Unit upy-e2e-11.service not loaded.\n  ✓ 首次部署失败，已清理新生成的 systemd unit\n  错误: systemd 服务 upy-e2e-11.service 已被路径 /opt/upy-e2e/case-11 的项目纳管，当前项目 (/opt/upy-e2e/case-11-other) 拒绝冲突覆盖\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-11.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": "0\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 163, in <module>\n    try:globals()[f't{n:02d}']()\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 93, in t11\n    c=baseline(11);old=pid(c);other=fixture(11,'-other');r=deploy(other,bundle(other,'2.0.0'));check(r['rc']!=0,'conflicting root accepted');check(pid(c)==old and active(c),'ownership rejection damaged original service');ready(c,'1.0.0')\n                                                                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 24, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ownership rejection damaged original service\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-11.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-11.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": "Oct 19 03:25:43 933258e13e54 systemd[1]: Starting upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:25:43 933258e13e54 systemd[1]: Started upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:25:43 933258e13e54 web[1121]: 2026/10/19 03:25:43 version=1.0.0 mode=healthy uid=988 listen=127.0.0.1:18210\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopping upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:25:44 933258e13e54 web[1121]: 2026/10/19 03:25:44 SIGTERM received; graceful shutdown\nOct 19 03:25:44 933258e13e54 systemd[1]: upy-e2e-11.service: Deactivated successfully.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopped upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:29:10 933258e13e54 systemd[1]: Starting upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:29:10 933258e13e54 systemd[1]: Started upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:29:10 933258e13e54 web[3951]: 2026/10/19 03:29:10 version=1.0.0 mode=healthy uid=988 listen=127.0.0.1:18210\nOct 19 03:29:11 933258e13e54 web[3951]: 2026/10/19 03:29:11 SIGTERM received; graceful shutdown\nOct 19 03:29:11 933258e13e54 systemd[1]: Stopping upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:29:11 933258e13e54 systemd[1]: upy-e2e-11.service: Deactivated successfully.\nOct 19 03:29:11 933258e13e54 systemd[1]: Stopped upy-e2e-11.service - upy-e2e-11 managed by upy.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-11.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-11.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "Oct 19 03:25:43 933258e13e54 systemd[1]: Starting upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:25:43 933258e13e54 systemd[1]: Started upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:25:43 933258e13e54 web[1121]: 2026/10/19 03:25:43 version=1.0.0 mode=healthy uid=988 listen=127.0.0.1:18210\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopping upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:25:44 933258e13e54 web[1121]: 2026/10/19 03:25:44 SIGTERM received; graceful shutdown\nOct 19 03:25:44 933258e13e54 systemd[1]: upy-e2e-11.service: Deactivated successfully.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopped upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:29:10 933258e13e54 systemd[1]: Starting upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:29:10 933258e13e54 systemd[1]: Started upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:29:10 933258e13e54 web[3951]: 2026/10/19 03:29:10 version=1.0.0 mode=healthy uid=988 listen=127.0.0.1:18210\nOct 19 03:29:11 933258e13e54 web[3951]: 2026/10/19 03:29:11 SIGTERM received; graceful shutdown\nOct 19 03:29:11 933258e13e54 systemd[1]: Stopping upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:29:11 933258e13e54 systemd[1]: upy-e2e-11.service: Deactivated successfully.\nOct 19 03:29:11 933258e13e54 systemd[1]: Stopped upy-e2e-11.service - upy-e2e-11 managed by upy.\n"
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-10.service"
+    ],
+    "rc": 5,
+    "seconds": 0.008,
+    "output": "Failed to stop upy-e2e-10.service: Unit upy-e2e-10.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-10.service"
+    ],
+    "rc": 1,
+    "seconds": 0.007,
+    "output": "Failed to disable unit: Unit file upy-e2e-10.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.05,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-10.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to reset failed state of unit upy-e2e-10.service: Unit upy-e2e-10.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/10-1.0.0-healthy-4.zip",
+      "--root",
+      "/opt/upy-e2e/case-10"
+    ],
+    "rc": 1,
+    "seconds": 0.261,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-10\n  📁 目录: /opt/upy-e2e/case-10\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/10-1.0.0-healthy-4.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-10 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-10/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  错误: 系统服务运行用户 \"upy-e2e-no-such-user\" 不存在，拒绝以 root 静默运行: user: unknown user upy-e2e-no-such-user\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-10.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.028,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-10.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.013,
+    "output": "-- No entries --\n"
+  }
+]

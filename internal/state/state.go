@@ -16,6 +16,9 @@ type State struct {
 	CurrentVersion  string `json:"currentVersion"`
 	PreviousVersion string `json:"previousVersion"`
 	DeployedAt      string `json:"deployedAt"`
+	Type            string `json:"type,omitempty"`
+	UnitName        string `json:"unitName,omitempty"`
+	Status          string `json:"status,omitempty"` // active | degraded | failed
 }
 
 // Read 读取 state.json (不存在时返回空状态)

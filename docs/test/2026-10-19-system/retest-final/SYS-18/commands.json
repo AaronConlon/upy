@@ -1,0 +1,136 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-18.service"
+    ],
+    "rc": 5,
+    "seconds": 0.003,
+    "output": "Failed to stop upy-e2e-18.service: Unit upy-e2e-18.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-18.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to disable unit: Unit file upy-e2e-18.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.064,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-18.service"
+    ],
+    "rc": 1,
+    "seconds": 0.008,
+    "output": "Failed to reset failed state of unit upy-e2e-18.service: Unit upy-e2e-18.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue18"
+    ],
+    "rc": 0,
+    "seconds": 0.063,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue18:ue18",
+      "/opt/upy-e2e/case-18/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.001,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/18-1.0.0-healthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-18"
+    ],
+    "rc": 0,
+    "seconds": 0.142,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-18\n  📁 目录: /opt/upy-e2e/case-18\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/18-1.0.0-healthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-18 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-18/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-18.service)\n  -> 正在健康检查 http://127.0.0.1:18280/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-18.service → /etc/systemd/system/upy-e2e-18.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-18 1.0.0\n  project layout:\n    /opt/upy-e2e/case-18\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.1s\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "clean",
+      "--root",
+      "/opt/upy-e2e/case-18",
+      "--purge",
+      "-y"
+    ],
+    "rc": 0,
+    "seconds": 0.094,
+    "output": "  -> 正在分析项目 upy-e2e-18（/opt/upy-e2e/case-18）数据占用...\n  📦 Bundle 压缩包缓存:   0 B (0 个文件)\n  📂 历史旧版本目录:     0 B (无)\n  🗑️  部署中断残留目录:   0 B (无)\n  🛡️  当前运行活跃版本:   1.0.0 (受保护)\n\n  -> 正在清空项目 upy-e2e-18 所有部署产物...\nRemoved \"/etc/systemd/system/multi-user.target.wants/upy-e2e-18.service\".\nFailed to reset failed state of unit upy-e2e-18.service: Unit upy-e2e-18.service not loaded.\n  ✓ ✨ 项目 upy-e2e-18 已彻底清空并注销，共释放磁盘空间: 5.2 MB\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "is-active",
+      "--quiet",
+      "upy-e2e-18.service"
+    ],
+    "rc": 3,
+    "seconds": 0.004,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-18.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.012,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-18.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.014,
+    "output": "Oct 19 03:51:43 1c6c596a0717 systemd[1]: Starting upy-e2e-18.service - upy-e2e-18 managed by upy...\nOct 19 03:51:43 1c6c596a0717 systemd[1]: Started upy-e2e-18.service - upy-e2e-18 managed by upy.\nOct 19 03:51:43 1c6c596a0717 web[2054]: 2026/10/19 03:51:43 version=1.0.0 mode=healthy uid=981 listen=127.0.0.1:18280\nOct 19 03:51:43 1c6c596a0717 web[2054]: 2026/10/19 03:51:43 SIGTERM received; graceful shutdown\nOct 19 03:51:43 1c6c596a0717 systemd[1]: Stopping upy-e2e-18.service - upy-e2e-18 managed by upy...\nOct 19 03:51:43 1c6c596a0717 systemd[1]: upy-e2e-18.service: Deactivated successfully.\nOct 19 03:51:43 1c6c596a0717 systemd[1]: Stopped upy-e2e-18.service - upy-e2e-18 managed by upy.\n"
+  }
+]

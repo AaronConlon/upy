@@ -1,0 +1,112 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-21.service"
+    ],
+    "rc": 5,
+    "seconds": 0.006,
+    "output": "Failed to stop upy-e2e-21.service: Unit upy-e2e-21.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-21.service"
+    ],
+    "rc": 1,
+    "seconds": 0.003,
+    "output": "Failed to disable unit: Unit file upy-e2e-21.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.048,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-21.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to reset failed state of unit upy-e2e-21.service: Unit upy-e2e-21.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue21"
+    ],
+    "rc": 0,
+    "seconds": 0.066,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue21:ue21",
+      "/opt/upy-e2e/case-21/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.002,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/21-1.0.0-unhealthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-21"
+    ],
+    "rc": 1,
+    "seconds": 5.356,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-21\n  📁 目录: /opt/upy-e2e/case-21\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/21-1.0.0-unhealthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-21 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-21/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-21.service)\n  -> 正在健康检查 http://127.0.0.1:18311/health (超时 5s)...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-21.service...\nFailed to reset failed state of unit upy-e2e-21.service: Unit upy-e2e-21.service not loaded.\nFailed to reset failed state of unit upy-e2e-21.service: Unit upy-e2e-21.service not loaded.\n  ✓ 首次部署失败，已清理新生成的 systemd unit\n  错误: 健康检查超时（5s）: 端口 18311 尚未由服务进程 (PID 2433) 监听\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-21.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.101,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-21.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.033,
+    "output": "Oct 19 03:51:54 1c6c596a0717 systemd[1]: Starting upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:51:54 1c6c596a0717 systemd[1]: Started upy-e2e-21.service - upy-e2e-21 managed by upy.\nOct 19 03:51:54 1c6c596a0717 web[2433]: 2026/10/19 03:51:54 version=1.0.0 mode=unhealthy uid=978 listen=127.0.0.1:18310\nOct 19 03:51:59 1c6c596a0717 web[2433]: 2026/10/19 03:51:59 SIGTERM received; graceful shutdown\nOct 19 03:51:59 1c6c596a0717 systemd[1]: Stopping upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:51:59 1c6c596a0717 systemd[1]: upy-e2e-21.service: Deactivated successfully.\nOct 19 03:51:59 1c6c596a0717 systemd[1]: Stopped upy-e2e-21.service - upy-e2e-21 managed by upy.\n"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "root": "/opt/upy-e2e/case-11",
+  "unit": "upy-e2e-11.service",
+  "port": 18210,
+  "state": "{\n  \"currentVersion\": \"1.0.0\",\n  \"previousVersion\": \"\",\n  \"deployedAt\": \"2026-10-19T03:25:43Z\",\n  \"type\": \"system\",\n  \"unitName\": \"upy-e2e-11.service\",\n  \"status\": \"active\"\n}\n",
+  "unit_content": null,
+  "releases": [
+    "1.0.0"
+  ],
+  "systemctl": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n",
+  "journal": "Oct 19 03:25:43 933258e13e54 systemd[1]: Starting upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:25:43 933258e13e54 systemd[1]: Started upy-e2e-11.service - upy-e2e-11 managed by upy.\nOct 19 03:25:43 933258e13e54 web[1121]: 2026/10/19 03:25:43 version=1.0.0 mode=healthy uid=988 listen=127.0.0.1:18210\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopping upy-e2e-11.service - upy-e2e-11 managed by upy...\nOct 19 03:25:44 933258e13e54 web[1121]: 2026/10/19 03:25:44 SIGTERM received; graceful shutdown\nOct 19 03:25:44 933258e13e54 systemd[1]: upy-e2e-11.service: Deactivated successfully.\nOct 19 03:25:44 933258e13e54 systemd[1]: Stopped upy-e2e-11.service - upy-e2e-11 managed by upy.\n"
+}

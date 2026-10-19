@@ -533,8 +533,8 @@ figcaption > span:last-child {
 }
 .deploy-types {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 60px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 36px;
   margin-left: 40px;
   padding-block: 40px;
   border-bottom: 1px solid var(--color-rule);

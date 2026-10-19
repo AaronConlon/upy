@@ -1,0 +1,12 @@
+{
+  "root": "/opt/upy-e2e/case-24",
+  "unit": "upy-e2e-24.service",
+  "port": 18340,
+  "state": "{\n  \"currentVersion\": \"1.0.0\",\n  \"previousVersion\": \"\",\n  \"deployedAt\": \"2026-10-19T03:52:02Z\",\n  \"type\": \"system\",\n  \"unitName\": \"upy-e2e-24.service\",\n  \"status\": \"active\"\n}\n",
+  "unit_content": "# Managed by upy - DO NOT EDIT MANUALLY\n# X-Upy-Project: upy-e2e-24\n# X-Upy-Root: /opt/upy-e2e/case-24\n\n[Unit]\nDescription=upy-e2e-24 managed by upy\nAfter=network.target\nWants=network-online.target\n\n[Service]\nType=exec\nUser=ue24\nGroup=ue24\nWorkingDirectory=/opt/upy-e2e/case-24/releases/1.0.0\nExecStart=/opt/upy-e2e/case-24/releases/1.0.0/bin/web\nEnvironmentFile=-/opt/upy-e2e/case-24/shared/service.env\nRestart=on-failure\nRestartSec=3s\nTimeoutStopSec=30s\nKillSignal=SIGTERM\nStandardOutput=journal\nStandardError=journal\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=multi-user.target\n",
+  "releases": [
+    "1.0.0"
+  ],
+  "systemctl": "MainPID=2775\nExecStart={ path=/opt/upy-e2e/case-24/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-24/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue24\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-24.service\n",
+  "journal": "Oct 19 03:52:02 1c6c596a0717 systemd[1]: Starting upy-e2e-24.service - upy-e2e-24 managed by upy...\nOct 19 03:52:02 1c6c596a0717 systemd[1]: Started upy-e2e-24.service - upy-e2e-24 managed by upy.\nOct 19 03:52:02 1c6c596a0717 web[2775]: 2026/10/19 03:52:02 version=1.0.0 mode=healthy uid=975 listen=127.0.0.1:18340\n"
+}

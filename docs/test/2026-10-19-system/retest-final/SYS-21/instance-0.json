@@ -1,0 +1,12 @@
+{
+  "root": "/opt/upy-e2e/case-21",
+  "unit": "upy-e2e-21.service",
+  "port": 18310,
+  "state": null,
+  "unit_content": null,
+  "releases": [
+    "1.0.0"
+  ],
+  "systemctl": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n",
+  "journal": "Oct 19 03:51:54 1c6c596a0717 systemd[1]: Starting upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:51:54 1c6c596a0717 systemd[1]: Started upy-e2e-21.service - upy-e2e-21 managed by upy.\nOct 19 03:51:54 1c6c596a0717 web[2433]: 2026/10/19 03:51:54 version=1.0.0 mode=unhealthy uid=978 listen=127.0.0.1:18310\nOct 19 03:51:59 1c6c596a0717 web[2433]: 2026/10/19 03:51:59 SIGTERM received; graceful shutdown\nOct 19 03:51:59 1c6c596a0717 systemd[1]: Stopping upy-e2e-21.service - upy-e2e-21 managed by upy...\nOct 19 03:51:59 1c6c596a0717 systemd[1]: upy-e2e-21.service: Deactivated successfully.\nOct 19 03:51:59 1c6c596a0717 systemd[1]: Stopped upy-e2e-21.service - upy-e2e-21 managed by upy.\n"
+}

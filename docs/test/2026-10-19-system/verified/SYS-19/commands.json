@@ -1,0 +1,124 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-19.service"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-19.service"
+    ],
+    "rc": 0,
+    "seconds": 0.037,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.033,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-19.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to reset failed state of unit upy-e2e-19.service: Unit upy-e2e-19.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue19"
+    ],
+    "rc": 9,
+    "seconds": 0.004,
+    "output": "useradd: user 'ue19' already exists\n"
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue19:ue19",
+      "/opt/upy-e2e/case-19/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.004,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/19-1.0.0-healthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-19"
+    ],
+    "rc": 1,
+    "seconds": 0.005,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-19\n  📁 目录: /opt/upy-e2e/case-19\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/19-1.0.0-healthy-6.zip\n  错误: 项目已被其他操作锁定，无法执行 部署，请稍后再试: 项目已被锁定\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/19-1.0.0-healthy-7.zip",
+      "--root",
+      "/opt/upy-e2e/case-19"
+    ],
+    "rc": 0,
+    "seconds": 0.224,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-19\n  📁 目录: /opt/upy-e2e/case-19\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/19-1.0.0-healthy-7.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-19 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-19/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-19.service)\n  -> 正在健康检查 http://127.0.0.1:18290/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-19.service → /etc/systemd/system/upy-e2e-19.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-19 1.0.0\n  project layout:\n    /opt/upy-e2e/case-19\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.2s\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-19.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.011,
+    "output": "MainPID=4927\nExecStart={ path=/opt/upy-e2e/case-19/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-19/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue19\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-19.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-19.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.008,
+    "output": "Oct 19 03:25:55 933258e13e54 systemd[1]: Starting upy-e2e-19.service - upy-e2e-19 managed by upy...\nOct 19 03:25:55 933258e13e54 systemd[1]: Started upy-e2e-19.service - upy-e2e-19 managed by upy.\nOct 19 03:25:55 933258e13e54 web[1897]: 2026/10/19 03:25:55 version=1.0.0 mode=healthy uid=980 listen=127.0.0.1:18290\nOct 19 03:25:55 933258e13e54 systemd[1]: Stopping upy-e2e-19.service - upy-e2e-19 managed by upy...\nOct 19 03:25:55 933258e13e54 web[1897]: 2026/10/19 03:25:55 SIGTERM received; graceful shutdown\nOct 19 03:25:55 933258e13e54 systemd[1]: upy-e2e-19.service: Deactivated successfully.\nOct 19 03:25:55 933258e13e54 systemd[1]: Stopped upy-e2e-19.service - upy-e2e-19 managed by upy.\nOct 19 03:29:34 933258e13e54 systemd[1]: Starting upy-e2e-19.service - upy-e2e-19 managed by upy...\nOct 19 03:29:34 933258e13e54 systemd[1]: Started upy-e2e-19.service - upy-e2e-19 managed by upy.\nOct 19 03:29:34 933258e13e54 web[4927]: 2026/10/19 03:29:34 version=1.0.0 mode=healthy uid=980 listen=127.0.0.1:18290\n"
+  }
+]

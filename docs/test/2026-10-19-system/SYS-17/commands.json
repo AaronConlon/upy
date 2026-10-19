@@ -1,0 +1,101 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue17"
+    ],
+    "rc": 0,
+    "seconds": 0.046,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue17:ue17",
+      "/opt/upy-e2e/case-17/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.002,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/17-1.0.0-healthy-2.zip",
+      "--root",
+      "/opt/upy-e2e/case-17"
+    ],
+    "rc": 0,
+    "seconds": 0.231,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-17\n  📁 目录: /opt/upy-e2e/case-17\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/17-1.0.0-healthy-2.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-17 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-17/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-17.service)\n  -> 正在健康检查 http://127.0.0.1:18270/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-17.service → /etc/systemd/system/upy-e2e-17.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-17 1.0.0\n  project layout:\n    /opt/upy-e2e/case-17\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.2s\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/17-2.0.0-healthy-3.zip",
+      "--root",
+      "/opt/upy-e2e/case-17"
+    ],
+    "rc": 0,
+    "seconds": 0.217,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-17\n  📁 目录: /opt/upy-e2e/case-17\n  🧩 类型: system\n  🏷 当前版本: 1.0.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/17-2.0.0-healthy-3.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-17 v2.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-17/releases/2.0.0\n  -> 正在安装版本 2.0.0...\n  ✓ 版本已安装到 releases/2.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在停止上一版本系统服务 (upy-e2e-17.service)...\n  ✓ 上一版本服务已停止\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-17.service)\n  -> 正在健康检查 http://127.0.0.1:18270/health (超时 5s)...\n  ✓ 健康检查通过\n  -> 正在切换 current -> releases/2.0.0...\n  ✓ 部署完成: upy-e2e-17 2.0.0\n  project layout:\n    /opt/upy-e2e/case-17\n    ├── releases/\n    │   ├── 1.0.0/\n    │   │   ├── bin/\n    │   │   │   └── web\n    │   │   ├── deploy.yaml\n    │   │   └── fixture.json\n    │   └── 2.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/2.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.2s\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "clean",
+      "--root",
+      "/opt/upy-e2e/case-17",
+      "--old-releases",
+      "-y"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "  -> 正在分析项目 upy-e2e-17（/opt/upy-e2e/case-17）数据占用...\n  📦 Bundle 压缩包缓存:   0 B (0 个文件)\n  📂 历史旧版本目录:     5.2 MB (1 个旧版本: 1.0.0)\n  🗑️  部署中断残留目录:   0 B (无)\n  🛡️  当前运行活跃版本:   2.0.0 (受保护)\n\n  ✓ 已清理历史版本 1.0.0\n  ✓ 清理完成！共释放磁盘空间: 5.2 MB\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 149, in <module>\n    caseid=f'SYS-{n:02d}'\n        ^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 106, in t17\n    r=cmd([UPY,'clean','--root',c['root'],'--old-releases','-y']);check(r['rc']==0,'clean failed');check(previous.exists(),'manual clean deleted previousVersion');ready(c,'2.0.0')\n                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 22, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: manual clean deleted previousVersion\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-17.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": "MainPID=1748\nExecStart={ path=/opt/upy-e2e/case-17/releases/2.0.0/bin/web ; argv[]=/opt/upy-e2e/case-17/releases/2.0.0/bin/web ; ignore_errors=no ; start_time=[Mon 2026-10-19 03:25:54 UTC] ; stop_time=[n/a] ; pid=1748 ; code=(null) ; status=0/0 }\nUser=ue17\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-17.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-17.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": "Oct 19 03:25:53 933258e13e54 systemd[1]: Starting upy-e2e-17.service - upy-e2e-17 managed by upy...\nOct 19 03:25:53 933258e13e54 systemd[1]: Started upy-e2e-17.service - upy-e2e-17 managed by upy.\nOct 19 03:25:53 933258e13e54 web[1697]: 2026/10/19 03:25:53 version=1.0.0 mode=healthy uid=982 listen=127.0.0.1:18270\nOct 19 03:25:54 933258e13e54 systemd[1]: Stopping upy-e2e-17.service - upy-e2e-17 managed by upy...\nOct 19 03:25:54 933258e13e54 web[1697]: 2026/10/19 03:25:54 SIGTERM received; graceful shutdown\nOct 19 03:25:54 933258e13e54 systemd[1]: upy-e2e-17.service: Deactivated successfully.\nOct 19 03:25:54 933258e13e54 systemd[1]: Stopped upy-e2e-17.service - upy-e2e-17 managed by upy.\nOct 19 03:25:54 933258e13e54 systemd[1]: Starting upy-e2e-17.service - upy-e2e-17 managed by upy...\nOct 19 03:25:54 933258e13e54 systemd[1]: Started upy-e2e-17.service - upy-e2e-17 managed by upy.\nOct 19 03:25:54 933258e13e54 web[1748]: 2026/10/19 03:25:54 version=2.0.0 mode=healthy uid=982 listen=127.0.0.1:18270\n"
+  }
+]

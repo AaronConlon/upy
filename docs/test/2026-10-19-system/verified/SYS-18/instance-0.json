@@ -1,0 +1,10 @@
+{
+  "root": "/opt/upy-e2e/case-18",
+  "unit": "upy-e2e-18.service",
+  "port": 18280,
+  "state": null,
+  "unit_content": "# Managed by upy - DO NOT EDIT MANUALLY\n# X-Upy-Project: upy-e2e-18\n# X-Upy-Root: /opt/upy-e2e/case-18\n\n[Unit]\nDescription=upy-e2e-18 managed by upy\nAfter=network.target\nWants=network-online.target\n\n[Service]\nType=exec\nUser=ue18\nGroup=ue18\nWorkingDirectory=/opt/upy-e2e/case-18/releases/1.0.0\nExecStart=/opt/upy-e2e/case-18/releases/1.0.0/bin/web\nEnvironmentFile=-/opt/upy-e2e/case-18/shared/service.env\nRestart=on-failure\nRestartSec=3s\nTimeoutStopSec=30s\nKillSignal=SIGTERM\nStandardOutput=journal\nStandardError=journal\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=multi-user.target\n",
+  "releases": [],
+  "systemctl": "MainPID=4817\nExecStart={ path=/opt/upy-e2e/case-18/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-18/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue18\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-18.service\n",
+  "journal": "Oct 19 03:25:54 933258e13e54 systemd[1]: Starting upy-e2e-18.service - upy-e2e-18 managed by upy...\nOct 19 03:25:54 933258e13e54 systemd[1]: Started upy-e2e-18.service - upy-e2e-18 managed by upy.\nOct 19 03:25:54 933258e13e54 web[1812]: 2026/10/19 03:25:54 version=1.0.0 mode=healthy uid=981 listen=127.0.0.1:18280\nOct 19 03:25:55 933258e13e54 web[1812]: 2026/10/19 03:25:55 SIGTERM received; graceful shutdown\nOct 19 03:25:55 933258e13e54 systemd[1]: Stopping upy-e2e-18.service - upy-e2e-18 managed by upy...\nOct 19 03:25:55 933258e13e54 systemd[1]: upy-e2e-18.service: Deactivated successfully.\nOct 19 03:25:55 933258e13e54 systemd[1]: Stopped upy-e2e-18.service - upy-e2e-18 managed by upy.\nOct 19 03:29:33 933258e13e54 systemd[1]: Starting upy-e2e-18.service - upy-e2e-18 managed by upy...\nOct 19 03:29:33 933258e13e54 systemd[1]: Started upy-e2e-18.service - upy-e2e-18 managed by upy.\nOct 19 03:29:33 933258e13e54 web[4817]: 2026/10/19 03:29:33 version=1.0.0 mode=healthy uid=981 listen=127.0.0.1:18280\n"
+}

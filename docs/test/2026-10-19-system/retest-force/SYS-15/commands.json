@@ -1,0 +1,128 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-15.service"
+    ],
+    "rc": 0,
+    "seconds": 0.034,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-15.service"
+    ],
+    "rc": 0,
+    "seconds": 0.103,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.044,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-15.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to reset failed state of unit upy-e2e-15.service: Unit upy-e2e-15.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue15"
+    ],
+    "rc": 9,
+    "seconds": 0.028,
+    "output": "useradd: user 'ue15' already exists\n"
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue15:ue15",
+      "/opt/upy-e2e/case-15/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/15-1.0.0-healthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-15"
+    ],
+    "rc": 0,
+    "seconds": 0.353,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-15\n  📁 目录: /opt/upy-e2e/case-15\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/15-1.0.0-healthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-15 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-15/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-15.service)\n  -> 正在健康检查 http://127.0.0.1:18250/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-15.service → /etc/systemd/system/upy-e2e-15.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-15 1.0.0\n  project layout:\n    /opt/upy-e2e/case-15\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.3s\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/15-1.0.0-unhealthy-7.zip",
+      "--root",
+      "/opt/upy-e2e/case-15",
+      "--force"
+    ],
+    "rc": 1,
+    "seconds": 5.405,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-15\n  📁 目录: /opt/upy-e2e/case-15\n  🧩 类型: system\n  🏷 当前版本: 1.0.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/15-1.0.0-unhealthy-7.zip（--force）\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-15 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-15/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在停止上一版本系统服务 (upy-e2e-15.service)...\n  ✓ 上一版本服务已停止\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-15.service)\n  -> 正在健康检查 http://127.0.0.1:18250/health (超时 5s)...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-15.service...\n  -> 正在重新启动上一版本系统服务 (1.0.0)...\n  ✓ 已成功恢复上一版本系统服务 (1.0.0)\n  错误: 健康检查超时（5s）: HTTP 503\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 163, in <module>\n    try:globals()[f't{n:02d}']()\n        ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 101, in t15\n    c=baseline(15);old=hashlib.sha256((c['root']/'releases/1.0.0/fixture.json').read_bytes()).hexdigest();r=deploy(c,bundle(c,'1.0.0','unhealthy'),True);check(r['rc']!=0,'unhealthy force succeeded');ready(c,'1.0.0');check(http(c['port'],'/health')['mode']=='healthy','force rollback did not restore healthy process');check(hashlib.sha256((c['root']/'releases/1.0.0/fixture.json').read_bytes()).hexdigest()==old,'old artifact replaced')\n                                                                                                                                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 28, in http\n    with urllib.request.urlopen(request,timeout=2) as r:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.11/urllib/request.py\", line 525, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.11/urllib/request.py\", line 634, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.11/urllib/request.py\", line 563, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.11/urllib/request.py\", line 496, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/usr/lib/python3.11/urllib/request.py\", line 643, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 503: Service Unavailable\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-15.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "MainPID=2599\nExecStart={ path=/opt/upy-e2e/case-15/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-15/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[Mon 2026-10-19 03:27:27 UTC] ; stop_time=[n/a] ; pid=2599 ; code=(null) ; status=0/0 }\nUser=ue15\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-15.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-15.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.008,
+    "output": "Oct 19 03:25:46 933258e13e54 systemd[1]: Starting upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:25:46 933258e13e54 systemd[1]: Started upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:25:46 933258e13e54 web[1445]: 2026/10/19 03:25:46 version=1.0.0 mode=healthy uid=984 listen=127.0.0.1:18250\nOct 19 03:25:47 933258e13e54 systemd[1]: Stopping upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:25:47 933258e13e54 web[1445]: 2026/10/19 03:25:47 SIGTERM received; graceful shutdown\nOct 19 03:25:47 933258e13e54 systemd[1]: upy-e2e-15.service: Deactivated successfully.\nOct 19 03:25:47 933258e13e54 systemd[1]: Stopped upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:25:47 933258e13e54 systemd[1]: Starting upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:25:47 933258e13e54 systemd[1]: Started upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:25:47 933258e13e54 web[1495]: 2026/10/19 03:25:47 version=1.0.0 mode=unhealthy uid=984 listen=127.0.0.1:18250\nOct 19 03:25:52 933258e13e54 web[1495]: 2026/10/19 03:25:52 SIGTERM received; graceful shutdown\nOct 19 03:25:52 933258e13e54 systemd[1]: Stopping upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:25:52 933258e13e54 systemd[1]: upy-e2e-15.service: Deactivated successfully.\nOct 19 03:25:52 933258e13e54 systemd[1]: Stopped upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:25:52 933258e13e54 systemd[1]: Starting upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:25:52 933258e13e54 systemd[1]: Started upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:25:52 933258e13e54 web[1529]: 2026/10/19 03:25:52 version=1.0.0 mode=unhealthy uid=984 listen=127.0.0.1:18250\nOct 19 03:25:52 933258e13e54 systemd[1]: Stopping upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:25:52 933258e13e54 web[1529]: 2026/10/19 03:25:52 SIGTERM received; graceful shutdown\nOct 19 03:25:52 933258e13e54 systemd[1]: upy-e2e-15.service: Deactivated successfully.\nOct 19 03:25:52 933258e13e54 systemd[1]: Stopped upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:27:21 933258e13e54 systemd[1]: Starting upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:27:21 933258e13e54 systemd[1]: Started upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:27:21 933258e13e54 web[2514]: 2026/10/19 03:27:21 version=1.0.0 mode=healthy uid=984 listen=127.0.0.1:18250\nOct 19 03:27:21 933258e13e54 systemd[1]: Stopping upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:27:21 933258e13e54 web[2514]: 2026/10/19 03:27:21 SIGTERM received; graceful shutdown\nOct 19 03:27:21 933258e13e54 systemd[1]: upy-e2e-15.service: Deactivated successfully.\nOct 19 03:27:21 933258e13e54 systemd[1]: Stopped upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:27:21 933258e13e54 systemd[1]: Starting upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:27:21 933258e13e54 systemd[1]: Started upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:27:21 933258e13e54 web[2565]: 2026/10/19 03:27:21 version=1.0.0 mode=unhealthy uid=984 listen=127.0.0.1:18250\nOct 19 03:27:26 933258e13e54 web[2565]: 2026/10/19 03:27:26 SIGTERM received; graceful shutdown\nOct 19 03:27:26 933258e13e54 systemd[1]: Stopping upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:27:26 933258e13e54 systemd[1]: upy-e2e-15.service: Deactivated successfully.\nOct 19 03:27:26 933258e13e54 systemd[1]: Stopped upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:27:27 933258e13e54 systemd[1]: Starting upy-e2e-15.service - upy-e2e-15 managed by upy...\nOct 19 03:27:27 933258e13e54 systemd[1]: Started upy-e2e-15.service - upy-e2e-15 managed by upy.\nOct 19 03:27:27 933258e13e54 web[2599]: 2026/10/19 03:27:27 version=1.0.0 mode=unhealthy uid=984 listen=127.0.0.1:18250\n"
+  }
+]

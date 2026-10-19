@@ -1,0 +1,170 @@
+[
+  {
+    "id": "SYS-01",
+    "name": "private-release",
+    "status": "PASS",
+    "seconds": 8.87,
+    "error": ""
+  },
+  {
+    "id": "SYS-02",
+    "name": "upgrade-persistence",
+    "status": "PASS",
+    "seconds": 1.7,
+    "error": ""
+  },
+  {
+    "id": "SYS-03",
+    "name": "same-version-skip",
+    "status": "PASS",
+    "seconds": 0.98,
+    "error": ""
+  },
+  {
+    "id": "SYS-04",
+    "name": "health-rollback",
+    "status": "PASS",
+    "seconds": 8.23,
+    "error": ""
+  },
+  {
+    "id": "SYS-05",
+    "name": "crash-rollback",
+    "status": "PASS",
+    "seconds": 1.22,
+    "error": ""
+  },
+  {
+    "id": "SYS-06",
+    "name": "first-failure",
+    "status": "PASS",
+    "seconds": 5.92,
+    "error": ""
+  },
+  {
+    "id": "SYS-07",
+    "name": "missing-binary",
+    "status": "PASS",
+    "seconds": 0.83,
+    "error": ""
+  },
+  {
+    "id": "SYS-08",
+    "name": "wrong-arch",
+    "status": "PASS",
+    "seconds": 2.04,
+    "error": ""
+  },
+  {
+    "id": "SYS-09",
+    "name": "stopped-rollback",
+    "status": "PASS",
+    "seconds": 7.55,
+    "error": ""
+  },
+  {
+    "id": "SYS-10",
+    "name": "missing-user",
+    "status": "PASS",
+    "seconds": 1.7,
+    "error": ""
+  },
+  {
+    "id": "SYS-11",
+    "name": "root-ownership",
+    "status": "PASS",
+    "seconds": 1.62,
+    "error": ""
+  },
+  {
+    "id": "SYS-12",
+    "name": "foreign-unit",
+    "status": "PASS",
+    "seconds": 0.46,
+    "error": ""
+  },
+  {
+    "id": "SYS-13",
+    "name": "argument-fidelity",
+    "status": "PASS",
+    "seconds": 0.51,
+    "error": ""
+  },
+  {
+    "id": "SYS-14",
+    "name": "space-root",
+    "status": "PASS",
+    "seconds": 0.51,
+    "error": ""
+  },
+  {
+    "id": "SYS-15",
+    "name": "force-rollback",
+    "status": "PASS",
+    "seconds": 7.21,
+    "error": ""
+  },
+  {
+    "id": "SYS-16",
+    "name": "retain-previous",
+    "status": "PASS",
+    "seconds": 1.67,
+    "error": ""
+  },
+  {
+    "id": "SYS-17",
+    "name": "clean-previous",
+    "status": "PASS",
+    "seconds": 1.28,
+    "error": ""
+  },
+  {
+    "id": "SYS-18",
+    "name": "purge-service",
+    "status": "PASS",
+    "seconds": 0.68,
+    "error": ""
+  },
+  {
+    "id": "SYS-19",
+    "name": "lock-conflict",
+    "status": "PASS",
+    "seconds": 1.26,
+    "error": ""
+  },
+  {
+    "id": "SYS-20",
+    "name": "hung-health",
+    "status": "PASS",
+    "seconds": 9.33,
+    "error": ""
+  },
+  {
+    "id": "SYS-21",
+    "name": "probe-identity",
+    "status": "PASS",
+    "seconds": 6.34,
+    "error": ""
+  },
+  {
+    "id": "SYS-22",
+    "name": "interrupted-deploy",
+    "status": "PASS",
+    "seconds": 0.89,
+    "error": ""
+  },
+  {
+    "id": "SYS-23",
+    "name": "unprivileged-prepare",
+    "status": "PASS",
+    "seconds": 0.8,
+    "error": ""
+  },
+  {
+    "id": "SYS-24",
+    "name": "service-alias",
+    "status": "PASS",
+    "seconds": 0.48,
+    "error": ""
+  }
+]

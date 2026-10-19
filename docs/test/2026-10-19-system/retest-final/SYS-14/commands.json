@@ -1,0 +1,112 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-14.service"
+    ],
+    "rc": 5,
+    "seconds": 0.007,
+    "output": "Failed to stop upy-e2e-14.service: Unit upy-e2e-14.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-14.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to disable unit: Unit file upy-e2e-14.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.036,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-14.service"
+    ],
+    "rc": 1,
+    "seconds": 0.005,
+    "output": "Failed to reset failed state of unit upy-e2e-14.service: Unit upy-e2e-14.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue14"
+    ],
+    "rc": 0,
+    "seconds": 0.047,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue14:ue14",
+      "/opt/upy-e2e/case-14 space/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/14-1.0.0-healthy-6.zip",
+      "--root",
+      "/opt/upy-e2e/case-14 space"
+    ],
+    "rc": 0,
+    "seconds": 0.145,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-14\n  📁 目录: /opt/upy-e2e/case-14 space\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/14-1.0.0-healthy-6.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-14 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-14 space/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-14.service)\n  -> 正在健康检查 http://127.0.0.1:18240/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-14.service → /etc/systemd/system/upy-e2e-14.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-14 1.0.0\n  project layout:\n    /opt/upy-e2e/case-14 space\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.1s\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-14.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "MainPID=1525\nExecStart={ path=/opt/upy-e2e/case-14 space/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-14 space/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue14\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-14.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-14.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "Oct 19 03:51:32 1c6c596a0717 systemd[1]: Starting upy-e2e-14.service - upy-e2e-14 managed by upy...\nOct 19 03:51:32 1c6c596a0717 systemd[1]: Started upy-e2e-14.service - upy-e2e-14 managed by upy.\nOct 19 03:51:32 1c6c596a0717 web[1525]: 2026/10/19 03:51:32 version=1.0.0 mode=healthy uid=985 listen=127.0.0.1:18240\n"
+  }
+]

@@ -3,6 +3,7 @@ package deployer
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -61,18 +62,45 @@ func SharedEnvFile(root string) string {
 	return ""
 }
 
-// PollHealth 每 1s 轮询 url, 2xx 视为成功, 超时返回错误
+// SharedServiceEnvPath 返回 shared/service.env 路径
+func SharedServiceEnvPath(root string) string {
+	return filepath.Join(root, "shared", "service.env")
+}
+
+// SharedServiceEnvFile 优先返回存在的 shared/service.env，若不存在则回退至 shared/.env，均不存在返回空字符串
+func SharedServiceEnvFile(root string) string {
+	p1 := SharedServiceEnvPath(root)
+	if _, err := os.Stat(p1); err == nil {
+		return p1
+	}
+	p2 := SharedEnvPath(root)
+	if _, err := os.Stat(p2); err == nil {
+		return p2
+	}
+	return ""
+}
+
+// PollHealth 每 1s 轮询 url, 2xx 视为成功, 超时返回错误 (SYS-007)
 func PollHealth(url string, timeoutSec int) error {
 	deadline := time.Now().Add(time.Duration(timeoutSec) * time.Second)
+	client := &http.Client{
+		Timeout: 3 * time.Second, // 限制单次请求超时，避免服务器卡死导致整个发布永久等待
+	}
 	lastErr := ""
 	for time.Now().Before(deadline) {
-		resp, err := http.Get(url)
+		req, err := http.NewRequest("GET", url, nil)
 		if err == nil {
-			resp.Body.Close()
-			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				return nil
+			resp, err := client.Do(req)
+			if err == nil {
+				_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+				resp.Body.Close()
+				if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+					return nil
+				}
+				lastErr = fmt.Sprintf("HTTP %d", resp.StatusCode)
+			} else {
+				lastErr = err.Error()
 			}
-			lastErr = fmt.Sprintf("HTTP %d", resp.StatusCode)
 		} else {
 			lastErr = err.Error()
 		}

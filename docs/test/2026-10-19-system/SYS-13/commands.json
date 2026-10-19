@@ -1,0 +1,76 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue13"
+    ],
+    "rc": 0,
+    "seconds": 0.047,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue13:ue13",
+      "/opt/upy-e2e/case-13/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/13-1.0.0-healthy-2.zip",
+      "--root",
+      "/opt/upy-e2e/case-13"
+    ],
+    "rc": 0,
+    "seconds": 0.193,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-13\n  📁 目录: /opt/upy-e2e/case-13\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/13-1.0.0-healthy-2.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-13 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-13/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-13.service)\n  -> 正在健康检查 http://127.0.0.1:18230/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-13.service → /etc/systemd/system/upy-e2e-13.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-13 1.0.0\n  project layout:\n    /opt/upy-e2e/case-13\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.2s\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 149, in <module>\n    caseid=f'SYS-{n:02d}'\n        ^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 95, in t13\n    c=fixture(13);args=['hello world','quote\"value','cash$HOME','percent%H','','  padded  '];r=deploy(c,bundle(c,args=args));check(r['rc']==0,'argument deployment failed');check(ready(c,'1.0.0')['args']==args,'argv changed: '+str(http(c['port'])['args']))\n                                                                                                                                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 22, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: argv changed: ['hello world', 'quote\"value', 'cash$HOME', 'percent%H', 'padded']\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-13.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "MainPID=1295\nExecStart={ path=/opt/upy-e2e/case-13/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-13/releases/1.0.0/bin/web hello world quote\"value cash$$HOME percent%H padded ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue13\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-13.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-13.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "Oct 19 03:25:45 933258e13e54 systemd[1]: Starting upy-e2e-13.service - upy-e2e-13 managed by upy...\nOct 19 03:25:45 933258e13e54 systemd[1]: Started upy-e2e-13.service - upy-e2e-13 managed by upy.\nOct 19 03:25:45 933258e13e54 web[1295]: 2026/10/19 03:25:45 version=1.0.0 mode=healthy uid=986 listen=127.0.0.1:18230\n"
+  }
+]

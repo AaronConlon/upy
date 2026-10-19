@@ -1,0 +1,89 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue18"
+    ],
+    "rc": 0,
+    "seconds": 0.045,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue18:ue18",
+      "/opt/upy-e2e/case-18/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/18-1.0.0-healthy-2.zip",
+      "--root",
+      "/opt/upy-e2e/case-18"
+    ],
+    "rc": 0,
+    "seconds": 0.248,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-18\n  📁 目录: /opt/upy-e2e/case-18\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/18-1.0.0-healthy-2.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-18 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-18/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-18.service)\n  -> 正在健康检查 http://127.0.0.1:18280/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-18.service → /etc/systemd/system/upy-e2e-18.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-18 1.0.0\n  project layout:\n    /opt/upy-e2e/case-18\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.2s\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "clean",
+      "--root",
+      "/opt/upy-e2e/case-18",
+      "--purge",
+      "-y"
+    ],
+    "rc": 0,
+    "seconds": 0.012,
+    "output": "  -> 正在分析项目 upy-e2e-18（/opt/upy-e2e/case-18）数据占用...\n  📦 Bundle 压缩包缓存:   0 B (0 个文件)\n  📂 历史旧版本目录:     0 B (无)\n  🗑️  部署中断残留目录:   0 B (无)\n  🛡️  当前运行活跃版本:   1.0.0 (受保护)\n\n  -> 正在清空项目 upy-e2e-18 所有部署产物...\n  ✓ ✨ 项目 upy-e2e-18 已彻底清空并注销，共释放磁盘空间: 5.2 MB\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 149, in <module>\n    caseid=f'SYS-{n:02d}'\n        ^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 108, in t18\n    c=baseline(18);r=cmd([UPY,'clean','--root',c['root'],'--purge','-y']);safe_reject=r['rc']!=0 and (c['root']/'releases/1.0.0/bin/web').exists();safe_uninstall=not unitpath(c).exists() and not active(c);check(safe_reject or safe_uninstall,'purge left systemd unit referencing removed release')\n                                                                                                                                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 22, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: purge left systemd unit referencing removed release\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-18.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": "MainPID=1812\nExecStart={ path=/opt/upy-e2e/case-18/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-18/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue18\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-18.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-18.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": "Oct 19 03:25:54 933258e13e54 systemd[1]: Starting upy-e2e-18.service - upy-e2e-18 managed by upy...\nOct 19 03:25:54 933258e13e54 systemd[1]: Started upy-e2e-18.service - upy-e2e-18 managed by upy.\nOct 19 03:25:54 933258e13e54 web[1812]: 2026/10/19 03:25:54 version=1.0.0 mode=healthy uid=981 listen=127.0.0.1:18280\n"
+  }
+]

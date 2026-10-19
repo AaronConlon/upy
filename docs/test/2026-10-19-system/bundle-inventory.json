@@ -1,0 +1,859 @@
+[
+  {
+    "file": "4-2.0.0-unhealthy-3.zip",
+    "sha256": "6f6370540cbe917ce69dc38c90b2f5f03a35507ae2d2d16eacfbdd12345c4773",
+    "manifest": {
+      "name": "upy-e2e-04",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18140/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/4-2.0.0-unhealthy-3.zip"
+  },
+  {
+    "file": "23-2.0.0-healthy-5.zip",
+    "sha256": "35d8e88bfb0ce3a26ddf2a6a01d0859d8b4b368d740e8a77c827ae7a1b835a92",
+    "manifest": {
+      "name": "upy-e2e-23",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18330/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/23-2.0.0-healthy-5.zip"
+  },
+  {
+    "file": "6-1.0.0-unhealthy-2.zip",
+    "sha256": "4bdfcc2491833590ed0a7ad721d411024a3afaced292238f8d1215e59ddea902",
+    "manifest": {
+      "name": "upy-e2e-06",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18160/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/6-1.0.0-unhealthy-2.zip"
+  },
+  {
+    "file": "22-2.0.0-healthy-3.zip",
+    "sha256": "edecc1a0982443ee9f109032727ad43c70fcb8ad299f594cd180ad57257f6457",
+    "manifest": {
+      "name": "upy-e2e-22",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18320/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/22-2.0.0-healthy-3.zip"
+  },
+  {
+    "file": "15-1.0.0-unhealthy-3.zip",
+    "sha256": "48bc5db6555dcfbdf07701607fee82f5e418c2f091d6772f863802fb9b8b41d3",
+    "manifest": {
+      "name": "upy-e2e-15",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18250/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/15-1.0.0-unhealthy-3.zip"
+  },
+  {
+    "file": "5-2.0.0-crash-3.zip",
+    "sha256": "d285afa882ade85779f2f9d823d5e29fe3b7c00f7cfe6a51dd961c8e5985b4b3",
+    "manifest": {
+      "name": "upy-e2e-05",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18150/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/5-2.0.0-crash-3.zip"
+  },
+  {
+    "file": "20-1.0.0-healthy-2.zip",
+    "sha256": "bd5325f5a490b7667b94d5141aa0fecfd1aad473d7227ee1434842ca322e7309",
+    "manifest": {
+      "name": "upy-e2e-20",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18300/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/20-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "23-1.0.0-healthy-2.zip",
+    "sha256": "d18df94e812134ab1b7afe7b56ea058c6b224b8a77a59a5276cedc04760104f7",
+    "manifest": {
+      "name": "upy-e2e-23",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18330/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/23-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "22-1.0.0-healthy-2.zip",
+    "sha256": "7521aea478abaa894fca1ecb3866c0e9bd040b08ca08eb1f08b8d22dfcdb4ab2",
+    "manifest": {
+      "name": "upy-e2e-22",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18320/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/22-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "24-1.0.0-healthy-2.zip",
+    "sha256": "48738cc3c970f3213f0f2ca78e3ec83eee8eb34317a5a23c96f17e99fbedd8f0",
+    "manifest": {
+      "name": "upy-e2e-24",
+      "version": "1.0.0",
+      "type": "service",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18340/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/24-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "17-1.0.0-healthy-2.zip",
+    "sha256": "8873eae80e2f12ac4d340ffc881c446665fdb74410909a2323b50a3879aceafa",
+    "manifest": {
+      "name": "upy-e2e-17",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18270/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/17-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "16-1.0.0-healthy-2.zip",
+    "sha256": "7f1a5c170ec95949a2cb9be1dfacf72434d8de4903f668da50fc147386369269",
+    "manifest": {
+      "name": "upy-e2e-16",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18260/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/16-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "12-1.0.0-healthy-5.zip",
+    "sha256": "6241f60018df2d14886ee4d21824476cb5f5978fa9f1e3d651f5f2adbf600061",
+    "manifest": {
+      "name": "upy-e2e-12",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18220/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/12-1.0.0-healthy-5.zip"
+  },
+  {
+    "file": "8-2.0.0-healthy-4.zip",
+    "sha256": "30ba7ba0adaf4b4506aa177f315bcb39d1118f15665d3df3986a4791cadf23ec",
+    "manifest": {
+      "name": "upy-e2e-08",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "amd64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18180/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/8-2.0.0-healthy-4.zip"
+  },
+  {
+    "file": "15-1.0.0-healthy-2.zip",
+    "sha256": "214abd96132eaf99bf233b399617a51e200949f860108d97c991cd6937fc0d53",
+    "manifest": {
+      "name": "upy-e2e-15",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18250/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/15-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "3-1.0.0-healthy-2.zip",
+    "sha256": "6721a74e9d963360fe1c402ddbbb5605840c4edb9c43722689f017e0baafe695",
+    "manifest": {
+      "name": "upy-e2e-03",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18130/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/3-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "2-1.0.0-healthy-2.zip",
+    "sha256": "c6bebcf838597a4047dc5a3548e82889b239d3b48897901c1088bef9522c0342",
+    "manifest": {
+      "name": "upy-e2e-02",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18120/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/2-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "14-1.0.0-healthy-2.zip",
+    "sha256": "2173ce9c02551314848b20f83dc346de56fee9fdd12ea86ee563033330a976d2",
+    "manifest": {
+      "name": "upy-e2e-14",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18240/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/14-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "4-1.0.0-healthy-2.zip",
+    "sha256": "f6a443e81123d543e95d4fd2b50cc380371f345341588bbdaa6310d9a8f99162",
+    "manifest": {
+      "name": "upy-e2e-04",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18140/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/4-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "5-1.0.0-healthy-2.zip",
+    "sha256": "52bac1883fd534f0d6674e47c6d905252b134cb1cf52432c150b6f25c9fc4365",
+    "manifest": {
+      "name": "upy-e2e-05",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18150/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/5-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "10-1.0.0-healthy-0.zip",
+    "sha256": "b8549479ded1995cad5b0e1e8091e61a1165650999895695aafabb6049300ca6",
+    "manifest": {
+      "name": "upy-e2e-10",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18200/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/10-1.0.0-healthy-0.zip"
+  },
+  {
+    "file": "13-1.0.0-healthy-2.zip",
+    "sha256": "c726320cb6df4299503904ccd875c3f5cae9aaedcad419806cce540b5b6a256f",
+    "manifest": {
+      "name": "upy-e2e-13",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web",
+          "hello world",
+          "quote\"value",
+          "cash$HOME",
+          "percent%H",
+          "",
+          "  padded  "
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18230/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/13-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "3-1.0.0-healthy-4.zip",
+    "sha256": "81db423fb4f2faaa568c957dd0baad287bd224bed744ebe0d3167bcc7857bbb0",
+    "manifest": {
+      "name": "upy-e2e-03",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18130/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/3-1.0.0-healthy-4.zip"
+  },
+  {
+    "file": "11-1.0.0-healthy-2.zip",
+    "sha256": "89904deb31d7e5ab47b6a80059e15eeea70f81745f424c6f77641ce8137ca3c9",
+    "manifest": {
+      "name": "upy-e2e-11",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18210/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/11-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "7-1.0.0-healthy-2.zip",
+    "sha256": "3c4215abd0d282c3fb983950947c1a2261a20531ca0b17e0d32749168c3c3bf3",
+    "manifest": {
+      "name": "upy-e2e-07",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18170/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/7-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "8-1.0.0-healthy-2.zip",
+    "sha256": "2bd2acc803e242e29bdab7aa987f29034662a90e192f155872f8499a3fd5c1b4",
+    "manifest": {
+      "name": "upy-e2e-08",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18180/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/8-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "9-1.0.0-healthy-2.zip",
+    "sha256": "d8412d07dd81750631c46b1a0565df31b360e6c383e1e64203f82cb5252a5913",
+    "manifest": {
+      "name": "upy-e2e-09",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18190/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/9-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "20-2.0.0-hang-3.zip",
+    "sha256": "fb511e168d1d1cd07f96fa9a3efd05efd114809f7b1201cce100c22aecce90b0",
+    "manifest": {
+      "name": "upy-e2e-20",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18300/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/20-2.0.0-hang-3.zip"
+  },
+  {
+    "file": "19-1.0.0-healthy-2.zip",
+    "sha256": "74ffed49bb264c7f7c66de99fc16acff9d676b0cd6c188925c8e314b38111dcc",
+    "manifest": {
+      "name": "upy-e2e-19",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18290/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/19-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "11-2.0.0-healthy-6.zip",
+    "sha256": "243547e8d9a09a2599403cc4b940dfd494d941b8e8205f4b134234fd359ac8b8",
+    "manifest": {
+      "name": "upy-e2e-11",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18210/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/11-2.0.0-healthy-6.zip"
+  },
+  {
+    "file": "9-2.0.0-unhealthy-4.zip",
+    "sha256": "3153bb27a4e3b885de4b19eee6dadc71cfd77d753eedf6e12164af7d86e68a63",
+    "manifest": {
+      "name": "upy-e2e-09",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18190/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/9-2.0.0-unhealthy-4.zip"
+  },
+  {
+    "file": "16-2.0.0-healthy-3.zip",
+    "sha256": "4745ab7d7a8f0b4c7ac3c6da09b68bc1662f7e64c08f9b6711ad0f8e04983e47",
+    "manifest": {
+      "name": "upy-e2e-16",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18260/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/16-2.0.0-healthy-3.zip"
+  },
+  {
+    "file": "18-1.0.0-healthy-2.zip",
+    "sha256": "fe66ef761098e2140c690f3b88659e99195b68a27b8281b229c9cfc3b6e86d47",
+    "manifest": {
+      "name": "upy-e2e-18",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18280/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/18-1.0.0-healthy-2.zip"
+  },
+  {
+    "file": "19-1.0.0-healthy-3.zip",
+    "sha256": "74ffed49bb264c7f7c66de99fc16acff9d676b0cd6c188925c8e314b38111dcc",
+    "manifest": {
+      "name": "upy-e2e-19",
+      "version": "1.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18290/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/19-1.0.0-healthy-3.zip"
+  },
+  {
+    "file": "17-2.0.0-healthy-3.zip",
+    "sha256": "1a087c2ba42ae76d4a438845f28358422c3c39efcff4ac6e33b7b4b860193961",
+    "manifest": {
+      "name": "upy-e2e-17",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18270/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/17-2.0.0-healthy-3.zip"
+  },
+  {
+    "file": "2-2.0.0-healthy-3.zip",
+    "sha256": "cb1d54efc6a63aea3b0ee4c9938055e9130e3b2ce3260779bad2fba7f25b360b",
+    "manifest": {
+      "name": "upy-e2e-02",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18120/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/2-2.0.0-healthy-3.zip"
+  },
+  {
+    "file": "7-2.0.0-healthy-4.zip",
+    "sha256": "90d95fa61b72dc514e40dddb3c26c5010205d49167c4038760157fdc1ff5f06c",
+    "manifest": {
+      "name": "upy-e2e-07",
+      "version": "2.0.0",
+      "type": "system",
+      "target": {
+        "os": "linux",
+        "arch": "arm64"
+      },
+      "system": {
+        "command": [
+          "./bin/web"
+        ]
+      },
+      "healthcheck": {
+        "url": "http://127.0.0.1:18170/health",
+        "timeout": "5s"
+      }
+    },
+    "local_archive": "/Users/aaron/repos/upy-test/.local/first-run-bundles/7-2.0.0-healthy-4.zip"
+  }
+]

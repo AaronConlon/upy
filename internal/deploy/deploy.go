@@ -120,13 +120,19 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 
 	releaseDir := filepath.Join(releasesDir, manifest.Version)
 	log.Step("版本目录: " + log.Path(releaseDir))
+	var backupReleaseDir string
 	if _, err := os.Stat(releaseDir); err == nil {
-		if err := os.RemoveAll(releaseDir); err != nil {
-			return nil, err
+		// SYS-005: 同版本 force 重发时保留旧版本目录备份，避免在 Deactivate 前就地删除正在运行的产物
+		backupReleaseDir = filepath.Join(releasesDir, fmt.Sprintf(".old-%s-%d", manifest.Version, time.Now().UnixNano()))
+		if err := moveDir(releaseDir, backupReleaseDir); err != nil {
+			return nil, fmt.Errorf("暂存既有版本目录失败: %w", err)
 		}
 	}
 	log.Step("正在安装版本 " + manifest.Version + "...")
 	if err := moveDir(tmp, releaseDir); err != nil {
+		if backupReleaseDir != "" {
+			_ = moveDir(backupReleaseDir, releaseDir)
+		}
 		return nil, err
 	}
 	cleanupTmp = false
@@ -147,30 +153,60 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	}
 	d, err := deployer.CreateDeployer(ctx)
 	if err != nil {
+		if backupReleaseDir != "" {
+			_ = os.RemoveAll(releaseDir)
+			_ = moveDir(backupReleaseDir, releaseDir)
+		}
 		return nil, err
 	}
 
-	// Prepare / Activate / HealthCheck, 失败回滚
-	if err := runDeployer(d); err != nil {
+	// Prepare 阶段：校验可执行文件、环境、权限、既有归属等。若 Prepare 失败，绝不能调用 Rollback 触碰或停掉原服务！
+	if err := d.Prepare(); err != nil {
+		if backupReleaseDir != "" {
+			_ = os.RemoveAll(releaseDir)
+			_ = moveDir(backupReleaseDir, releaseDir)
+		}
+		return nil, err
+	}
+
+	// 激活与健康检查阶段：停掉上一版本并启动新版本。若失败，执行回滚
+	if err := runActiveDeployer(d); err != nil {
 		log.Warn("部署失败，正在尝试回滚...")
+		if backupReleaseDir != "" {
+			// SYS-15: 必须在调用 Rollback() 重新拉起旧服务前，先将原版本的二进制和配置还原到 releaseDir！
+			_ = os.RemoveAll(releaseDir)
+			_ = moveDir(backupReleaseDir, releaseDir)
+			backupReleaseDir = ""
+		}
 		if rbErr := d.Rollback(); rbErr != nil {
 			log.Warn("回滚出错: " + rbErr.Error())
 		}
 		return nil, err
 	}
 
-	// docker 类型额外切换 current
-	if manifest.Type == "docker" {
+	if backupReleaseDir != "" {
+		_ = os.RemoveAll(backupReleaseDir)
+	}
+
+	// docker / system 类型额外切换 current 软链
+	if manifest.Type == "docker" || manifest.Type == "system" || manifest.Type == "service" {
 		log.Step("正在切换 current -> releases/" + manifest.Version + "...")
 		if err := deployer.AtomicSymlink(releaseDir, filepath.Join(root, "current")); err != nil {
 			return nil, err
 		}
 	}
 
+	unitName := ""
+	if sysD, ok := d.(*deployer.SystemDeployer); ok {
+		unitName = sysD.UnitName()
+	}
 	newState := &state.State{
 		CurrentVersion:  manifest.Version,
 		PreviousVersion: st.CurrentVersion,
 		DeployedAt:      time.Now().Format(time.RFC3339),
+		Type:            manifest.Type,
+		UnitName:        unitName,
+		Status:          "active",
 	}
 	if err := state.WriteAtomic(root, newState); err != nil {
 		return nil, err
@@ -187,11 +223,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	return &Result{Skipped: false, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 }
 
-func runDeployer(d deployer.Deployer) error {
-	if err := d.Prepare(); err != nil {
-		return err
-	}
-	// 新版本构建成功后, 先停掉上一版本再启动新版本, 避免端口/容器名冲突
+func runActiveDeployer(d deployer.Deployer) error {
+	// 新版本准备成功后, 先停掉上一版本再启动新版本, 避免端口/容器名冲突
 	if err := d.Deactivate(); err != nil {
 		return err
 	}
@@ -201,7 +234,7 @@ func runDeployer(d deployer.Deployer) error {
 	return d.HealthCheck()
 }
 
-// cleanupOldReleases 只保留当前版本, 其余全部清理, 不留数据
+// cleanupOldReleases 保留当前版本与最近一个上一版本 (SYS-004), 其余全部清理
 func cleanupOldReleases(root string, st *state.State) {
 	releasesDir := filepath.Join(root, "releases")
 	entries, err := os.ReadDir(releasesDir)
@@ -212,11 +245,11 @@ func cleanupOldReleases(root string, st *state.State) {
 		if !e.IsDir() {
 			continue
 		}
-		if strings.HasPrefix(e.Name(), ".tmp-deploy-") {
+		if strings.HasPrefix(e.Name(), ".tmp-deploy-") || strings.HasPrefix(e.Name(), ".old-") {
 			_ = os.RemoveAll(filepath.Join(releasesDir, e.Name()))
 			continue
 		}
-		if e.Name() == st.CurrentVersion {
+		if e.Name() == st.CurrentVersion || (st.PreviousVersion != "" && e.Name() == st.PreviousVersion) {
 			continue
 		}
 		log.Info("🗑 清理旧版本目录 " + e.Name())

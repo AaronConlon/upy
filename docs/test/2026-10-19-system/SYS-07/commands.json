@@ -1,0 +1,114 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue07"
+    ],
+    "rc": 0,
+    "seconds": 0.154,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue07:ue07",
+      "/opt/upy-e2e/case-07/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.004,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/7-1.0.0-healthy-2.zip",
+      "--root",
+      "/opt/upy-e2e/case-07"
+    ],
+    "rc": 0,
+    "seconds": 0.318,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-07\n  📁 目录: /opt/upy-e2e/case-07\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/7-1.0.0-healthy-2.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-07 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-07/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-07.service)\n  -> 正在健康检查 http://127.0.0.1:18170/health (超时 5s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-07.service → /etc/systemd/system/upy-e2e-07.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-07 1.0.0\n  project layout:\n    /opt/upy-e2e/case-07\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       ├── deploy.yaml\n    │       └── fixture.json\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 0.3s\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-07.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "737\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/7-2.0.0-healthy-4.zip",
+      "--root",
+      "/opt/upy-e2e/case-07"
+    ],
+    "rc": 1,
+    "seconds": 0.159,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-07\n  📁 目录: /opt/upy-e2e/case-07\n  🧩 类型: system\n  🏷 当前版本: 1.0.0\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/7-2.0.0-healthy-4.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-07 v2.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-07/releases/2.0.0\n  -> 正在安装版本 2.0.0...\n  ✓ 版本已安装到 releases/2.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-07.service...\nRemoved \"/etc/systemd/system/multi-user.target.wants/upy-e2e-07.service\".\nFailed to reset failed state of unit upy-e2e-07.service: Unit upy-e2e-07.service not loaded.\n  ✓ 首次部署失败，已清理新生成的 systemd unit\n  错误: 找不到可执行文件: /opt/upy-e2e/case-07/releases/2.0.0/bin/web\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-07.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.01,
+    "output": "0\n"
+  },
+  {
+    "traceback": "Traceback (most recent call last):\n  File \"/fixtures/scripts/run_system_e2e.py\", line 149, in <module>\n    caseid=f'SYS-{n:02d}'\n        ^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 83, in t07\n    c=baseline(7);old=pid(c);r=deploy(c,bundle(c,'2.0.0',missing=True));check(r['rc']!=0,'missing executable accepted');check(pid(c)==old and active(c),'prepare failure stopped old process');ready(c,'1.0.0')\n                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fixtures/scripts/run_system_e2e.py\", line 22, in check\n    if not condition:raise AssertionError(message)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: prepare failure stopped old process\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-07.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.011,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-07.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": "Oct 19 03:25:31 933258e13e54 systemd[1]: Starting upy-e2e-07.service - upy-e2e-07 managed by upy...\nOct 19 03:25:31 933258e13e54 web[737]: 2026/10/19 03:25:31 version=1.0.0 mode=healthy uid=991 listen=127.0.0.1:18170\nOct 19 03:25:31 933258e13e54 systemd[1]: Started upy-e2e-07.service - upy-e2e-07 managed by upy.\nOct 19 03:25:31 933258e13e54 web[737]: 2026/10/19 03:25:31 SIGTERM received; graceful shutdown\nOct 19 03:25:31 933258e13e54 systemd[1]: Stopping upy-e2e-07.service - upy-e2e-07 managed by upy...\nOct 19 03:25:31 933258e13e54 systemd[1]: upy-e2e-07.service: Deactivated successfully.\nOct 19 03:25:31 933258e13e54 systemd[1]: Stopped upy-e2e-07.service - upy-e2e-07 managed by upy.\n"
+  }
+]

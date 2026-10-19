@@ -1,0 +1,84 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue06"
+    ],
+    "rc": 0,
+    "seconds": 0.053,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue06:ue06",
+      "/opt/upy-e2e/case-06/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.004,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/results/bundles/6-1.0.0-unhealthy-2.zip",
+      "--root",
+      "/opt/upy-e2e/case-06"
+    ],
+    "rc": 1,
+    "seconds": 5.504,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-06\n  📁 目录: /opt/upy-e2e/case-06\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /results/bundles/6-1.0.0-unhealthy-2.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-06 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-06/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-06.service)\n  -> 正在健康检查 http://127.0.0.1:18160/health (超时 5s)...\n  ! 部署失败，正在尝试回滚...\n  ! 正在回滚系统服务 upy-e2e-06.service...\nFailed to reset failed state of unit upy-e2e-06.service: Unit upy-e2e-06.service not loaded.\nFailed to reset failed state of unit upy-e2e-06.service: Unit upy-e2e-06.service not loaded.\n  ✓ 首次部署失败，已清理新生成的 systemd unit\n  错误: 健康检查超时（5s）: HTTP 503\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "is-active",
+      "--quiet",
+      "upy-e2e-06.service"
+    ],
+    "rc": 3,
+    "seconds": 0.003,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-06.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.012,
+    "output": "MainPID=0\nUser=\nActiveState=inactive\nSubState=dead\nFragmentPath=\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-06.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "Oct 19 03:25:25 933258e13e54 systemd[1]: Starting upy-e2e-06.service - upy-e2e-06 managed by upy...\nOct 19 03:25:25 933258e13e54 systemd[1]: Started upy-e2e-06.service - upy-e2e-06 managed by upy.\nOct 19 03:25:25 933258e13e54 web[654]: 2026/10/19 03:25:25 version=1.0.0 mode=unhealthy uid=992 listen=127.0.0.1:18160\nOct 19 03:25:30 933258e13e54 web[654]: 2026/10/19 03:25:30 SIGTERM received; graceful shutdown\nOct 19 03:25:30 933258e13e54 systemd[1]: Stopping upy-e2e-06.service - upy-e2e-06 managed by upy...\nOct 19 03:25:30 933258e13e54 systemd[1]: upy-e2e-06.service: Deactivated successfully.\nOct 19 03:25:30 933258e13e54 systemd[1]: Stopped upy-e2e-06.service - upy-e2e-06 managed by upy.\n"
+  }
+]

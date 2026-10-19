@@ -1,0 +1,94 @@
+[
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue01"
+    ],
+    "rc": 0,
+    "seconds": 0.092,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue01:ue01",
+      "/opt/upy-e2e/case-01/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": ""
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "release",
+      "system-v1.0.0",
+      "--root",
+      "/opt/upy-e2e/case-01"
+    ],
+    "rc": 0,
+    "seconds": 13.491,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-01\n  📁 目录: /opt/upy-e2e/case-01\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  -> 正在获取 AaronConlon/upy-test 的 system-v1.0.0 版本...\n  ✓ 已选择版本 system-v1.0.0\n  -> ⬇️  正在下载资产 bundle-linux-arm64.zip（2.1MB）...\n  ✓ 已保存到 /opt/upy-e2e/case-01/bundles/system-v1.0.0-bundle-linux-arm64.zip\n  - 开始部署 upy-e2e-01 vsystem-v1.0.0\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-release v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-01/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  ✓ 系统服务配置校验通过\n  -> 正在加载 systemd 配置并启动服务...\n  ✓ 系统服务已启动 (upy-e2e-01.service)\n  -> 正在健康检查 http://127.0.0.1:18080/health (超时 8s)...\n  ✓ 健康检查通过\nCreated symlink /etc/systemd/system/multi-user.target.wants/upy-e2e-01.service → /etc/systemd/system/upy-e2e-01.service.\n  -> 正在切换 current -> releases/1.0.0...\n  ✓ 部署完成: upy-e2e-release 1.0.0\n  project layout:\n    /opt/upy-e2e/case-01\n    ├── bundles/\n    │   └── system-v1.0.0-bundle-linux-arm64.zip\n    ├── releases/\n    │   └── 1.0.0/\n    │       ├── bin/\n    │       │   └── web\n    │       └── deploy.yaml\n    ├── shared/\n    │   ├── data/\n    │   └── service.env\n    ├── current -> releases/1.0.0\n    ├── deploy.yaml\n    └── state.json\n  - ⏱ 部署耗时: 13.5s\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "is-active",
+      "--quiet",
+      "upy-e2e-01.service"
+    ],
+    "rc": 0,
+    "seconds": 0.003,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "is-enabled",
+      "upy-e2e-01.service"
+    ],
+    "rc": 0,
+    "seconds": 0.003,
+    "output": "enabled\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-01.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.004,
+    "output": "MainPID=105\nExecStart={ path=/opt/upy-e2e/case-01/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-01/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue01\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-01.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-01.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": "Oct 19 03:25:08 933258e13e54 systemd[1]: Starting upy-e2e-01.service - upy-e2e-release managed by upy...\nOct 19 03:25:08 933258e13e54 systemd[1]: Started upy-e2e-01.service - upy-e2e-release managed by upy.\nOct 19 03:25:08 933258e13e54 web[105]: 2026/10/19 03:25:08 version=1.0.0 mode=healthy uid=997 listen=127.0.0.1:18080\n"
+  }
+]

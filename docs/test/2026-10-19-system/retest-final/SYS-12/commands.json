@@ -1,0 +1,168 @@
+[
+  {
+    "argv": [
+      "systemctl",
+      "stop",
+      "upy-e2e-12.service"
+    ],
+    "rc": 5,
+    "seconds": 0.008,
+    "output": "Failed to stop upy-e2e-12.service: Unit upy-e2e-12.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "disable",
+      "upy-e2e-12.service"
+    ],
+    "rc": 1,
+    "seconds": 0.006,
+    "output": "Failed to disable unit: Unit file upy-e2e-12.service does not exist.\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.055,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "reset-failed",
+      "upy-e2e-12.service"
+    ],
+    "rc": 1,
+    "seconds": 0.005,
+    "output": "Failed to reset failed state of unit upy-e2e-12.service: Unit upy-e2e-12.service not loaded.\n"
+  },
+  {
+    "argv": [
+      "useradd",
+      "--system",
+      "--no-create-home",
+      "--shell",
+      "/usr/sbin/nologin",
+      "ue12"
+    ],
+    "rc": 0,
+    "seconds": 0.043,
+    "output": ""
+  },
+  {
+    "argv": [
+      "chown",
+      "-R",
+      "ue12:ue12",
+      "/opt/upy-e2e/case-12/shared"
+    ],
+    "rc": 0,
+    "seconds": 0.001,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "daemon-reload"
+    ],
+    "rc": 0,
+    "seconds": 0.035,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "start",
+      "upy-e2e-12.service"
+    ],
+    "rc": 0,
+    "seconds": 0.007,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-12.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.009,
+    "output": "1356\n"
+  },
+  {
+    "argv": [
+      "/usr/local/bin/upy-under-test",
+      "bundle",
+      "/opt/upy-e2e/bundles/12-1.0.0-healthy-9.zip",
+      "--root",
+      "/opt/upy-e2e/case-12"
+    ],
+    "rc": 1,
+    "seconds": 0.042,
+    "output": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  📦 项目: upy-e2e-12\n  📁 目录: /opt/upy-e2e/case-12\n  🧩 类型: system\n  🏷 当前版本: 未部署\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n  - 正在部署本地 bundle /opt/upy-e2e/bundles/12-1.0.0-healthy-9.zip\n  -> 正在解压 bundle...\n  ✓ bundle 解压完成\n  - bundle: upy-e2e-12 v1.0.0 (system)\n  -> 版本目录: /opt/upy-e2e/case-12/releases/1.0.0\n  -> 正在安装版本 1.0.0...\n  ✓ 版本已安装到 releases/1.0.0\n  -> 正在校验系统服务配置与可执行文件...\n  错误: systemd 服务 /etc/systemd/system/upy-e2e-12.service 已存在但非 upy 纳管（缺少 upy 标记），拒绝接管或覆盖\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-12.service",
+      "-p",
+      "MainPID",
+      "--value"
+    ],
+    "rc": 0,
+    "seconds": 0.005,
+    "output": "1356\n"
+  },
+  {
+    "argv": [
+      "systemctl",
+      "is-active",
+      "--quiet",
+      "upy-e2e-12.service"
+    ],
+    "rc": 0,
+    "seconds": 0.002,
+    "output": ""
+  },
+  {
+    "argv": [
+      "systemctl",
+      "show",
+      "upy-e2e-12.service",
+      "-p",
+      "ActiveState",
+      "-p",
+      "SubState",
+      "-p",
+      "MainPID",
+      "-p",
+      "User",
+      "-p",
+      "ExecStart",
+      "-p",
+      "FragmentPath"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "MainPID=1356\nExecStart={ path=/bin/sleep ; argv[]=/bin/sleep infinity ; ignore_errors=no ; start_time=[Mon 2026-10-19 03:51:31 UTC] ; stop_time=[n/a] ; pid=1356 ; code=(null) ; status=0/0 }\nUser=\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-12.service\n"
+  },
+  {
+    "argv": [
+      "journalctl",
+      "-u",
+      "upy-e2e-12.service",
+      "--no-pager",
+      "-n",
+      "40"
+    ],
+    "rc": 0,
+    "seconds": 0.006,
+    "output": "Oct 19 03:51:31 1c6c596a0717 systemd[1]: Started upy-e2e-12.service - external fixture.\n"
+  }
+]

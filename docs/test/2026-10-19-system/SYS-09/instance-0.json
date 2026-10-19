@@ -1,0 +1,13 @@
+{
+  "root": "/opt/upy-e2e/case-09",
+  "unit": "upy-e2e-09.service",
+  "port": 18190,
+  "state": "{\n  \"currentVersion\": \"1.0.0\",\n  \"previousVersion\": \"\",\n  \"deployedAt\": \"2026-10-19T03:25:35Z\",\n  \"type\": \"system\",\n  \"unitName\": \"upy-e2e-09.service\",\n  \"status\": \"active\"\n}\n",
+  "unit_content": "# Managed by upy - DO NOT EDIT MANUALLY\n# X-Upy-Project: upy-e2e-09\n# X-Upy-Root: /opt/upy-e2e/case-09\n\n[Unit]\nDescription=upy-e2e-09 managed by upy\nAfter=network.target\nWants=network-online.target\n\n[Service]\nType=exec\nUser=ue09\nGroup=ue09\nWorkingDirectory=/opt/upy-e2e/case-09/releases/1.0.0\nExecStart=/opt/upy-e2e/case-09/releases/1.0.0/bin/web\nEnvironmentFile=-/opt/upy-e2e/case-09/shared/service.env\nRestart=on-failure\nRestartSec=3s\nTimeoutStopSec=30s\nKillSignal=SIGTERM\nStandardOutput=journal\nStandardError=journal\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=multi-user.target\n",
+  "releases": [
+    "1.0.0",
+    "2.0.0"
+  ],
+  "systemctl": "MainPID=0\nExecStart={ path=/opt/upy-e2e/case-09/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-09/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue09\nActiveState=inactive\nSubState=dead\nFragmentPath=/etc/systemd/system/upy-e2e-09.service\n",
+  "journal": "Oct 19 03:25:34 933258e13e54 systemd[1]: Starting upy-e2e-09.service - upy-e2e-09 managed by upy...\nOct 19 03:25:34 933258e13e54 systemd[1]: Started upy-e2e-09.service - upy-e2e-09 managed by upy.\nOct 19 03:25:34 933258e13e54 web[921]: 2026/10/19 03:25:34 version=1.0.0 mode=healthy uid=989 listen=127.0.0.1:18190\nOct 19 03:25:35 933258e13e54 systemd[1]: Stopping upy-e2e-09.service - upy-e2e-09 managed by upy...\nOct 19 03:25:35 933258e13e54 web[921]: 2026/10/19 03:25:35 SIGTERM received; graceful shutdown\nOct 19 03:25:35 933258e13e54 systemd[1]: upy-e2e-09.service: Deactivated successfully.\nOct 19 03:25:35 933258e13e54 systemd[1]: Stopped upy-e2e-09.service - upy-e2e-09 managed by upy.\nOct 19 03:25:35 933258e13e54 systemd[1]: Starting upy-e2e-09.service - upy-e2e-09 managed by upy...\nOct 19 03:25:35 933258e13e54 systemd[1]: Started upy-e2e-09.service - upy-e2e-09 managed by upy.\nOct 19 03:25:35 933258e13e54 web[972]: 2026/10/19 03:25:35 version=2.0.0 mode=unhealthy uid=989 listen=127.0.0.1:18190\nOct 19 03:25:40 933258e13e54 systemd[1]: Stopping upy-e2e-09.service - upy-e2e-09 managed by upy...\nOct 19 03:25:40 933258e13e54 web[972]: 2026/10/19 03:25:40 SIGTERM received; graceful shutdown\nOct 19 03:25:40 933258e13e54 systemd[1]: upy-e2e-09.service: Deactivated successfully.\nOct 19 03:25:40 933258e13e54 systemd[1]: Stopped upy-e2e-09.service - upy-e2e-09 managed by upy.\n"
+}

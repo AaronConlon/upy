@@ -23,11 +23,19 @@ type ProjectReleases struct {
 	Keep int `yaml:"keep"`
 }
 
+// ProjectService 服务器端系统服务配置
+type ProjectService struct {
+	User  string `yaml:"user"`
+	Group string `yaml:"group"`
+	Unit  string `yaml:"unit"`
+}
+
 // ProjectConfig 服务器端项目配置
 type ProjectConfig struct {
 	Name     string          `yaml:"name"`
 	Release  *ProjectRelease `yaml:"release"`
 	Releases ProjectReleases `yaml:"releases"`
+	Service  *ProjectService `yaml:"service"` // 可选: 允许在服务器端显式配置运行账号与 unit
 }
 
 // ReadProjectConfig 读取并校验服务器端 deploy.yaml

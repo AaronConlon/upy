@@ -1,0 +1,12 @@
+{
+  "root": "/opt/upy-e2e/case-19",
+  "unit": "upy-e2e-19.service",
+  "port": 18290,
+  "state": "{\n  \"currentVersion\": \"1.0.0\",\n  \"previousVersion\": \"\",\n  \"deployedAt\": \"2026-10-19T03:29:34Z\",\n  \"type\": \"system\",\n  \"unitName\": \"upy-e2e-19.service\",\n  \"status\": \"active\"\n}\n",
+  "unit_content": "# Managed by upy - DO NOT EDIT MANUALLY\n# X-Upy-Project: upy-e2e-19\n# X-Upy-Root: /opt/upy-e2e/case-19\n\n[Unit]\nDescription=upy-e2e-19 managed by upy\nAfter=network.target\nWants=network-online.target\n\n[Service]\nType=exec\nUser=ue19\nGroup=ue19\nWorkingDirectory=/opt/upy-e2e/case-19/releases/1.0.0\nExecStart=/opt/upy-e2e/case-19/releases/1.0.0/bin/web\nEnvironmentFile=-/opt/upy-e2e/case-19/shared/service.env\nRestart=on-failure\nRestartSec=3s\nTimeoutStopSec=30s\nKillSignal=SIGTERM\nStandardOutput=journal\nStandardError=journal\nNoNewPrivileges=true\nPrivateTmp=true\n\n[Install]\nWantedBy=multi-user.target\n",
+  "releases": [
+    "1.0.0"
+  ],
+  "systemctl": "MainPID=4927\nExecStart={ path=/opt/upy-e2e/case-19/releases/1.0.0/bin/web ; argv[]=/opt/upy-e2e/case-19/releases/1.0.0/bin/web ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nUser=ue19\nActiveState=active\nSubState=running\nFragmentPath=/etc/systemd/system/upy-e2e-19.service\n",
+  "journal": "Oct 19 03:25:55 933258e13e54 systemd[1]: Starting upy-e2e-19.service - upy-e2e-19 managed by upy...\nOct 19 03:25:55 933258e13e54 systemd[1]: Started upy-e2e-19.service - upy-e2e-19 managed by upy.\nOct 19 03:25:55 933258e13e54 web[1897]: 2026/10/19 03:25:55 version=1.0.0 mode=healthy uid=980 listen=127.0.0.1:18290\nOct 19 03:25:55 933258e13e54 systemd[1]: Stopping upy-e2e-19.service - upy-e2e-19 managed by upy...\nOct 19 03:25:55 933258e13e54 web[1897]: 2026/10/19 03:25:55 SIGTERM received; graceful shutdown\nOct 19 03:25:55 933258e13e54 systemd[1]: upy-e2e-19.service: Deactivated successfully.\nOct 19 03:25:55 933258e13e54 systemd[1]: Stopped upy-e2e-19.service - upy-e2e-19 managed by upy.\nOct 19 03:29:34 933258e13e54 systemd[1]: Starting upy-e2e-19.service - upy-e2e-19 managed by upy...\nOct 19 03:29:34 933258e13e54 systemd[1]: Started upy-e2e-19.service - upy-e2e-19 managed by upy.\nOct 19 03:29:34 933258e13e54 web[4927]: 2026/10/19 03:29:34 version=1.0.0 mode=healthy uid=980 listen=127.0.0.1:18290\n"
+}

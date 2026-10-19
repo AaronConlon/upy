@@ -1,0 +1,7 @@
+{
+  "test_services_running_before_stop": 0,
+  "container": "upy-system-e2e-20261019",
+  "container_stopped": true,
+  "container_retained_for_diagnostics": true,
+  "runner_failure_exit_check": 1
+}
