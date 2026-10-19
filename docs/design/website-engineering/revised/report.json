@@ -1,0 +1,62 @@
+[
+  {
+    "file": "page-1440x900.png",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 1,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 4,
+        "examples": [
+          "p.eyebrow「开始使用 / 安装」",
+          "p.eyebrow「部署流程」",
+          "span.eyebrow「静态站点」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / 关联项目」",
+          "span.step-number「02 / 发布版本」",
+          "span.step-number「03 / 日常维护」"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "page-390x844.png",
+    "state": null,
+    "size": "390x844",
+    "zoom": 1,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 4,
+        "examples": [
+          "p.eyebrow「开始使用 / 安装」",
+          "p.eyebrow「部署流程」",
+          "span.eyebrow「静态站点」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / 关联项目」",
+          "span.step-number「02 / 发布版本」",
+          "span.step-number「03 / 日常维护」"
+        ]
+      }
+    ]
+  }
+]

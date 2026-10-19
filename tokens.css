@@ -1,22 +1,21 @@
-/* Hallmark · Hum palette · shared website design tokens */
+/* upy · 工程制图 · shared website tokens */
 :root {
-  --color-paper: #faf9f2;
-  --color-ink: #192d34;
-  --color-muted: #54676d;
-  --color-rule: #d9dfd7;
-  --color-cyan: #bceef4;
-  --color-accent: #08778b;
-  --color-pear: #e8f29c;
-  --color-peach: #ffe1bf;
-  --color-code: #20363e;
-  --color-code-text: #e3f0e9;
-  --color-code-comment: #a8c5c1;
-  --font-display: 'Bricolage Grotesque', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-body: 'Geist', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius-card: 24px;
-  --radius-pill: 999px;
-  --ease-out: cubic-bezier(.2,.7,.3,1);
-  --dur-fast: 160ms;
-  --space-section: clamp(64px, 9vw, 120px);
+  --color-paper: #f5f7f6;
+  --color-surface: #edf1f0;
+  --color-ink: #172b33;
+  --color-muted: #4d626c;
+  --color-rule: #becbce;
+  --color-grid: #dce4e4;
+  --color-cyan: #e4f2f3;
+  --color-accent: #006e87;
+  --color-code: #18323c;
+  --color-code-text: #edf5f4;
+  --color-code-comment: #b7cdcd;
+  --font-display: "Space Grotesk", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --radius-card: 2px;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 180ms;
+  --space-section: clamp(64px, 8vw, 112px);
 }

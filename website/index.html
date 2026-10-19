@@ -1,67 +1,281 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#faf9f2">
-  <title>upy — 把部署滑顺一点</title>
-  <meta name="description" content="Go 编写的轻量 Web 部署工具。一个二进制，从 GitHub Release 或本地 Bundle 部署 SPA、Docker 与 Docker Compose 项目。">
-  <meta property="og:title" content="upy — 把部署滑顺一点">
-  <meta property="og:description" content="一个 Go 二进制，让 Web 项目从 Release 到上线。支持 SPA、Docker 和 Compose。">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://aaronconlon.github.io/upy/">
-  <meta property="og:image" content="https://aaronconlon.github.io/upy/assets/gopher.png">
-  <link rel="canonical" href="https://aaronconlon.github.io/upy/">
-  <link rel="icon" type="image/png" href="./assets/gopher.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./app.js" defer></script>
-</head>
-<body>
-  <a class="skip-link" href="#main">跳到正文</a>
-  <header class="masthead wrap">
-    <a class="wordmark" href="./" aria-label="upy 首页">upy<span aria-hidden="true">↗</span></a>
-    <nav aria-label="主导航"><a href="#start">开始使用</a><a href="https://github.com/AaronConlon/upy#readme">文档 ↗</a><a href="https://github.com/AaronConlon/upy">GitHub ↗</a></nav>
-  </header>
-  <main id="main">
-    <section class="hero wrap" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow">SMALL TOOL. SMOOTH DEPLOY.</p>
-        <h1 id="hero-title">把部署<br>滑顺一点<span class="period">。</span></h1>
-        <p class="intro">代码写好了，接下来交给 upy。<br>一个 Go 二进制，把你的 Web 项目从 Release 带到线上。</p>
-        <div class="hero-actions"><a class="button primary" href="#start">开始部署 <span aria-hidden="true">↗</span></a><a class="text-link" href="https://github.com/AaronConlon/upy/releases">下载二进制 ↗</a></div>
-        <p class="platforms">Linux / macOS <span>·</span> amd64 / arm64 <span>·</span> MIT</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f7f6" />
+    <title>upy — 把部署滑顺一点</title>
+    <meta
+      name="description"
+      content="Go 编写的轻量 Web 部署工具。一个二进制，从 GitHub Release 或本地 Bundle 部署 SPA、Docker 与 Docker Compose 项目。"
+    />
+    <meta property="og:title" content="upy — 把部署滑顺一点" />
+    <meta
+      property="og:description"
+      content="一个 Go 二进制，让 Web 项目从 Release 到上线。支持 SPA、Docker 和 Compose。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aaronconlon.github.io/upy/" />
+    <meta
+      property="og:image"
+      content="https://aaronconlon.github.io/upy/assets/gopher.png"
+    />
+    <link rel="canonical" href="https://aaronconlon.github.io/upy/" />
+    <link rel="icon" type="image/png" href="./assets/gopher.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./vendor/gsap.min.js" defer></script>
+    <script src="./vendor/ScrollTrigger.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <header class="masthead wrap">
+      <a class="wordmark" href="./" aria-label="upy 首页"
+        >upy<span aria-hidden="true">↗</span></a
+      ><span class="brand-caption">轻量 Web 部署工具</span>
+      <nav aria-label="主导航">
+        <a href="#start">开始使用</a
+        ><a href="https://github.com/AaronConlon/upy#readme">文档 ↗</a
+        ><a href="https://github.com/AaronConlon/upy">GitHub ↗</a>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <h1 id="hero-title">
+              <span>把部署</span
+              ><span>滑顺一点<span class="period">。</span></span>
+            </h1>
+            <p class="intro">
+              一个 Go 二进制，<br />把 Web 项目从 Release 带到线上。
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#start"
+                >开始部署 <span aria-hidden="true">↗</span></a
+              ><a
+                class="text-link"
+                href="https://github.com/AaronConlon/upy/releases"
+                >下载二进制 <span aria-hidden="true">↗</span></a
+              >
+            </div>
+            <p class="platforms">Linux / macOS <span>·</span> amd64 / arm64</p>
+          </div>
+          <figure class="mascot-stage">
+            <div class="drawing-meta">
+              <span>从构建产物，到运行版本</span>
+            </div>
+            <div class="drawing-field">
+              <svg
+                class="draft-lines"
+                viewBox="0 0 560 430"
+                fill="none"
+                aria-hidden="true"
+              >
+                <g class="construction">
+                  <path d="M40 42H520M40 388H520M64 20V410M496 20V410" />
+                  <path d="M280 20V410M40 215H520" stroke-dasharray="4 7" />
+                  <circle cx="280" cy="214" r="156" stroke-dasharray="3 6" />
+                </g>
+                <g class="dimension">
+                  <path d="M84 405H476M84 398V412M476 398V412" />
+                </g>
+                <g class="crosses">
+                  <path
+                    d="M55 42H73M64 33V51M487 42H505M496 33V51M55 388H73M64 379V397M487 388H505M496 379V397"
+                  />
+                </g>
+              </svg>
+              <img
+                src="./assets/gopher.png"
+                width="1280"
+                height="1280"
+                alt="蓝色 Go Gopher 踩着滑板，放置在工程辅助线之间"
+                fetchpriority="high"
+              />
+            </div>
+            <figcaption
+              class="deployment-route"
+              aria-label="从 Release 或 Bundle，经 upy 部署到服务器"
+            >
+              <span>Release / Bundle</span><span aria-hidden="true">→</span
+              ><strong>upy</strong><span aria-hidden="true">→</span
+              ><span>服务器</span>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+      <div class="capability-band">
+        <div class="wrap capability-inner">
+          <span><i aria-hidden="true">01</i> 一个二进制</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">02</i> SPA 原子切换</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">03</i> Docker & Compose</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">04</i> Release 或离线包</span>
+        </div>
       </div>
-      <figure class="mascot-stage"><span class="stage-note">READY TO ROLL</span><img src="./assets/gopher.png" width="1280" height="1280" alt="蓝色 Go Gopher 双脚踩着滑板，向前滑行" fetchpriority="high"><figcaption>轻装上阵，发布向前。</figcaption></figure>
-    </section>
-    <div class="capability-band"><div class="wrap capability-inner"><span>一个二进制</span><b aria-hidden="true">/</b><span>SPA 原子切换</span><b aria-hidden="true">/</b><span>Docker & Compose</span><b aria-hidden="true">/</b><span>Release 或离线包</span></div></div>
-    <section class="installation wrap" id="start" aria-labelledby="install-title">
-      <div><p class="eyebrow">FIRST PUSH</p><h2 id="install-title">先装上，再出发。</h2><p>Linux / macOS 打开终端，运行安装脚本。<br>自动识别架构，并配置 Shell 命令补全。</p><a class="text-link" href="https://github.com/AaronConlon/upy#如何安装">查看安装选项 ↗</a></div>
-      <div class="install-command"><div class="code-label"><span>安装 upy</span><button type="button" data-copy="install-code" aria-label="复制安装命令">复制命令</button></div><pre><code id="install-code">curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash</code></pre><p>默认安装到 /usr/local/bin，必要时会请求 sudo 权限。</p></div>
-    </section>
-    <section class="workflow wrap" aria-labelledby="workflow-title">
-      <div class="section-heading"><p class="eyebrow">FROM RELEASE TO RUNNING</p><h2 id="workflow-title">发布，有一条清楚的路。</h2><p>CI 负责构建和打包，upy 负责服务器上的部署。</p></div>
-      <article class="step"><div class="step-copy"><span class="step-number">01 / CONNECT</span><h3>告诉它，项目在哪里。</h3><p>在服务器的项目目录里放一份 <code>deploy.yaml</code>，关联 GitHub 仓库。私有仓库通过 <code>upy init</code> 配置 Token，支持按组织分别设置。</p><a href="https://github.com/AaronConlon/upy#如何初始化" class="text-link">配置私有仓库 ↗</a></div><div class="example"><span class="file-label">deploy.yaml · 服务器端</span><pre><code>name: my-app
+      <section
+        class="installation wrap"
+        id="start"
+        aria-labelledby="install-title"
+      >
+        <div>
+          <p class="eyebrow">开始使用 / 安装</p>
+          <h2 id="install-title">先装上，再出发。</h2>
+          <p>
+            Linux / macOS 打开终端，运行安装脚本。<br />自动识别架构，并配置
+            Shell 命令补全。
+          </p>
+          <a
+            class="text-link"
+            href="https://github.com/AaronConlon/upy#如何安装"
+            >查看安装选项 ↗</a
+          >
+        </div>
+        <div class="install-command">
+          <div class="code-label">
+            <span>安装 upy</span
+            ><button
+              type="button"
+              data-copy="install-code"
+              aria-label="复制安装命令"
+            >
+              复制命令
+            </button>
+          </div>
+          <pre><code id="install-code">curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash</code></pre>
+          <p>默认安装到 /usr/local/bin，必要时会请求 sudo 权限。</p>
+        </div>
+      </section>
+      <section
+        class="workflow wrap"
+        id="workflow"
+        aria-labelledby="workflow-title"
+      >
+        <div class="section-heading">
+          <p class="eyebrow">部署流程</p>
+          <h2 id="workflow-title">发布，有一条清楚的路。</h2>
+          <p>CI 负责构建和打包，upy 负责服务器上的部署。</p>
+        </div>
+        <div class="workflow-track" aria-hidden="true">
+          <span class="workflow-progress"></span>
+        </div>
+        <article class="step" data-step>
+          <div class="step-copy">
+            <span class="step-number">01 / 关联项目</span>
+            <h3>告诉它，项目在哪里。</h3>
+            <p>
+              在服务器的项目目录里放一份 <code>deploy.yaml</code>，关联 GitHub
+              仓库。私有仓库通过 <code>upy init</code> 配置
+              Token，支持按组织分别设置。
+            </p>
+            <a
+              href="https://github.com/AaronConlon/upy#如何初始化"
+              class="text-link"
+              >配置私有仓库 ↗</a
+            >
+          </div>
+          <div class="example">
+            <span class="file-label">deploy.yaml · 服务器端</span>
+            <pre><code>name: my-app
 release:
   provider: github
   repository: owner/my-app
-  asset: bundle.zip</code></pre></div></article>
-      <article class="step"><div class="step-copy"><span class="step-number">02 / DEPLOY</span><h3>选一个版本，然后上线。</h3><p>从 GitHub Release 选择版本，或直接部署最新正式版。没有外网？传入本地 Bundle，同样可以部署。</p><p class="aside">构建产物里记得带上部署清单。</p></div><div class="example cyan"><span class="file-label">在项目目录运行</span><pre><code><span class="comment"># 交互选择 Release</span>
+  asset: bundle.zip</code></pre>
+          </div>
+        </article>
+        <article class="step" data-step>
+          <div class="step-copy">
+            <span class="step-number">02 / 发布版本</span>
+            <h3>选一个版本，然后上线。</h3>
+            <p>
+              从 GitHub Release
+              选择版本，或直接部署最新正式版。没有外网？传入本地
+              Bundle，同样可以部署。
+            </p>
+            <p class="aside">构建产物里记得带上部署清单。</p>
+          </div>
+          <div class="example cyan">
+            <span class="file-label">在项目目录运行</span>
+            <pre><code><span class="comment"># 交互选择 Release</span>
 upy release
 
 <span class="comment"># 部署最新正式版</span>
 upy release latest
 
 <span class="comment"># 直接部署离线包</span>
-upy bundle ./bundle.zip</code></pre></div></article>
-      <div class="deploy-types"><article><span class="eyebrow">STATIC</span><h3>静态站点，原子切换。</h3><p>SPA 资源安装到版本目录，通过 <code>current</code> 软链切换。让 Nginx 或 Caddy 指向它，后续发布沿用同一入口。</p></article><article><span class="eyebrow">DOCKER / COMPOSE</span><h3>容器项目，按流程交接。</h3><p>准备新镜像、停止旧服务、启动新服务。配置健康检查后，检查失败会尝试回滚。服务器需预先安装 Docker。</p></article></div>
-      <article class="step last"><div class="step-copy"><span class="step-number">03 / KEEP ROLLING</span><h3>下次发布，少做几步。</h3><p>成功部署后自动登记本地项目。之后在任意目录运行 <code>upy</code>，选择项目即可继续部署。也可以指定项目、清理缓存，或更新工具。</p></div><div class="command-list"><div><code>upy</code><span>选择已登记的项目</span></div><div><code>upy deploy my-app</code><span>部署项目最新版本</span></div><div><code>upy clean --bundles</code><span>清理下载缓存</span></div><div><code>upy update</code><span>更新 upy</span></div></div></article>
-    </section>
-    <section class="closing"><div class="wrap closing-inner"><div><p class="eyebrow">LESS SETUP. MORE SHIPPING.</p><h2>下一次发布，<br>轻装出发。</h2></div><div><p>开源，MIT 协议。<br>从一个项目开始，也能照顾多个项目。</p><a class="button" href="https://github.com/AaronConlon/upy#readme">阅读完整文档 ↗</a></div></div></section>
-  </main>
-  <footer class="wrap footer"><a class="wordmark" href="./">upy<span aria-hidden="true">↗</span></a><p>Built with Go. Made to ship.</p><div><a href="https://github.com/AaronConlon/upy/issues">反馈问题 ↗</a><a href="https://github.com/AaronConlon/upy#开源协议">MIT License ↗</a></div></footer>
-  <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
-</body>
+upy bundle ./bundle.zip</code></pre>
+          </div>
+        </article>
+        <div class="deploy-types">
+          <article>
+            <span class="eyebrow">静态站点</span>
+            <h3>静态站点，原子切换。</h3>
+            <p>
+              SPA 资源安装到版本目录，通过 <code>current</code> 软链切换。让
+              Nginx 或 Caddy 指向它，后续发布沿用同一入口。
+            </p>
+          </article>
+          <article>
+            <span class="eyebrow">容器应用</span>
+            <h3>容器项目，按流程交接。</h3>
+            <p>
+              准备新镜像、停止旧服务、启动新服务。配置健康检查后，检查失败会尝试回滚。服务器需预先安装
+              Docker。
+            </p>
+          </article>
+        </div>
+        <article class="step last" data-step>
+          <div class="step-copy">
+            <span class="step-number">03 / 日常维护</span>
+            <h3>下次发布，少做几步。</h3>
+            <p>
+              成功部署后自动登记本地项目。之后在任意目录运行
+              <code>upy</code
+              >，选择项目即可继续部署。也可以指定项目、清理缓存，或更新工具。
+            </p>
+          </div>
+          <div class="command-list">
+            <div><code>upy</code><span>选择已登记的项目</span></div>
+            <div>
+              <code>upy deploy my-app</code><span>部署项目最新版本</span>
+            </div>
+            <div><code>upy clean --bundles</code><span>清理下载缓存</span></div>
+            <div><code>upy update</code><span>更新 upy</span></div>
+          </div>
+        </article>
+      </section>
+      <section class="closing">
+        <div class="wrap closing-inner">
+          <div>
+            <h2>下一次发布，<br />轻装出发。</h2>
+          </div>
+          <div>
+            <p>开源，MIT 协议。<br />从一个项目开始，也能照顾多个项目。</p>
+            <a class="button" href="https://github.com/AaronConlon/upy#readme"
+              >阅读完整文档 ↗</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="wrap footer">
+      <a class="wordmark" href="./">upy<span aria-hidden="true">↗</span></a>
+      <div>
+        <a href="https://github.com/AaronConlon/upy/issues">反馈问题 ↗</a
+        ><a href="https://github.com/AaronConlon/upy#开源协议"
+          >MIT License ↗</a
+        >
+      </div>
+    </footer>
+    <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
+  </body>
 </html>

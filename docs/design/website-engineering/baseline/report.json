@@ -1,0 +1,50 @@
+[
+  {
+    "file": "page.png",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 1,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 6,
+        "examples": [
+          "p.eyebrow「SMALL TOOL. SMOOTH DEPLO」",
+          "p.eyebrow「FIRST PUSH」",
+          "p.eyebrow「FROM RELEASE TO RUNNING」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / CONNECT」",
+          "span.step-number「02 / DEPLOY」",
+          "span.step-number「03 / KEEP ROLLING」"
+        ]
+      },
+      {
+        "rule": "englishLabel",
+        "label": "中文界面里的英文大写标签",
+        "count": 7,
+        "examples": [
+          "p.eyebrow「SMALL TOOL. SMOOTH DEPLO」",
+          "span.stage-note「READY TO ROLL」",
+          "p.eyebrow「FIRST PUSH」"
+        ]
+      },
+      {
+        "rule": "contrastLow",
+        "label": "文字对比度不达标（正文低于 4.5:1，大字低于 3:1）",
+        "count": 1,
+        "examples": [
+          "p.eyebrow「LESS SETUP. MORE SHIPPIN」（4.15:1）"
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,389 @@
+[
+  {
+    "file": "page-1440x900.png",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 1,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 5,
+        "examples": [
+          "p.eyebrow「开始使用 / 安装」",
+          "p.eyebrow「部署流程」",
+          "span.eyebrow「静态站点」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / 关联项目」",
+          "span.step-number「02 / 发布版本」",
+          "span.step-number「03 / 日常维护」"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "page-390x844.png",
+    "state": null,
+    "size": "390x844",
+    "zoom": 1,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 5,
+        "examples": [
+          "p.eyebrow「开始使用 / 安装」",
+          "p.eyebrow「部署流程」",
+          "span.eyebrow「静态站点」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / 关联项目」",
+          "span.step-number「02 / 发布版本」",
+          "span.step-number「03 / 日常维护」"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "page-1440x900-@2x.png",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 2,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 5,
+        "examples": [
+          "p.eyebrow「开始使用 / 安装」",
+          "p.eyebrow「部署流程」",
+          "span.eyebrow「静态站点」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / 关联项目」",
+          "span.step-number「02 / 发布版本」",
+          "span.step-number「03 / 日常维护」"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "page-390x844-@2x.png",
+    "state": null,
+    "size": "390x844",
+    "zoom": 2,
+    "animationWaitMs": 0,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "eyebrow",
+        "label": "标题上方的眉标",
+        "count": 5,
+        "examples": [
+          "p.eyebrow「开始使用 / 安装」",
+          "p.eyebrow「部署流程」",
+          "span.eyebrow「静态站点」"
+        ]
+      },
+      {
+        "rule": "numbered",
+        "label": "标题上方的编号标签",
+        "count": 3,
+        "examples": [
+          "span.step-number「01 / 关联项目」",
+          "span.step-number「02 / 发布版本」",
+          "span.step-number「03 / 日常维护」"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "motion-probe",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 1,
+    "motion": {
+      "load": {
+        "elements": 6,
+        "loops": 0,
+        "maxMove": 239,
+        "maxSize": 477.568,
+        "maxOpacity": 1,
+        "top": [
+          {
+            "el": "g",
+            "move": 239,
+            "size": 477.568,
+            "opacity": 0,
+            "loop": false,
+            "sources": [
+              "js:style",
+              "js:transform"
+            ]
+          },
+          {
+            "el": "img",
+            "move": 86,
+            "size": 0.09,
+            "opacity": 1,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "span",
+            "move": 22,
+            "size": 0,
+            "opacity": 1,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "span",
+            "move": 22,
+            "size": 0,
+            "opacity": 1,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "g",
+            "move": 0,
+            "size": 0,
+            "opacity": 1,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "g",
+            "move": 0,
+            "size": 0,
+            "opacity": 1,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          }
+        ]
+      },
+      "steps": {
+        "elements": 8,
+        "loops": 0,
+        "maxMove": 20,
+        "maxSize": 768.235,
+        "maxOpacity": 0.92,
+        "top": [
+          {
+            "el": "span.workflow-progress",
+            "move": 0,
+            "size": 768.235,
+            "opacity": 0,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "section#start.installation.wrap",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "div.section-heading",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "article.step",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "article.step",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "div.deploy-types",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "article.step.last",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          },
+          {
+            "el": "div.wrap.closing-inner",
+            "move": 20,
+            "size": 0,
+            "opacity": 0.92,
+            "loop": false,
+            "sources": [
+              "js:style"
+            ]
+          }
+        ]
+      },
+      "hero": {
+        "elements": 0,
+        "loops": 0,
+        "maxMove": 0,
+        "maxSize": 0,
+        "maxOpacity": 0,
+        "top": [],
+        "layers": 0
+      },
+      "scroll": {
+        "elements": 0,
+        "loops": 0,
+        "maxMove": 0,
+        "maxSize": 0,
+        "maxOpacity": 0,
+        "top": [],
+        "scrollable": true
+      }
+    },
+    "issues": [
+      "滚动：没有检测到随滚动出现的变化；落地页、品牌页、发布页和展览页需要一段滚动叙事"
+    ]
+  },
+  {
+    "file": "motion-entry-end.jpg",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 1,
+    "group": "entry",
+    "issues": [
+      "录屏：没装 ffmpeg，只留了 motion-entry-start/mid/end.jpg 三帧"
+    ],
+    "frames": {
+      "start": {
+        "file": "motion-entry-start.jpg",
+        "source": "Page.screencastFrame",
+        "timeMs": 152
+      },
+      "mid": {
+        "file": "motion-entry-mid.jpg",
+        "source": "Page.screencastFrame",
+        "timeMs": 946
+      },
+      "end": {
+        "file": "motion-entry-end.jpg",
+        "source": "Page.captureScreenshot",
+        "timeMs": 1740
+      }
+    },
+    "sampling": {
+      "mode": "entry"
+    },
+    "durationMs": 1740,
+    "consistency": {
+      "status": "matched",
+      "reference": "motion-entry-end.jpg",
+      "different": false,
+      "changedPixels": 0,
+      "maxTilePixels": 0,
+      "pixelRatio": 0
+    },
+    "failed": true
+  },
+  {
+    "file": "motion-end.jpg",
+    "state": null,
+    "size": "1440x900",
+    "zoom": 1,
+    "issues": [
+      "录屏：没装 ffmpeg，只留了 motion-start/mid/end.jpg 三帧"
+    ],
+    "frames": {
+      "start": {
+        "file": "motion-start.jpg",
+        "source": "Page.screencastFrame",
+        "timeMs": 0
+      },
+      "mid": {
+        "file": "motion-mid.jpg",
+        "source": "Page.screencastFrame",
+        "timeMs": 899
+      },
+      "end": {
+        "file": "motion-end.jpg",
+        "source": "Page.screencastFrame",
+        "timeMs": 2085
+      }
+    },
+    "sampling": {
+      "mode": "recording"
+    },
+    "durationMs": 2736,
+    "consistency": {
+      "status": "matched",
+      "reference": "motion-end.jpg",
+      "different": false,
+      "changedPixels": 0,
+      "maxTilePixels": 0,
+      "pixelRatio": 0
+    },
+    "failed": true
+  }
+]
