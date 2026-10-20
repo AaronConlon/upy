@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,8 +51,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /logout", s.handleLogout)
 
 	// 受保护的 Web 日志路由 (Session 校验，失效重定向到 /)
-	mux.HandleFunc("GET /logs", s.requireAuth(s.handleLogsPage))
-	mux.HandleFunc("GET /logs/{id}", s.requireAuth(s.handleLogDetailPage))
+	mux.HandleFunc("GET /overview", s.requireAuth(s.handleOverviewPage))
+	mux.HandleFunc("GET /projects", s.requireAuth(s.handleProjectsPage))
+	mux.HandleFunc("GET /projects/{name}", s.requireAuth(s.handleProjectPage))
+	mux.HandleFunc("GET /logs", s.requireAuth(s.handleConsoleLogsPage))
+	mux.HandleFunc("GET /logs/{id}", s.requireAuth(s.handleConsoleLogDetail))
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -232,8 +237,8 @@ func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type projectView struct {
-		Name       string `json:"name"`
-		Root       string `json:"root"`
+		Name        string `json:"name"`
+		Root        string `json:"root"`
 		IsDeploying bool   `json:"is_deploying"`
 	}
 
@@ -266,6 +271,9 @@ func (s *Server) taskLogURL(taskID string) string {
 }
 
 func findLogPathByID(taskID string) string {
+	if !validLogID(taskID) {
+		return ""
+	}
 	logsRoot := filepath.Join(config.UserDataDir(), "logs")
 	entries, err := os.ReadDir(logsRoot)
 	if err != nil {
@@ -285,6 +293,7 @@ func findLogPathByID(taskID string) string {
 
 func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
 		token := GetSessionToken(r)
 		if !s.sessions.Validate(token) {
 			http.Redirect(w, r, "/", http.StatusFound)
@@ -318,6 +327,7 @@ func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, RenderAuthPage(qrPNG, s.totpMgr.Secret(), views, maxViews))
@@ -326,9 +336,10 @@ func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRootGet(w http.ResponseWriter, r *http.Request) {
 	token := GetSessionToken(r)
 	if s.sessions.Validate(token) {
-		http.Redirect(w, r, "/logs", http.StatusFound)
+		http.Redirect(w, r, "/overview", http.StatusFound)
 		return
 	}
+	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, RenderLoginPage(""))
@@ -339,6 +350,7 @@ func (s *Server) handleRootPost(w http.ResponseWriter, r *http.Request) {
 	code := strings.TrimSpace(r.FormValue("code"))
 
 	if s.totpMgr == nil || !s.totpMgr.Validate(code) {
+		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, RenderLoginPage("动态验证码错误或已失效，请重新输入"))
@@ -347,7 +359,7 @@ func (s *Server) handleRootPost(w http.ResponseWriter, r *http.Request) {
 
 	token := s.sessions.CreateSession()
 	SetSessionCookie(w, token)
-	http.Redirect(w, r, "/logs", http.StatusFound)
+	http.Redirect(w, r, "/overview", http.StatusFound)
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -355,78 +367,6 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	s.sessions.Revoke(token)
 	ClearSessionCookie(w)
 	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func (s *Server) handleLogsPage(w http.ResponseWriter, r *http.Request) {
-	items := collectLogItems(s.taskMgr)
-	var activeProjs []string
-	if localProjects, err := config.ListLocalProjects(); err == nil {
-		for _, lp := range localProjects {
-			activeProjs = append(activeProjs, lp.Name)
-		}
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, RenderLogsPage(items, activeProjs))
-}
-
-func (s *Server) handleLogDetailPage(w http.ResponseWriter, r *http.Request) {
-	taskID := strings.TrimSpace(r.PathValue("id"))
-	if taskID == "" {
-		http.NotFound(w, r)
-		return
-	}
-
-	project := "unknown"
-	status := "completed"
-	exitCode := 0
-	duration := "-"
-	var logPath string
-
-	if taskID == "server" {
-		project = "server (运行服务)"
-		status = "running"
-		logPath = ServerLogPath()
-	} else if taskID == "upy" {
-		project = "upy (CLI 执行)"
-		status = "completed"
-		logPath = filepath.Join(config.UserDataDir(), "logs", "upy.log")
-	} else if task, ok := s.taskMgr.Get(taskID); ok {
-		project = task.Project
-		status = string(task.Status)
-		exitCode = task.ExitCode
-		duration = task.Duration
-		logPath = task.LogFile
-	}
-
-	if logPath == "" {
-		logPath = findLogPathByID(taskID)
-		if logPath != "" {
-			project = filepath.Base(filepath.Dir(logPath))
-		}
-	}
-
-	if logPath == "" {
-		http.NotFound(w, r)
-		return
-	}
-
-	contentBytes, err := os.ReadFile(logPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			contentBytes = []byte("日志文件尚未生成。\n")
-		} else {
-			http.Error(w, "读取日志失败: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	rawLog := string(contentBytes)
-	logHTML := RenderAnsiToHTML(rawLog)
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, RenderLogDetailPage(taskID, project, status, exitCode, duration, logHTML, rawLog))
 }
 
 func collectLogItems(taskMgr *TaskManager) []LogItemView {
@@ -442,6 +382,7 @@ func collectLogItems(taskMgr *TaskManager) []LogItemView {
 			Status:    string(t.Status),
 			ExitCode:  t.ExitCode,
 			Duration:  t.Duration,
+			Target:    t.Target,
 		})
 	}
 
@@ -474,18 +415,8 @@ func collectLogItems(taskMgr *TaskManager) []LogItemView {
 					modTime = info.ModTime()
 				}
 
-				status := "success"
-				exitCode := 0
 				logPath := filepath.Join(projLogDir, le.Name())
-				if tail, err := readTail(logPath, 512); err == nil {
-					if strings.Contains(tail, "退出码: 0") {
-						status = "success"
-						exitCode = 0
-					} else if strings.Contains(tail, "退出码:") || strings.Contains(tail, "错误:") {
-						status = "failed"
-						exitCode = 1
-					}
-				}
+				status, exitCode := archivedLogStatus(logPath)
 
 				items = append(items, LogItemView{
 					ID:        taskID,
@@ -500,6 +431,9 @@ func collectLogItems(taskMgr *TaskManager) []LogItemView {
 	}
 
 	sort.Slice(items, func(i, j int) bool {
+		if items[i].Timestamp == items[j].Timestamp {
+			return items[i].ID > items[j].ID
+		}
 		return items[i].Timestamp > items[j].Timestamp
 	})
 	return items
@@ -525,4 +459,26 @@ func readTail(path string, maxBytes int64) (string, error) {
 	buf := make([]byte, size-offset)
 	_, err = f.ReadAt(buf, offset)
 	return string(buf), err
+}
+
+// 历史文件缺少明确结束标记时结果未知，不能将中断的部署推断为成功。
+var archivedExitPattern = regexp.MustCompile(`部署任务结束 \(退出码: (-?[0-9]+)\)`)
+
+func archivedLogStatus(path string) (string, int) {
+	tail, err := readTail(path, 4096)
+	if err != nil {
+		return "unknown", 0
+	}
+	matches := archivedExitPattern.FindAllStringSubmatch(ansiRegex.ReplaceAllString(tail, ""), -1)
+	if len(matches) == 0 {
+		return "unknown", 0
+	}
+	code, err := strconv.Atoi(matches[len(matches)-1][1])
+	if err != nil {
+		return "unknown", 0
+	}
+	if code != 0 {
+		return "failed", code
+	}
+	return "success", 0
 }

@@ -1,1 +1,18 @@
-[{"date":"2026-10-19","macrostructure":"Narrative Workflow","theme":"Hum","nav":"N7","footer":"Ft5","enrichment":"supplied mascot","brief":"upy Go deployment CLI website"}]
+[
+  {
+    "date": "2026-10-20",
+    "macrostructure": "Console triptych",
+    "theme": "Grid adapted to console",
+    "enrichment": "none",
+    "brief": "upy server mobile light rational engineering draft; Lucide SVG"
+  },
+  {
+    "date": "2026-10-19",
+    "macrostructure": "Narrative Workflow",
+    "theme": "Hum",
+    "nav": "N7",
+    "footer": "Ft5",
+    "enrichment": "supplied mascot",
+    "brief": "upy Go deployment CLI website"
+  }
+]

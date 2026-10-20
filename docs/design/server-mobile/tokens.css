@@ -1,0 +1,6 @@
+/* Hallmark · portable tokens · server-mobile */
+:root{
+--color-paper:oklch(99% .003 255);--color-surface:oklch(97.4% .004 255);--color-board:oklch(95.5% .005 255);--color-ink:oklch(24% .009 255);--color-muted:oklch(51% .012 255);--color-faint:oklch(65% .01 255);--color-rule:oklch(87% .006 255);--color-grid:oklch(92.5% .005 255);--color-accent:oklch(45% .19 264);--color-success:oklch(45% .09 162);--color-success-bg:oklch(96% .018 162);--color-error:oklch(48% .12 35);--color-error-bg:oklch(96.5% .02 35);--color-on-ink:oklch(99% .003 255);
+--font-display:"Jost","Avenir Next","PingFang SC",sans-serif;--font-body:"PingFang SC","Microsoft YaHei",sans-serif;--font-mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+--space-xs:4px;--space-sm:8px;--space-md:12px;--space-lg:16px;--space-xl:24px;--space-2xl:32px;--radius-control:2px;--ease-out:cubic-bezier(.2,.7,.3,1);--dur-fast:150ms;
+}

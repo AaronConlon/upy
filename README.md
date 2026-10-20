@@ -775,6 +775,15 @@ In your GitHub Actions workflow, trigger `POST /api/v1/webhook/{project}` after 
 - **Dynamic 6-Digit Code Login (`/`)**: Visiting root prompts for the 6-digit TOTP verification code. Successful authentication issues a 30-minute `HttpOnly` + `SameSite` secure session cookie.
 - **Full Trace Browsing (`/logs`)**: Authenticated sessions can view deployment history across all registered projects, along with high-fidelity terminal ANSI color rendering.
 
+The console uses a light mobile layout, with a centered 440px container on desktop. Lucide SVG icons and styles are embedded in the binary:
+
+- **Overview (`/overview`)**: the default destination after login, showing host information, server uptime, projects, and recent deployment results.
+- **Projects (`/projects`)**: search by name or directory; inspect current/previous versions, service units from `state.json`, and deployment history.
+- **Logs (`/logs`)**: filter by project, status, or keyword, with 20 records per page and separate Server / upy runtime log views.
+- **Log details (`/logs/{id}`)**: copy output or download the complete original file. Active tasks and runtime logs refresh every 3 seconds; expired sessions prompt sign-in.
+
+All console pages, refreshes, and downloads share TOTP session protection. The console is read-only. A successful deployment is not a live application health check; archived logs without an explicit completion marker show an unknown result. Large logs preview only the last 256 KiB, while downloads include the entire original file.
+
 ---
 
 ## Unified Logging & the upy log Command

@@ -1,0 +1,624 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>upy server · 移动端设计稿</title><link rel="stylesheet" href="styles.css"></head><body><div class="board-head"><div><span class="board-tag">upy / interface studies</span><h1>轻量运维，秩序井然。</h1><p>Server Console · Mobile · Light</p></div><div class="board-spec">界面设计 / 2026.10<br>390 × 844 px<br>Lucide SVG / 1.5 px</div></div><div class="screens"><section class="artboard" data-screen="overview"><div class="screen-label"><h2>服务总览</h2><span>主机状态与项目，打开即知。</span></div><div class="screen"><header class="apphead"><a class="brand" href="?screen=overview">upy<span class="brand-dot"></span></a><span class="headlabel">SERVER CONSOLE</span><span class="secure" title="TOTP 已验证"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg>
+</span></header><main><div class="page-title"><div><p class="sub">单机部署，清晰掌控。</p><h1>服务总览</h1></div></div><div class="host"><div class="host-top"><span class="host-symbol"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+  <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+  <line x1="6" x2="6.01" y1="6" y2="6" />
+  <line x1="6" x2="6.01" y1="18" y2="18" />
+</svg>
+</span><div><strong>production-01</strong><p class="sub mono">LINUX / AMD64</p></div><span class="status"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+服务在线</span></div><div class="host-bottom"><span>运行时间 <b class="mono">12d 08h 32m</b></span><span class="mono">:8080</span></div></div><div class="stats"><div><span>已登记项目</span><b>03<span>个</span></b></div><div><span>最近部署成功</span><b>02<span>个</span></b></div><div><span>待排查</span><b class="warn">01<span>项</span></b></div></div><div class="section-title"><h2>项目</h2><a class="textlink" href="?screen=project">查看项目 <svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="m12 5 7 7-7 7" />
+</svg>
+</a></div><a class="project-row" href="?screen=project"><span class="project-icon"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+</span><span class="project-info"><strong>microdraft</strong><span class="sub mono">Systemd <span class="sep">/</span> v1.8.2</span></span><span class="row-right"><span class="status "><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+已部署</span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span></a><a class="project-row" href="?screen=project"><span class="project-icon"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M10 9H8" />
+  <path d="M16 13H8" />
+  <path d="M16 17H8" />
+</svg>
+</span><span class="project-info"><strong>upy-website</strong><span class="sub mono">Static <span class="sep">/</span> v0.9.0</span></span><span class="row-right"><span class="status "><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+已部署</span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span></a><a class="project-row" href="?screen=project"><span class="project-icon"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+  <path d="m3.3 7 8.7 5 8.7-5" />
+  <path d="M12 22V12" />
+</svg>
+</span><span class="project-info"><strong>sisyphus</strong><span class="sub mono">Docker <span class="sep">/</span> v2.4.0</span></span><span class="row-right"><span class="status failed"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" />
+</svg>
+部署失败</span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m9 18 6-6-6-6" />
+</svg>
+</span></a><div class="section-title"><h2>最近部署</h2><span class="sub mono">10 / 20</span></div><a href="?screen=logs" class="event"><span class="event-mark "><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+</span><span class="event-body"><strong>microdraft<span class="mono">v1.8.2</span></strong><span class="sub">部署完成<span class="sep">·</span>14:32 · 3.2s</span></span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 7h10v10" />
+  <path d="M7 17 17 7" />
+</svg>
+</a><a href="?screen=logs" class="event"><span class="event-mark failed"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m15 9-6 6" />
+  <path d="m9 9 6 6" />
+</svg>
+</span><span class="event-body"><strong>sisyphus<span class="mono">v2.4.1</span></strong><span class="sub">健康检查超时<span class="sep">·</span>13:18 · 30.0s</span></span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 7h10v10" />
+  <path d="M7 17 17 7" />
+</svg>
+</a><div class="footnote"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg>
+TOTP 会话已验证<span>演示数据</span></div></main><nav class="bottom" aria-label="主导航"><a href="?screen=overview" class="selected"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+<span>总览</span></a><a href="?screen=project" class=""><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+</svg>
+<span>项目</span></a><a href="?screen=logs" class=""><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+<span>日志</span></a></nav></div></section><section class="artboard" data-screen="project"><div class="screen-label"><h2>项目详情</h2><span>版本、部署信息与历史记录。</span></div><div class="screen"><header class="apphead"><a class="back" href="?screen=overview" aria-label="返回总览"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+</a><span class="headlabel">SERVER CONSOLE</span><span class="secure" title="TOTP 已验证"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg>
+</span></header><main><div class="page-title detail-title"><p class="sub">项目详情</p><h1>microdraft</h1><div class="title-meta"><span class="type">Systemd</span><span class="sub mono">AaronConlon / microdraft</span></div></div><section class="version-plate"><div class="plate-label"><span>当前部署版本</span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 6a9 9 0 0 0-9 9V3" />
+  <circle cx="18" cy="6" r="3" />
+  <circle cx="6" cy="18" r="3" />
+</svg>
+</div><div class="version-number mono">v1.8.2</div><div class="plate-bottom"><span class="status"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+部署成功</span><span class="sub mono">EXIT 0</span></div></section><div class="section-title"><h2>部署信息</h2></div><dl class="properties"><div><dt>部署目录</dt><dd class="mono">/opt/microdraft</dd></div><div><dt>服务单元</dt><dd class="mono">upy-microdraft.service</dd></div><div><dt>最近部署</dt><dd class="mono">10-20 14:32:08</dd></div><div><dt>部署耗时</dt><dd class="mono">3.2s</dd></div></dl><a class="primary" href="?screen=logs"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+查看本次部署日志<svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 7h10v10" />
+  <path d="M7 17 17 7" />
+</svg>
+</a><div class="section-title"><h2>部署记录</h2><span class="sub">最近 2 次</span></div><a href="?screen=logs" class="event"><span class="event-mark "><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+</span><span class="event-body"><strong>v1.8.2<span class="mono">CURRENT</span></strong><span class="sub">部署完成<span class="sep">·</span>10-20 14:32 · 3.2s</span></span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 7h10v10" />
+  <path d="M7 17 17 7" />
+</svg>
+</a><a href="?screen=logs" class="event"><span class="event-mark "><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+</span><span class="event-body"><strong>v1.8.1<span class="mono">PREVIOUS</span></strong><span class="sub">部署完成<span class="sep">·</span>10-19 09:16 · 4.1s</span></span><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 7h10v10" />
+  <path d="M7 17 17 7" />
+</svg>
+</a><div class="info-note"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 6a9 9 0 0 0-9 9V3" />
+  <circle cx="18" cy="6" r="3" />
+  <circle cx="6" cy="18" r="3" />
+</svg>
+<span>由 GitHub Release 驱动<br><small>Webhook 触发后自动记录部署过程。</small></span></div><div class="footnote">只读项目视图<span>演示数据</span></div></main><nav class="bottom" aria-label="主导航"><a href="?screen=overview" class=""><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+<span>总览</span></a><a href="?screen=project" class="selected"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+</svg>
+<span>项目</span></a><a href="?screen=logs" class=""><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+<span>日志</span></a></nav></div></section><section class="artboard" data-screen="logs"><div class="screen-label"><h2>部署日志</h2><span>在浅色终端中，回溯每一步。</span></div><div class="screen"><header class="apphead"><a class="back" href="?screen=overview" aria-label="返回总览"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m12 19-7-7 7-7" />
+  <path d="M19 12H5" />
+</svg>
+</a><span class="headlabel">SERVER CONSOLE</span><span class="secure" title="TOTP 已验证"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+  <path d="m9 12 2 2 4-4" />
+</svg>
+</span></header><main><div class="page-title"><p class="sub">microdraft / 部署记录</p><h1>部署日志</h1><div class="title-meta"><span class="status"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="10" />
+  <path d="m16 9-5.5 5.5L8 12" />
+</svg>
+执行成功</span><span class="sub mono">v1.8.2 <span class="sep">/</span> 3.2s</span></div></div><div class="taskid"><span class="sub">任务 ID</span><span class="mono">20261020-143208</span><button data-copy="20261020-143208" class="button icon-only" aria-label="copy"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+</svg>
+</button></div><div class="log-toolbar"><span>执行输出 <span class="sub mono">13 LINES</span></span><button id="export" class="button " aria-label="导出"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 15V3" />
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  <path d="m7 10 5 5 5-5" />
+</svg>
+导出</button></div><section class="log-output" aria-label="部署执行输出"><div class="logline"><span class="lineno">01</span><span class="logbody"><span class="logtime">14:32:08</span> <span class="loglevel ">INFO</span><br>解析 GitHub Release</span></div><div class="logline"><span class="lineno">02</span><span class="logbody"><span class="logtime"></span> <span class="loglevel "></span>AaronConlon/microdraft @ v1.8.2</span></div><div class="logline"><span class="lineno">03</span><span class="logbody"><span class="logtime">14:32:08</span> <span class="loglevel ">INFO</span><br>下载 bundle.zip</span></div><div class="logline"><span class="lineno">04</span><span class="logbody"><span class="logtime"></span> <span class="loglevel "></span>SHA-256 校验通过</span></div><div class="logline"><span class="lineno">05</span><span class="logbody"><span class="logtime">14:32:09</span> <span class="loglevel ">INFO</span><br>准备 systemd 服务</span></div><div class="logline"><span class="lineno">06</span><span class="logbody"><span class="logtime"></span> <span class="loglevel "></span>目标平台 linux/amd64</span></div><div class="logline"><span class="lineno">07</span><span class="logbody"><span class="logtime"></span> <span class="loglevel "></span>运行用户 microdraft</span></div><div class="logline"><span class="lineno">08</span><span class="logbody"><span class="logtime">14:32:09</span> <span class="loglevel ">INFO</span><br>解压至 releases/v1.8.2</span></div><div class="logline"><span class="lineno">09</span><span class="logbody"><span class="logtime">14:32:10</span> <span class="loglevel ">INFO</span><br>更新 current 符号链接</span></div><div class="logline"><span class="lineno">10</span><span class="logbody"><span class="logtime">14:32:10</span> <span class="loglevel ">INFO</span><br>重启 upy-microdraft.service</span></div><div class="logline"><span class="lineno">11</span><span class="logbody"><span class="logtime">14:32:11</span> <span class="loglevel pass">PASS</span><br>HTTP 健康检查通过</span></div><div class="logline"><span class="lineno">12</span><span class="logbody"><span class="logtime"></span> <span class="loglevel "></span>127.0.0.1:8080/health → 200</span></div><div class="logline"><span class="lineno">13</span><span class="logbody"><span class="logtime">14:32:11</span> <span class="loglevel pass">DONE</span><br>部署完成，耗时 3.2s</span></div></section><div class="log-result"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg>
+<span>任务已结束</span><span class="mono">EXIT CODE 0</span></div><div class="footnote">日志按项目归档<span>演示数据</span></div></main><nav class="bottom" aria-label="主导航"><a href="?screen=overview" class=""><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+  <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" />
+  <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />
+</svg>
+<span>总览</span></a><a href="?screen=project" class=""><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+</svg>
+<span>项目</span></a><a href="?screen=logs" class="selected"><svg class="icon " aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 19h8" />
+  <path d="m4 17 6-6-6-6" />
+</svg>
+<span>日志</span></a></nav></div></section></div><footer class="board-footer"><span>细线构筑层级 · 留白组织信息 · 色彩只表达状态</span><span>DESIGN PROTOTYPE / 示例数据</span></footer><script src="app.js"></script></body></html>

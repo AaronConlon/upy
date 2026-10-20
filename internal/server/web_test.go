@@ -166,7 +166,7 @@ func TestWebRoutesFlow(t *testing.T) {
 		t.Fatalf("错误验证码应返回 401, 得到 %d", rrPostWrong.Code)
 	}
 
-	// 5. 输入正确验证码登录 -> 302 重定向到 /logs 并分配 cookie
+	// 5. 输入正确验证码登录 -> 302 重定向到 /overview 并分配 cookie
 	validCode, _ := generateTOTP(fixedSecret, time.Now())
 	formValid := url.Values{"code": {validCode}}
 	reqPostValid, _ := http.NewRequest("POST", "/", strings.NewReader(formValid.Encode()))
@@ -174,8 +174,8 @@ func TestWebRoutesFlow(t *testing.T) {
 	rrPostValid := httptest.NewRecorder()
 	mux.ServeHTTP(rrPostValid, reqPostValid)
 
-	if rrPostValid.Code != http.StatusFound || rrPostValid.Header().Get("Location") != "/logs" {
-		t.Fatalf("正确验证码应重定向到 /logs, 得到 code=%d, loc=%s", rrPostValid.Code, rrPostValid.Header().Get("Location"))
+	if rrPostValid.Code != http.StatusFound || rrPostValid.Header().Get("Location") != "/overview" {
+		t.Fatalf("正确验证码应重定向到 /overview, 得到 code=%d, loc=%s", rrPostValid.Code, rrPostValid.Header().Get("Location"))
 	}
 
 	cookies := rrPostValid.Result().Cookies()

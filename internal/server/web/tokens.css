@@ -1,0 +1,29 @@
+/* Hallmark · portable tokens · server-mobile */
+:root {
+  --color-paper: oklch(99% 0.003 255);
+  --color-surface: oklch(97.4% 0.004 255);
+  --color-board: oklch(95.5% 0.005 255);
+  --color-ink: oklch(24% 0.009 255);
+  --color-muted: oklch(51% 0.012 255);
+  --color-faint: oklch(65% 0.01 255);
+  --color-rule: oklch(87% 0.006 255);
+  --color-grid: oklch(92.5% 0.005 255);
+  --color-accent: oklch(45% 0.19 264);
+  --color-success: oklch(45% 0.09 162);
+  --color-success-bg: oklch(96% 0.018 162);
+  --color-error: oklch(48% 0.12 35);
+  --color-error-bg: oklch(96.5% 0.02 35);
+  --color-on-ink: oklch(99% 0.003 255);
+  --font-display: "Jost", "Avenir Next", "PingFang SC", sans-serif;
+  --font-body: "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --radius-control: 2px;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 150ms;
+}
