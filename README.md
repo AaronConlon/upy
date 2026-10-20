@@ -785,8 +785,9 @@ UPY_CONFIG=/path/to/config.yaml upy server auth
 
 This reuses the existing `totp.json` secret without rotating it or invalidating enrolled authenticators. To protect the secret from indefinite exposure, the command is subject to a view quota (`server.totp_max_views`, default 5 times); once exhausted, the QR code is no longer rendered. QR output goes directly to an interactive terminal, never to upy logs or redirected stdout. The server can keep running. Invalid secret files produce an error instead of silently replacing the key.
 
-The console uses a light mobile layout, with a centered 440px container on desktop. Lucide SVG icons and styles are embedded in the binary:
+The console uses a light mobile layout, centered in an iPhone 17 container (402px × 874px) on desktop, with fixed header and bottom tab bar, independently scrollable content, and right gutter on logs to prevent scroll traps. Lucide SVG icons, mascot WebP logo, and styles are all embedded in the binary:
 
+- **Authentication (`/`)**: enter the 6-digit dynamic code from your authenticator. Protected by rate limiting (max 10 failed attempts per minute; successful logins excluded; blocked once exceeded until restart).
 - **Overview (`/overview`)**: the default destination after login, showing host information, server uptime, projects, and recent deployment results.
 - **Projects (`/projects`)**: search by name or directory; inspect current/previous versions, service units from `state.json`, and deployment history.
 - **Logs (`/logs`)**: filter by project, status, or keyword, with 20 records per page and separate Server / upy runtime log views.
