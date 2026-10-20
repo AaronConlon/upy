@@ -62,8 +62,39 @@ func TestServerTerminalEnrollment(t *testing.T) {
 		t.Fatal(err)
 	}
 	second, err := os.ReadFile(filepath.Join(root, "totp.json"))
-	if err != nil || !bytes.Equal(first, second) {
+	if err != nil {
+		t.Fatal(err)
+	}
+	var d1, d2 struct {
+		Secret string `json:"secret"`
+		Views  int    `json:"views"`
+	}
+	if err := json.Unmarshal(first, &d1); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(second, &d2); err != nil {
+		t.Fatal(err)
+	}
+	if d1.Secret == "" || d1.Secret != d2.Secret {
 		t.Fatal("enrollment rotated secret")
+	}
+	if d1.Views != 1 || d2.Views != 2 {
+		t.Fatalf("expected views to increment from 1 to 2, got d1=%d, d2=%d", d1.Views, d2.Views)
+	}
+	if !strings.Contains(out.String(), "剩余展示次数：4 / 5 次") {
+		t.Fatalf("expected remaining views in output, got: %s", out.String())
+	}
+
+	// 剩余查看次数耗尽后禁止渲染
+	for i := 3; i <= 5; i++ {
+		if err := renderServerAuth(config.ServerConfig{}, io.Discard); err != nil {
+			t.Fatalf("call %d should succeed: %v", i, err)
+		}
+	}
+	if err := renderServerAuth(config.ServerConfig{}, io.Discard); err == nil {
+		t.Fatal("call 6 should have exceeded view quota, but got nil error")
+	} else if !strings.Contains(err.Error(), "上限") {
+		t.Fatalf("expected quota exceeded error, got: %v", err)
 	}
 	if !strings.Contains(out.String(), "█") {
 		t.Fatal("terminal QR missing")
@@ -75,13 +106,7 @@ func TestServerTerminalEnrollment(t *testing.T) {
 	if strings.Contains(string(logged), "█") || strings.Contains(string(logged), "otpauth://") {
 		t.Fatal("QR leaked into runtime log")
 	}
-	var data struct {
-		Secret string `json:"secret"`
-	}
-	if err := json.Unmarshal(first, &data); err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(out.String(), data.Secret) || strings.Contains(string(logged), data.Secret) {
+	if strings.Contains(out.String(), d1.Secret) || strings.Contains(string(logged), d1.Secret) {
 		t.Fatal("plaintext secret leaked")
 	}
 }

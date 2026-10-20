@@ -102,3 +102,72 @@ func TestTOTPConcurrentInitialization(t *testing.T) {
 		t.Fatalf("secret file permissions: %o", info.Mode().Perm())
 	}
 }
+
+func TestTOTPViewQuota(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "totp.json")
+	tm, err := NewTOTPManager(path, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if tm.Views() != 0 {
+		t.Fatalf("expected initial views 0, got %d", tm.Views())
+	}
+	if !tm.CanView(3) {
+		t.Fatal("expected CanView(3) to be true")
+	}
+	if rem := tm.RemainingViews(3); rem != 3 {
+		t.Fatalf("expected remaining views 3, got %d", rem)
+	}
+
+	// 第 1 次查看
+	rem, allowed, err := tm.RecordView(3)
+	if err != nil || !allowed || rem != 2 {
+		t.Fatalf("call 1 failed: rem=%d, allowed=%v, err=%v", rem, allowed, err)
+	}
+	if tm.Views() != 1 {
+		t.Fatalf("expected views 1, got %d", tm.Views())
+	}
+
+	// 第 2 次查看
+	rem, allowed, err = tm.RecordView(3)
+	if err != nil || !allowed || rem != 1 {
+		t.Fatalf("call 2 failed: rem=%d, allowed=%v, err=%v", rem, allowed, err)
+	}
+
+	// 第 3 次查看 (达到上限)
+	rem, allowed, err = tm.RecordView(3)
+	if err != nil || !allowed || rem != 0 {
+		t.Fatalf("call 3 failed: rem=%d, allowed=%v, err=%v", rem, allowed, err)
+	}
+	if tm.CanView(3) {
+		t.Fatal("expected CanView(3) to be false after 3 views")
+	}
+
+	// 第 4 次查看 (超额拒绝)
+	rem, allowed, err = tm.RecordView(3)
+	if err != nil {
+		t.Fatalf("call 4 should not return system error: %v", err)
+	}
+	if allowed {
+		t.Fatal("call 4 should not be allowed")
+	}
+	if rem != 0 {
+		t.Fatalf("expected remaining 0, got %d", rem)
+	}
+	if tm.Views() != 3 {
+		t.Fatalf("expected views to stay 3, got %d", tm.Views())
+	}
+
+	// 重新加载验证持久化
+	tmReloaded, err := NewTOTPManager(path, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tmReloaded.Views() != 3 {
+		t.Fatalf("expected reloaded views 3, got %d", tmReloaded.Views())
+	}
+	if tmReloaded.CanView(3) {
+		t.Fatal("expected reloaded CanView(3) to be false")
+	}
+}

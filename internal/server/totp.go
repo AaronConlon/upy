@@ -22,6 +22,7 @@ import (
 
 type TOTPData struct {
 	Secret    string    `json:"secret"`
+	Views     int       `json:"views"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -89,7 +90,7 @@ func (tm *TOTPManager) loadOrInit() error {
 	if _, err := generateTOTP(secret, time.Now()); err != nil {
 		return fmt.Errorf("server.totp_secret 不是有效的 Base32 密钥")
 	}
-	d := TOTPData{Secret: secret, CreatedAt: time.Now()}
+	d := TOTPData{Secret: secret, Views: 0, CreatedAt: time.Now()}
 	data, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		return err
@@ -120,6 +121,77 @@ func (tm *TOTPManager) loadOrInit() error {
 	}
 	tm.data = d
 	return nil
+}
+
+func (tm *TOTPManager) saveLocked() error {
+	data, err := json.MarshalIndent(tm.data, "", "  ")
+	if err != nil {
+		return err
+	}
+	f, err := os.CreateTemp(filepath.Dir(tm.filePath), ".totp-*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	defer os.Remove(tmp)
+	if _, err = f.Write(data); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp, tm.filePath)
+}
+
+// Views 获取当前的已查看次数
+func (tm *TOTPManager) Views() int {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	return tm.data.Views
+}
+
+// CanView 检查是否仍有展示配额
+func (tm *TOTPManager) CanView(maxViews int) bool {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	return tm.data.Views < maxViews
+}
+
+// RemainingViews 返回剩余查看次数
+func (tm *TOTPManager) RemainingViews(maxViews int) int {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	r := maxViews - tm.data.Views
+	if r < 0 {
+		return 0
+	}
+	return r
+}
+
+// RecordView 记录一次绑定二维码查看，若超出配额则返回 allowed=false
+func (tm *TOTPManager) RecordView(maxViews int) (remaining int, allowed bool, err error) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	if tm.data.Views >= maxViews {
+		return 0, false, nil
+	}
+
+	tm.data.Views++
+	if err := tm.saveLocked(); err != nil {
+		tm.data.Views--
+		return maxViews - tm.data.Views, false, err
+	}
+	remaining = maxViews - tm.data.Views
+	if remaining < 0 {
+		remaining = 0
+	}
+	return remaining, true, nil
 }
 
 // Secret 获取当前的 TOTP Secret

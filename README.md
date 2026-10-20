@@ -783,7 +783,7 @@ upy server auth
 UPY_CONFIG=/path/to/config.yaml upy server auth
 ```
 
-This reuses the existing `totp.json` secret without rotating it or invalidating enrolled authenticators. The old view quota no longer applies. QR output goes directly to an interactive terminal, never to upy logs or redirected stdout. The server can keep running. Invalid secret files produce an error instead of silently replacing the key.
+This reuses the existing `totp.json` secret without rotating it or invalidating enrolled authenticators. To protect the secret from indefinite exposure, the command is subject to a view quota (`server.totp_max_views`, default 5 times); once exhausted, the QR code is no longer rendered. QR output goes directly to an interactive terminal, never to upy logs or redirected stdout. The server can keep running. Invalid secret files produce an error instead of silently replacing the key.
 
 The console uses a light mobile layout, with a centered 440px container on desktop. Lucide SVG icons and styles are embedded in the binary:
 

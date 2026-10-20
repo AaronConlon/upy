@@ -32,6 +32,7 @@ server:
   # 在 VPS 上运行 upy server auth，扫描终端二维码绑定认证器（Web 不提供绑定入口）
   listen: "127.0.0.1:8999"         # Webhook & Web 控制台监听地址 (建议反代模式下绑定 127.0.0.1)
   token: "your-api-secret-token"   # 全局 API 鉴权 Token (CI/CD Webhook 调用时使用)
+  totp_max_views: 5                # 2FA 绑定二维码最大展示次数 (默认 5 次，超出即禁止展示)
   # public_url: "https://deploy.example.com" # 生成外部访问日志链接的基础 URL
   # max_log_history: 30            # 每个项目保留的历史日志份数 (默认 30 份)
 

@@ -205,6 +205,7 @@ type ServerConfig struct {
 	Token         string `yaml:"token,omitempty"`           // 全局 API Bearer Token
 	PublicURL     string `yaml:"public_url,omitempty"`      // 对外生成日志访问链接的 Base URL
 	MaxLogHistory int    `yaml:"max_log_history,omitempty"` // 每个项目保留的最大日志文件数，默认 30
+	TOTPMaxViews  int    `yaml:"totp_max_views,omitempty"`  // 2FA 绑定二维码最大展示次数，默认 5
 	TOTPSecret    string `yaml:"totp_secret,omitempty"`     // 可选显式固定 TOTP Secret (Base32)
 }
 
@@ -222,6 +223,14 @@ func (s ServerConfig) EffectiveMaxLogHistory() int {
 		return s.MaxLogHistory
 	}
 	return 30
+}
+
+// EffectiveTOTPMaxViews 返回生效的 2FA 绑定二维码最大展示次数，默认 5
+func (s ServerConfig) EffectiveTOTPMaxViews() int {
+	if s.TOTPMaxViews > 0 {
+		return s.TOTPMaxViews
+	}
+	return 5
 }
 
 // ActiveBarks 返回全局用户配置中生效的 Bark 渠道

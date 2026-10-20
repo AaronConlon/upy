@@ -178,6 +178,14 @@ func renderServerAuth(cfg config.ServerConfig, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	maxViews := cfg.EffectiveTOTPMaxViews()
+	remaining, allowed, err := tm.RecordView(maxViews)
+	if err != nil {
+		return fmt.Errorf("读取绑定次数失败: %w", err)
+	}
+	if !allowed {
+		return fmt.Errorf("绑定二维码查看次数已达上限 (%d/%d 次)，已禁止再次渲染", maxViews, maxViews)
+	}
 	host, _ := os.Hostname()
 	account := "admin"
 	if host != "" {
@@ -187,6 +195,6 @@ func renderServerAuth(cfg config.ServerConfig, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(out, "upy · 认证器绑定\n\n请用 Google Authenticator、1Password 等扫描下方二维码：\n\n%s\n绑定后访问控制台首页，输入 6 位动态验证码登录。\n此命令复用现有密钥，已有认证器绑定继续有效。\n", qr)
+	_, err = fmt.Fprintf(out, "upy · 认证器绑定\n\n请用 Google Authenticator、1Password 等扫描下方二维码：\n\n%s\n绑定后访问控制台首页，输入 6 位动态验证码登录。\n此命令复用现有密钥（剩余展示次数：%d / %d 次）。\n", qr, remaining, maxViews)
 	return err
 }

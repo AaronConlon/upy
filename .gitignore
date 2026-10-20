@@ -215,6 +215,7 @@ go.work
 
 # upy build
 /dist/
+/output/
 upy-*
 !skills/upy-project-adapter/
 !skills/upy-project-adapter/**
