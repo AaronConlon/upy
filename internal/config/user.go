@@ -185,8 +185,14 @@ type UserGitHub struct {
 	Tokens map[string]string `yaml:"tokens,omitempty"` // 按归属映射: WeiaiHealth-Software: ghp_xxx
 }
 
+// UpdateConfig 仅控制 upy 自身升级，不影响项目 Release 下载及系统网络代理。
+type UpdateConfig struct {
+	ProxyEnabled bool `yaml:"proxy_enabled,omitempty"`
+}
+
 // UserConfig ~/.upy/config.yaml
 type UserConfig struct {
+	Update   UpdateConfig   `yaml:"update,omitempty"`
 	GitHub   UserGitHub     `yaml:"github"`
 	Notify   UserNotify     `yaml:"notify,omitempty"`
 	Projects []LocalProject `yaml:"projects,omitempty"`

@@ -838,6 +838,15 @@ upy log upy -c
 
 ## 如何升级
 
+可选在 `~/.upy/config.yaml` 中开启 upy 自身升级下载加速：
+
+```yaml
+update:
+  proxy_enabled: true
+```
+
+默认关闭（`false` 或不配置）。开启后，`upy update`（含指定版本）通过 `https://ghfast.top/` 加上 GitHub Release 原始 URL 下载二进制及 `SHA256SUMS`，继续执行大小检查和 SHA-256 校验。版本查询仍直连 GitHub API；项目部署下载不受影响，加速请求不携带 GitHub Token。服务不可用时设为 `false` 恢复原下载路径。此开关不控制已有的系统 HTTP / HTTPS 代理。
+
 `upy` 拥有完善的跨分区自更新与在运行进程替换机制，随时保持工具最新：
 
 ```bash

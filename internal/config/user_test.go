@@ -468,3 +468,27 @@ func TestLoadUserConfigServer(t *testing.T) {
 		t.Fatalf("UserDataDir 不对: %s, 期望 %s", UserDataDir(), dir)
 	}
 }
+
+func TestUpdateProxyConfiguration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	t.Setenv("UPY_CONFIG", path)
+	for _, tc := range []struct {
+		yaml    string
+		enabled bool
+	}{{"", false}, {"update: {}", false}, {"update:\n  proxy_enabled: false\n", false}, {"update:\n  proxy_enabled: true\n", true}} {
+		if err := os.WriteFile(path, []byte(tc.yaml), 0600); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := LoadUserConfig()
+		if err != nil || cfg.Update.ProxyEnabled != tc.enabled {
+			t.Fatalf("config %q: %+v %v", tc.yaml, cfg, err)
+		}
+		if _, err := saveUserConfig(cfg); err != nil {
+			t.Fatal(err)
+		}
+		again, err := LoadUserConfig()
+		if err != nil || again.Update.ProxyEnabled != tc.enabled {
+			t.Fatal("update option lost after saving config")
+		}
+	}
+}

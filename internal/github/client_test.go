@@ -2,6 +2,7 @@ package github
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -250,5 +251,47 @@ func TestDownloadAssetResumeOnDisconnect(t *testing.T) {
 	}
 	if attempts < 2 {
 		t.Fatalf("期望发生重试与续传，实际请求次数: %d", attempts)
+	}
+}
+
+func TestSelfUpdateProxyURL(t *testing.T) {
+	raw := "https://github.com/AaronConlon/upy/releases/download/v0.6.0/upy-linux-x64"
+	got, err := selfUpdateProxyURL(raw)
+	if err != nil || got != "https://ghfast.top/"+raw {
+		t.Fatalf("incorrect proxy URL: %s %v", got, err)
+	}
+	for _, raw := range []string{"http://github.com/AaronConlon/upy/releases/download/v1/a", "https://github.com/other/repo/releases/download/v1/a", "https://github.com.evil/AaronConlon/upy/releases/download/v1/a", "https://user:password@github.com/AaronConlon/upy/releases/download/v1/a", "https://github.com/AaronConlon/upy/releases/download/v1/a?token=secret"} {
+		if _, err := selfUpdateProxyURL(raw); err == nil {
+			t.Fatalf("unexpected allowed URL: %s", raw)
+		}
+	}
+}
+
+type updateProxyTransport func(*http.Request) (*http.Response, error)
+
+func (f updateProxyTransport) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestSelfUpdateProxyDownloadNeverSendsToken(t *testing.T) {
+	t.Setenv("DEPLOY_GITHUB_TOKEN", "private-token")
+	old := downloadClient.Transport
+	defer func() { downloadClient.Transport = old }()
+	requests := 0
+	downloadClient.Transport = updateProxyTransport(func(r *http.Request) (*http.Response, error) {
+		requests++
+		if r.Header.Get("Authorization") != "" {
+			t.Fatal("GitHub token sent to accelerator")
+		}
+		if r.URL.Host != "ghfast.top" || !strings.HasPrefix(r.URL.Path, "/https://github.com/AaronConlon/upy/releases/download/") {
+			t.Fatalf("unexpected target %s", r.URL)
+		}
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader("binary")), ContentLength: 6, Header: make(http.Header)}, nil
+	})
+	dest := filepath.Join(t.TempDir(), "upy")
+	if err := DownloadSelfUpdateAsset(&GHAsset{URL: "https://github.com/AaronConlon/upy/releases/download/v1/upy-linux-x64", Name: "upy-linux-x64", Size: 6}, dest); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(dest)
+	if err != nil || string(data) != "binary" || requests != 1 {
+		t.Fatalf("unexpected result %q %v requests=%d", data, err, requests)
 	}
 }

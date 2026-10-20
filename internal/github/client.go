@@ -444,6 +444,24 @@ func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 	return downloadToFile(asset.URL, "", asset, dest)
 }
 
+// DownloadSelfUpdateAsset 仅转发 upy 公共 Release 资产，不携带 GitHub Token。
+// 保留现有下载重试、断点续传和大小检查，安装端仍执行 SHA-256 校验。
+func DownloadSelfUpdateAsset(asset *GHAsset, dest string) error {
+	proxyURL, err := selfUpdateProxyURL(asset.URL)
+	if err != nil {
+		return err
+	}
+	return downloadToFile(proxyURL, "", asset, dest)
+}
+
+func selfUpdateProxyURL(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.Host != "github.com" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || !strings.HasPrefix(u.Path, "/AaronConlon/upy/releases/download/") {
+		return "", fmt.Errorf("自更新加速只支持 AaronConlon/upy 的 GitHub Release 公开下载地址")
+	}
+	return "https://ghfast.top/" + raw, nil
+}
+
 func downloadToFile(url, token string, asset *GHAsset, dest string) error {
 	tmpDest := fmt.Sprintf("%s.tmp-%d", dest, time.Now().UnixNano())
 	success := false

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/checksum"
+	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/github"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/platform"
@@ -23,9 +24,22 @@ import (
 func UpdateCmd(target string, force bool) error {
 	startedAt := time.Now()
 	target = strings.TrimSpace(target)
+	userCfg, err := config.LoadUserConfig()
+	if err != nil {
+		return err
+	}
+	proxyEnabled := userCfg.Update.ProxyEnabled
+	if proxyEnabled {
+		log.Info("upy 自更新下载加速已启用: https://ghfast.top")
+	}
+	download := func(asset *github.GHAsset, dest string) error {
+		if proxyEnabled {
+			return github.DownloadSelfUpdateAsset(asset, dest)
+		}
+		return github.DownloadAsset(selfRepo, asset, dest)
+	}
 
 	var release *github.GHRelease
-	var err error
 
 	if target == "" || strings.EqualFold(target, "latest") {
 		release, err = github.GetLatest(selfRepo)
@@ -104,12 +118,12 @@ func UpdateCmd(target string, force bool) error {
 	defer os.Remove(sumsPath)
 
 	log.Step(fmt.Sprintf("⬇️  正在下载 %s（%s）...", assetName, humanSize(asset.Size)))
-	if err := github.DownloadAsset(selfRepo, asset, tmpPath); err != nil {
+	if err := download(asset, tmpPath); err != nil {
 		return err
 	}
 	log.Ok(fmt.Sprintf("%s 下载完成", assetName))
 	log.Step("正在校验 SHA-256...")
-	if err := github.DownloadAsset(selfRepo, sumsAsset, sumsPath); err != nil {
+	if err := download(sumsAsset, sumsPath); err != nil {
 		return fmt.Errorf("无法下载 SHA256SUMS，拒绝安装未校验的二进制: %w", err)
 	}
 	if err := checksum.VerifySHA256SUMS(tmpPath, sumsPath, assetName); err != nil {

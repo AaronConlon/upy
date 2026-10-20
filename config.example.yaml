@@ -34,3 +34,7 @@ server:
   token: "your-api-secret-token"   # 全局 API 鉴权 Token (CI/CD Webhook 调用时使用)
   # public_url: "https://deploy.example.com" # 生成外部访问日志链接的基础 URL
   # max_log_history: 30            # 每个项目保留的历史日志份数 (默认 30 份)
+
+# upy 自身升级下载加速，默认关闭；不影响项目部署和 GitHub API 查询。
+update:
+  proxy_enabled: false            # true: 使用 https://ghfast.top 下载二进制与 SHA256SUMS
