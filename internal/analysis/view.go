@@ -165,6 +165,10 @@ func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 		sb.WriteString(log.Dim(headerLine) + "\n")
 
 		for i, p := range report.Projects {
+			// 项目行之间留一行空白，避免终端中相邻项目紧贴。
+			if i > 0 {
+				sb.WriteString("\n")
+			}
 			idxStr := padRight(fmt.Sprintf("%d", i+1), 3)
 
 			displayName := p.Name
