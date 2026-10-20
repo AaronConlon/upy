@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 )
 
@@ -27,14 +28,14 @@ func (s *StaticDeployer) directory() string {
 func (s *StaticDeployer) Prepare() error {
 	dir := filepath.Join(s.ctx.ReleaseDir, s.directory())
 	idx := filepath.Join(dir, "index.html")
-	log.Step("正在校验静态 bundle...")
+	log.Step(i18n.T("正在校验静态 bundle..."))
 	if _, err := os.Stat(dir); err != nil {
-		return fmt.Errorf("bundle 中缺少静态目录: %s", s.directory())
+		return fmt.Errorf(i18n.T("bundle 中缺少静态目录: %s"), s.directory())
 	}
 	if _, err := os.Stat(idx); err != nil {
-		return fmt.Errorf("静态 bundle 缺少入口文件 (期望位于 %s/index.html)", s.directory())
+		return fmt.Errorf(i18n.T("静态 bundle 缺少入口文件 (期望位于 %s/index.html)"), s.directory())
 	}
-	log.Ok("静态 bundle 校验通过 (" + s.directory() + "/)")
+	log.Ok(i18n.T("静态 bundle 校验通过 (") + s.directory() + "/)")
 	return nil
 }
 
@@ -43,13 +44,13 @@ func (s *StaticDeployer) Deactivate() error { return nil }
 
 // Activate 原子切换 current 软链
 func (s *StaticDeployer) Activate() error {
-	log.Step("正在激活静态版本...")
+	log.Step(i18n.T("正在激活静态版本..."))
 	target, err := filepath.Abs(filepath.Join(s.ctx.ReleaseDir, s.directory()))
 	if err != nil {
 		return err
 	}
 	if _, err := os.Stat(target); err != nil {
-		return fmt.Errorf("静态版本目录不存在: %s", target)
+		return fmt.Errorf(i18n.T("静态版本目录不存在: %s"), target)
 	}
 	_ = os.Chmod(target, 0o755)
 	if err := AtomicSymlink(target, filepath.Join(s.ctx.Root, "current")); err != nil {
@@ -64,32 +65,32 @@ func (s *StaticDeployer) Activate() error {
 func (s *StaticDeployer) HealthCheck() error {
 	hc := s.ctx.Manifest.Healthcheck
 	if hc == nil {
-		log.Info("未配置健康检查，跳过")
+		log.Info(i18n.T("未配置健康检查，跳过"))
 		return nil
 	}
-	log.Step("正在健康检查 " + hc.URL + "...")
+	log.Step(i18n.T("正在健康检查 ") + hc.URL + "...")
 	if err := PollHealth(hc.URL, HealthcheckTimeoutSec(s.ctx.Manifest)); err != nil {
 		return err
 	}
-	log.Ok("健康检查通过")
+	log.Ok(i18n.T("健康检查通过"))
 	return nil
 }
 
 // Rollback best-effort 切回上一版本
 func (s *StaticDeployer) Rollback() error {
-	log.Step("回滚: 恢复上一静态版本...")
+	log.Step(i18n.T("回滚: 恢复上一静态版本..."))
 	if s.ctx.PreviousVersion == "" {
-		log.Info("没有可回滚的上一版本")
+		log.Info(i18n.T("没有可回滚的上一版本"))
 		return nil
 	}
 	prevDir := filepath.Join(s.ctx.Root, "releases", s.ctx.PreviousVersion, s.directory())
 	if _, err := os.Stat(prevDir); err != nil {
-		log.Info("上一版本目录已不存在，保留当前版本")
+		log.Info(i18n.T("上一版本目录已不存在，保留当前版本"))
 		return nil
 	}
 	if err := AtomicSymlink(prevDir, filepath.Join(s.ctx.Root, "current")); err != nil {
 		return err
 	}
-	log.Ok("已回滚到 " + s.ctx.PreviousVersion)
+	log.Ok(i18n.T("已回滚到 ") + s.ctx.PreviousVersion)
 	return nil
 }

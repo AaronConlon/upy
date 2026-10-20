@@ -190,8 +190,8 @@
               复制命令
             </button>
           </div>
-          <pre><code id="install-code">curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash</code></pre>
-          <p>默认安装至 /usr/local/bin，支持通过 INSTALL_DIR 指定安装路径。</p>
+          <pre><code id="install-code">curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash -s -- --lang zh-CN</code></pre>
+          <p>默认安装至 /usr/local/bin，CLI 设为中文；可通过 --lang en 改用英文，或用 INSTALL_DIR 指定安装路径。</p>
         </div>
       </section>
       <section
@@ -772,9 +772,9 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
                   <span class="step-card-file">Max Benchmark Bar</span>
                 </div>
                 <pre><code><span class="comment"># 算法：以占用最高的项目 maxBytes 为 100% 基准换算比例</span>
-1  my-compose-app  docker  1.45 GB  [<span class="keyword">████████████████████</span>] 100.0%
-2  my-api-service  system  482 MB   [<span class="keyword">███████</span>░░░░░░░░░░░░░]  32.5%
-3  portal-frontend static   86 MB   [<span class="keyword">█</span>░░░░░░░░░░░░░░░░░░░]   5.8%</code></pre>
+1  my-compose-app  docker  1.45 GB  <span class="keyword">━━━━━━━━━━━━━━━━━━━━</span>
+2  my-api-service  system  482 MB   <span class="string">━━━━━━━</span>─────────────
+3  portal-frontend static   86 MB   <span class="number">━</span>───────────────────</code></pre>
               </div>
 
               <!-- Card 2: 最近部署 Spotlight -->
@@ -813,10 +813,10 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
 
 <span class="t-highlight">━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━</span>
 <span class="t-dim">#   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)</span>
-1   <span class="t-bold">my-compose-app</span>      <span class="t-ok">🟢 active</span>      docker   <span class="t-highlight">v2.1.0</span>      1.45 GB     [<span class="t-highlight">████████████████████</span>] 100.0%
-2   <span class="t-bold">my-api-service</span>      <span class="t-ok">🟢 active</span>      system   <span class="t-highlight">v1.2.0</span>      482.3 MB    [<span class="t-ok">███████░░░░░░░░░░░░░</span>]  32.5%
-3   <span class="t-bold">portal-frontend</span>     <span class="t-ok">🟢 active</span>      static   <span class="t-highlight">v0.9.4</span>       86.1 MB    [<span class="t-dim">█░░░░░░░░░░░░░░░░░░░</span>]   5.8%
-4   <span class="t-bold">demo-spa</span>            <span class="t-dim">⚪ undeployed</span>  static   -            14.2 MB    [<span class="t-dim">▏░░░░░░░░░░░░░░░░░░░</span>]   0.9%
+1   <span class="t-bold">my-compose-app</span>      <span class="t-ok">🟢 active</span>      docker   <span class="t-highlight">v2.1.0</span>      1.45 GB     <span class="t-highlight">━━━━━━━━━━━━━━━━━━━━</span>
+2   <span class="t-bold">my-api-service</span>      <span class="t-ok">🟢 active</span>      system   <span class="t-highlight">v1.2.0</span>      482.3 MB    <span class="t-ok">━━━━━━━─────────────</span>
+3   <span class="t-bold">portal-frontend</span>     <span class="t-ok">🟢 active</span>      static   <span class="t-highlight">v0.9.4</span>       86.1 MB    <span class="t-dim">━───────────────────</span>
+4   <span class="t-bold">demo-spa</span>            <span class="t-dim">⚪ undeployed</span>  static   -            14.2 MB    <span class="t-dim">━───────────────────</span>
 
 <span class="t-highlight">━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
   📊 纳管项目: 4 个

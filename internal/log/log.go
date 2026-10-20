@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"golang.org/x/term"
 )
 
@@ -64,7 +65,7 @@ func EnableFileLog(logDir string, argv []string) func() {
 	fileLogStartedAt = time.Now()
 	ts := fileLogStartedAt.Format("2006-01-02 15:04:05")
 	cmdStr := strings.Join(argv, " ")
-	fmt.Fprintf(f, "[%s] [CLI] >>> 启动: %s (PID: %d)\n", ts, Redact(cmdStr), os.Getpid())
+	fmt.Fprintf(f, i18n.T("[%s] [CLI] >>> 启动: %s (PID: %d)\n"), ts, Redact(cmdStr), os.Getpid())
 	fileMu.Unlock()
 
 	return func() {
@@ -73,7 +74,7 @@ func EnableFileLog(logDir string, argv []string) func() {
 		if fileLogger != nil {
 			ts := time.Now().Format("2006-01-02 15:04:05")
 			duration := time.Since(fileLogStartedAt).Round(time.Millisecond)
-			fmt.Fprintf(fileLogger, "[%s] [CLI] <<< 退出 (耗时: %s)\n", ts, duration)
+			fmt.Fprintf(fileLogger, i18n.T("[%s] [CLI] <<< 退出 (耗时: %s)\n"), ts, duration)
 			_ = fileLogger.Close()
 			fileLogger = nil
 		}
@@ -158,6 +159,9 @@ func Yellow(s string) string  { return paint(yellow, s) }
 func Red(s string) string     { return paint(red, s) }
 func Magenta(s string) string { return paint(magenta, s) }
 
+// RGB applies a project-specific color only on terminals that support ANSI output.
+func RGB(s string, r, g, b int) string { return paint(fmt.Sprintf("\x1b[38;2;%d;%d;%dm", r, g, b), s) }
+
 // Path 突出路径: 天蓝加粗
 func Path(s string) string { return paint(bright+bold, s) }
 
@@ -183,7 +187,7 @@ func Progress(msg string) { emit("  " + paint(cyan, "...") + " " + msg) }
 func Ok(msg string)       { emit("  " + paint(green, "✓") + " " + msg) }
 func Info(msg string)     { emit("  " + paint(dim, "-") + " " + msg) }
 func Warn(msg string)     { emit("  " + paint(yellow, "!") + " " + msg) }
-func Fail(msg string)     { emit("  " + paint(red, "错误: ") + msg) }
+func Fail(msg string)     { emit("  " + paint(red, i18n.T("错误: ")) + msg) }
 
 // HumanSize 将字节大小格式化为易读的字符串 (如 1.2MB, 512KB)
 func HumanSize(bytes int64) string {

@@ -4,14 +4,43 @@
 #
 # 用法:
 #   # 安装或更新到最新 Release 版本
-#   curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash -s -- --lang en
 #
 # 自定义安装目录、指定版本或强制重装:
-#   INSTALL_DIR=~/.local/bin curl -fsSL ... | bash
+#   curl -fsSL ... | INSTALL_DIR=~/.local/bin bash -s -- --lang en
 #   VERSION=v0.1.1 curl -fsSL ... | bash
 #   FORCE=1 curl -fsSL ... | bash
 #
 set -euo pipefail
+
+# --lang 影响安装器消息，并写入 upy 用户配置。不要使用系统 LANG，避免改变系统区域设置。
+INSTALL_LANGUAGE="${UPY_LANG:-en}"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --lang)
+      if [ "$#" -lt 2 ]; then printf '%s\n' 'Missing value for --lang (en or zh-CN)' >&2; exit 1; fi
+      INSTALL_LANGUAGE="$2"; shift 2 ;;
+    --lang=*) INSTALL_LANGUAGE="${1#--lang=}"; shift ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 1 ;;
+  esac
+done
+case "$INSTALL_LANGUAGE" in
+  en|en-US|en-GB) INSTALL_LANGUAGE=en ;;
+  zh|zh-CN|zh-cn|zh-Hans) INSTALL_LANGUAGE=zh-CN ;;
+  *) printf 'Unsupported language: %s (use en or zh-CN)\n' "$INSTALL_LANGUAGE" >&2; exit 1 ;;
+esac
+export UPY_LANG="$INSTALL_LANGUAGE"
+message() {
+  if [ "$INSTALL_LANGUAGE" = "zh-CN" ]; then printf '%s' "$1"; else printf '%s' "$2"; fi
+}
+save_language() {
+  # 由 Go YAML 读写器修改单一字段，避免 shell 文本替换损坏已有配置。
+  if UPY_LANG=en "$TARGET_BIN" --help | grep -F 'language: en | zh-CN' >/dev/null; then
+    "$TARGET_BIN" __set-language "$INSTALL_LANGUAGE"
+  else
+    log_err "$(message "此版本尚不支持语言设置，请升级至支持多语言的版本。" "This version does not support language settings; upgrade to a multilingual release.")"
+  fi
+}
 
 START_TIME="$(date +%s)"
 
@@ -55,7 +84,7 @@ log_err() {
 print_elapsed() {
   END_TIME="$(date +%s)"
   ELAPSED=$((END_TIME - START_TIME))
-  log_info "⏱ 耗时: ${GREEN}${BOLD}${ELAPSED}s${RESET}"
+  log_info "$(message "⏱ 耗时: ${GREEN}${BOLD}${ELAPSED}s${RESET}" "Elapsed: ${GREEN}${BOLD}${ELAPSED}s${RESET}")"
 }
 
 # 1. 识别当前平台 OS 与架构
@@ -64,7 +93,7 @@ case "$OS_RAW" in
   darwin) OS="darwin" ;;
   linux) OS="linux" ;;
   *)
-    log_err "暂不支持的操作系统: $OS_RAW (目前仅支持 Linux / macOS)"
+    log_err "$(message "暂不支持的操作系统: $OS_RAW (目前仅支持 Linux / macOS)" "Unsupported operating system: $OS_RAW (Linux / macOS only)")"
     exit 1
     ;;
 esac
@@ -74,7 +103,7 @@ case "$ARCH_RAW" in
   x86_64|amd64) ARCH="x64" ;;
   arm64|aarch64) ARCH="arm64" ;;
   *)
-    log_err "暂不支持的 CPU 架构: $ARCH_RAW (目前仅支持 x64 / arm64)"
+    log_err "$(message "暂不支持的 CPU 架构: $ARCH_RAW (目前仅支持 x64 / arm64)" "Unsupported CPU architecture: $ARCH_RAW (x64 / arm64 only)")"
     exit 1
     ;;
 esac
@@ -116,9 +145,9 @@ elif command -v upy >/dev/null 2>&1; then
   CURRENT_VERSION="$(upy --version 2>/dev/null | awk '{print $2}' || true)"
 fi
 
-log_info "运行环境: ${BOLD}${OS}-${ARCH}${RESET} (目标资产: ${ASSET_NAME})"
+log_info "$(message "运行环境: ${BOLD}${OS}-${ARCH}${RESET} (目标资产: ${ASSET_NAME})" "Platform: ${BOLD}${OS}-${ARCH}${RESET} (asset: ${ASSET_NAME})")"
 if [ -n "$CURRENT_VERSION" ]; then
-  log_info "本地当前版本: ${BOLD}${CURRENT_VERSION}${RESET}"
+  log_info "$(message "本地当前版本: ${BOLD}${CURRENT_VERSION}${RESET}" "Installed version: ${BOLD}${CURRENT_VERSION}${RESET}")"
 fi
 
 # 4. 从 GitHub Releases 解析最新发布版本及资产信息
@@ -131,7 +160,7 @@ fi
 ASSET_ID=""
 SUMS_ASSET_ID=""
 if [ -z "$TARGET_VERSION" ]; then
-  log_step "正在从 GitHub Releases 检查最新发布版本..."
+  log_step "$(message "正在从 GitHub Releases 检查最新发布版本..." "Checking the latest GitHub Release...")"
   API_URL="https://api.github.com/repos/${REPO}/releases/latest"
   RELEASE_JSON="$(curl -fsSL "${AUTH_HEADER[@]}" -H "Accept: application/vnd.github+json" "$API_URL" 2>/dev/null || true)"
   TARGET_VERSION="$(printf '%s' "$RELEASE_JSON" | grep -m1 '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)"
@@ -149,19 +178,20 @@ else
 fi
 
 if [ -z "$TARGET_VERSION" ]; then
-  log_err "无法从 Releases 获取版本号。若仓库为私有仓库，请设置 GITHUB_TOKEN 或运行 upy init 配置访问令牌。"
+  log_err "$(message "无法从 Releases 获取版本号。若仓库为私有仓库，请设置 GITHUB_TOKEN 或运行 upy init 配置访问令牌。" "Cannot resolve the Release version. For private repositories, set GITHUB_TOKEN or configure access with upy init.")"
   exit 1
 fi
 
-log_info "Releases 目标版本: ${BOLD}${TARGET_VERSION}${RESET}"
+log_info "$(message "Releases 目标版本: ${BOLD}${TARGET_VERSION}${RESET}" "Target release: ${BOLD}${TARGET_VERSION}${RESET}")"
 
 # 若本地已安装且版本一致，未开启强制覆盖，直接提示退出
 if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" = "$TARGET_VERSION" ] && [ "$FORCE" != "1" ]; then
-  log_ok "当前已是 Releases 目标版本 (${CURRENT_VERSION})，无需更新。"
+  log_ok "$(message "当前已是 Releases 目标版本 (${CURRENT_VERSION})，无需更新。" "Already on the target release (${CURRENT_VERSION}); no update needed.")"
   if [ -x "$TARGET_BIN" ]; then
-    "$TARGET_BIN" __install-completion || log_err "Tab 命令补全安装失败，但 upy 可正常使用。"
+    save_language
+    "$TARGET_BIN" __install-completion || log_err "$(message "Tab 命令补全安装失败，但 upy 可正常使用。" "Shell completion installation failed; upy remains usable.")"
   fi
-  log_info "如需强制重新下载安装，可传 FORCE=1，例如: FORCE=1 ./install.sh"
+  log_info "$(message "如需强制重新下载安装，可传 FORCE=1，例如: FORCE=1 ./install.sh" "To reinstall, set FORCE=1, for example: FORCE=1 ./install.sh")"
   print_elapsed
   exit 0
 fi
@@ -179,9 +209,9 @@ TMP_FILE="${TMP_DIR}/${ASSET_NAME}"
 SUMS_FILE="${TMP_DIR}/SHA256SUMS"
 
 if [ -n "$CURRENT_VERSION" ]; then
-  log_step "正在从 Releases 拉取最新资产更新: ${CURRENT_VERSION} -> ${TARGET_VERSION}..."
+  log_step "$(message "正在从 Releases 拉取最新资产更新: ${CURRENT_VERSION} -> ${TARGET_VERSION}..." "Downloading release update: ${CURRENT_VERSION} -> ${TARGET_VERSION}...")"
 else
-  log_step "正在从 Releases 下载 ${ASSET_NAME} (${TARGET_VERSION})..."
+  log_step "$(message "正在从 Releases 下载 ${ASSET_NAME} (${TARGET_VERSION})..." "Downloading ${ASSET_NAME} (${TARGET_VERSION})...")"
 fi
 
 DOWNLOAD_SUCCESS=0
@@ -202,7 +232,7 @@ if [ "$DOWNLOAD_SUCCESS" -ne 1 ]; then
 fi
 
 if [ "$DOWNLOAD_SUCCESS" -ne 1 ]; then
-  log_err "资产下载失败。若仓库为私有，请确认 Token 是否具有目标仓库的 Contents 读取权限。"
+  log_err "$(message "资产下载失败。若仓库为私有，请确认 Token 是否具有目标仓库的 Contents 读取权限。" "Download failed. For a private repository, check that the token has Contents read permission.")"
   exit 1
 fi
 
@@ -220,18 +250,18 @@ if [ "$SUMS_DOWNLOAD_SUCCESS" -ne 1 ]; then
   fi
 fi
 if [ "$SUMS_DOWNLOAD_SUCCESS" -ne 1 ]; then
-  log_err "无法下载 SHA256SUMS，拒绝安装未校验的二进制。"
+  log_err "$(message "无法下载 SHA256SUMS，拒绝安装未校验的二进制。" "Cannot download SHA256SUMS; refusing to install an unverified binary.")"
   exit 1
 fi
 
 EXPECTED_SHA="$(awk -v asset="$ASSET_NAME" '$2 { name=$2; sub(/^\*/, "", name); if (name == asset) print $1 }' "$SUMS_FILE")"
 EXPECTED_COUNT="$(printf '%s\n' "$EXPECTED_SHA" | sed '/^$/d' | wc -l | tr -d '[:space:]')"
 if [ "$EXPECTED_COUNT" != "1" ]; then
-  log_err "SHA256SUMS 中资产 ${ASSET_NAME} 的记录缺失或重复。"
+  log_err "$(message "SHA256SUMS 中资产 ${ASSET_NAME} 的记录缺失或重复。" "Missing or duplicate entry for ${ASSET_NAME} in SHA256SUMS.")"
   exit 1
 fi
 if ! printf '%s\n' "$EXPECTED_SHA" | grep -Eq '^[[:xdigit:]]{64}$'; then
-  log_err "SHA256SUMS 中不存在或格式不正确的资产校验值: ${ASSET_NAME}"
+  log_err "$(message "SHA256SUMS 中不存在或格式不正确的资产校验值: ${ASSET_NAME}" "Missing or invalid checksum for asset: ${ASSET_NAME}")"
   exit 1
 fi
 if command -v sha256sum >/dev/null 2>&1; then
@@ -239,16 +269,16 @@ if command -v sha256sum >/dev/null 2>&1; then
 elif command -v shasum >/dev/null 2>&1; then
   ACTUAL_SHA="$(shasum -a 256 "$TMP_FILE" | awk '{print $1}')"
 else
-  log_err "未找到 sha256sum 或 shasum，无法校验下载的二进制。"
+  log_err "$(message "未找到 sha256sum 或 shasum，无法校验下载的二进制。" "Neither sha256sum nor shasum is available to verify the downloaded binary.")"
   exit 1
 fi
 EXPECTED_SHA_LOWER="$(printf '%s' "$EXPECTED_SHA" | tr '[:upper:]' '[:lower:]')"
 ACTUAL_SHA_LOWER="$(printf '%s' "$ACTUAL_SHA" | tr '[:upper:]' '[:lower:]')"
 if [ "$EXPECTED_SHA_LOWER" != "$ACTUAL_SHA_LOWER" ]; then
-  log_err "SHA-256 校验失败，拒绝安装二进制。"
+  log_err "$(message "SHA-256 校验失败，拒绝安装二进制。" "SHA-256 verification failed; refusing to install the binary.")"
   exit 1
 fi
-log_ok "SHA-256 校验通过。"
+log_ok "$(message "SHA-256 校验通过。" "SHA-256 verification passed.")"
 
 chmod +x "$TMP_FILE"
 
@@ -258,9 +288,9 @@ if [ "$(id -u)" -ne 0 ]; then
   if [ ! -w "$INSTALL_DIR" ] || [ ! -d "$INSTALL_DIR" ]; then
     if command -v sudo >/dev/null 2>&1; then
       SUDO="sudo"
-      log_info "需要管理员权限写入 ${INSTALL_DIR}"
+      log_info "$(message "需要管理员权限写入 ${INSTALL_DIR}" "Administrator privileges are required to write to ${INSTALL_DIR}")"
     else
-      log_err "无权限写入 ${INSTALL_DIR}，且未找到 sudo 命令"
+      log_err "$(message "无权限写入 ${INSTALL_DIR}，且未找到 sudo 命令" "Permission denied for ${INSTALL_DIR}, and sudo is unavailable")"
       exit 1
     fi
   fi
@@ -270,27 +300,30 @@ if [ ! -d "$INSTALL_DIR" ]; then
   $SUDO mkdir -p "$INSTALL_DIR"
 fi
 
-log_step "正在写入 ${TARGET_BIN}..."
+log_step "$(message "正在写入 ${TARGET_BIN}..." "Installing to ${TARGET_BIN}...")"
 $SUDO mv "$TMP_FILE" "$TARGET_BIN"
 $SUDO chmod 755 "$TARGET_BIN"
 
+# 保存当前安装选择的语言，保留 Token、项目注册表与其他设置。
+save_language
+
 # 7. 验证结果
 if [ -n "$CURRENT_VERSION" ]; then
-  log_ok "upy 已成功更新至 ${TARGET_VERSION}！"
+  log_ok "$(message "upy 已成功更新至 ${TARGET_VERSION}！" "upy updated to ${TARGET_VERSION}.")"
 else
-  log_ok "upy ${TARGET_VERSION} 已成功安装完成！"
+  log_ok "$(message "upy ${TARGET_VERSION} 已成功安装完成！" "upy ${TARGET_VERSION} installed successfully.")"
 fi
 
-log_step "正在配置 Tab 命令补全..."
+log_step "$(message "正在配置 Tab 命令补全..." "Configuring shell completion...")"
 if ! "$TARGET_BIN" __install-completion; then
-  log_err "Tab 命令补全安装失败，但 upy 已可正常使用。"
+  log_err "$(message "Tab 命令补全安装失败，但 upy 已可正常使用。" "Shell completion installation failed; upy is ready to use.")"
 fi
 
 if command -v upy >/dev/null 2>&1; then
   INSTALLED_PATH="$(command -v upy)"
-  log_info "执行文件路径: ${INSTALLED_PATH}"
+  log_info "$(message "执行文件路径: ${INSTALLED_PATH}" "Executable path: ${INSTALLED_PATH}")"
 else
-  log_info "提示: ${INSTALL_DIR} 可能尚未加入系统 PATH，请将其加入您的 shell 配置文件 (如 ~/.zshrc 或 ~/.bashrc):"
+  log_info "$(message "提示: ${INSTALL_DIR} 可能尚未加入系统 PATH，请将其加入您的 shell 配置文件 (如 ~/.zshrc 或 ~/.bashrc):" "Tip: ${INSTALL_DIR} may not be on PATH. Add it to your shell configuration (such as ~/.zshrc or ~/.bashrc):")"
   printf "    export PATH=\"%s:\$PATH\"\n" "$INSTALL_DIR"
 fi
 

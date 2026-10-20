@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"gopkg.in/yaml.v3"
 )
 
@@ -192,6 +193,7 @@ type UpdateConfig struct {
 
 // UserConfig ~/.upy/config.yaml
 type UserConfig struct {
+	Language string         `yaml:"language,omitempty"`
 	Update   UpdateConfig   `yaml:"update,omitempty"`
 	GitHub   UserGitHub     `yaml:"github"`
 	Notify   UserNotify     `yaml:"notify,omitempty"`
@@ -363,11 +365,11 @@ func LoadUserConfig() (*UserConfig, error) {
 		if os.IsNotExist(err) {
 			return &UserConfig{}, nil
 		}
-		return nil, fmt.Errorf("读取用户配置失败: %s (%v)", path, err)
+		return nil, fmt.Errorf(i18n.T("读取用户配置失败: %s (%v)"), path, err)
 	}
 	var cfg UserConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("用户配置 YAML 无效: %s (%v)", path, err)
+		return nil, fmt.Errorf(i18n.T("用户配置 YAML 无效: %s (%v)"), path, err)
 	}
 	return &cfg, nil
 }
@@ -443,9 +445,9 @@ func ResolveGitHubTokenForRepo(repo string) (string, error) {
 		}
 		owner := ParseRepoOwner(repo)
 		if owner != "" {
-			return "", fmt.Errorf("未配置访问 %s 的 GitHub token。请在 %s 写入 github.tokens.%s，或通过 upy init %s <token> 添加。", owner, path, owner, owner)
+			return "", fmt.Errorf(i18n.T("未配置访问 %s 的 GitHub token。请在 %s 写入 github.tokens.%s，或通过 upy init %s <token> 添加。"), owner, path, owner, owner)
 		}
-		return "", fmt.Errorf("未配置 GitHub token。请在 %s 写入 github.token，或通过 upy init <token> 添加。", path)
+		return "", fmt.Errorf(i18n.T("未配置 GitHub token。请在 %s 写入 github.token，或通过 upy init <token> 添加。"), path)
 	}
 	return t, nil
 }
@@ -464,7 +466,7 @@ func ResolveGitHubToken() (string, error) {
 func SaveGitHubToken(owner, token string) (string, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return "", fmt.Errorf("token 不能为空")
+		return "", i18n.Error("token 不能为空")
 	}
 
 	path := UserConfigPath()
@@ -534,7 +536,7 @@ func SaveLocalProject(name, root string) error {
 	root = strings.TrimSpace(root)
 	absRoot, err := filepath.Abs(root)
 	if err != nil || name == "" || !isProjectRoot(absRoot) {
-		return fmt.Errorf("项目名称或根目录无效，无法保存本地项目")
+		return i18n.Error("项目名称或根目录无效，无法保存本地项目")
 	}
 
 	cfg, err := LoadUserConfig()
@@ -614,14 +616,28 @@ func saveUserConfig(cfg *UserConfig) (string, error) {
 		path = DefaultUserConfigPath()
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-		return "", fmt.Errorf("无法创建配置目录 %s: %v", filepath.Dir(path), err)
+		return "", fmt.Errorf(i18n.T("无法创建配置目录 %s: %v"), filepath.Dir(path), err)
 	}
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
-		return "", fmt.Errorf("序列化配置失败: %v", err)
+		return "", fmt.Errorf(i18n.T("序列化配置失败: %v"), err)
 	}
 	if err := os.WriteFile(path, data, 0600); err != nil {
-		return "", fmt.Errorf("写入配置文件失败 %s: %v", path, err)
+		return "", fmt.Errorf(i18n.T("写入配置文件失败 %s: %v"), path, err)
 	}
 	return path, nil
+}
+
+// SaveLanguage persists only a supported canonical language, preserving the rest of the configuration.
+func SaveLanguage(language string) (string, error) {
+	language, err := i18n.Normalize(language)
+	if err != nil {
+		return "", err
+	}
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		return "", err
+	}
+	cfg.Language = language
+	return saveUserConfig(cfg)
 }

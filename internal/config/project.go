@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"gopkg.in/yaml.v3"
 )
 
@@ -121,24 +122,24 @@ func ReadProjectConfig(root string) (*ProjectConfig, error) {
 	path := filepath.Join(root, "deploy.yaml")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("在 %s 中找不到 deploy.yaml（请在项目目录中运行 upy，或用 --root 指定目录）", root)
+		return nil, fmt.Errorf(i18n.T("在 %s 中找不到 deploy.yaml（请在项目目录中运行 upy，或用 --root 指定目录）"), root)
 	}
 	var cfg ProjectConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("deploy.yaml 无效: %v", err)
+		return nil, fmt.Errorf(i18n.T("deploy.yaml 无效: %v"), err)
 	}
 	if strings.TrimSpace(cfg.Name) == "" {
-		return nil, fmt.Errorf("deploy.yaml 无效: name 为必填且不能为空")
+		return nil, i18n.Error("deploy.yaml 无效: name 为必填且不能为空")
 	}
 	if cfg.Release == nil {
-		return nil, fmt.Errorf("deploy.yaml 无效: 缺少 release 配置块 (provider, repository, asset)")
+		return nil, i18n.Error("deploy.yaml 无效: 缺少 release 配置块 (provider, repository, asset)")
 	}
 	if cfg.Release.Provider != "github" {
-		return nil, fmt.Errorf("deploy.yaml 无效: release.provider 仅支持 'github'，当前为 '%s'", cfg.Release.Provider)
+		return nil, fmt.Errorf(i18n.T("deploy.yaml 无效: release.provider 仅支持 'github'，当前为 '%s'"), cfg.Release.Provider)
 	}
 	parts := strings.Split(cfg.Release.Repository, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return nil, fmt.Errorf("deploy.yaml 无效: release.repository 格式应为 'owner/repo'")
+		return nil, i18n.Error("deploy.yaml 无效: release.repository 格式应为 'owner/repo'")
 	}
 	if strings.TrimSpace(cfg.Release.Asset) == "" {
 		cfg.Release.Asset = "bundle.zip"
@@ -156,7 +157,7 @@ func ReadProjectConfig(root string) (*ProjectConfig, error) {
 	if bundlesCfg != nil && bundlesCfg.Keep != nil {
 		keep = *bundlesCfg.Keep
 		if keep < 0 || keep > 100 {
-			return nil, fmt.Errorf("deploy.yaml 无效: bundles.keep 必须在 0 到 100 之间 (当前为 %d)", keep)
+			return nil, fmt.Errorf(i18n.T("deploy.yaml 无效: bundles.keep 必须在 0 到 100 之间 (当前为 %d)"), keep)
 		}
 	}
 	cfg.Bundles = &ProjectBundles{Keep: &keep}

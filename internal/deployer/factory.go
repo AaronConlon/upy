@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 )
 
 // CreateDeployer 按 manifest.type + docker.mode 创建部署器
@@ -20,7 +21,7 @@ func CreateDeployer(ctx *DeployContext) (Deployer, error) {
 	case "system", "service":
 		return NewSystem(ctx), nil
 	}
-	return nil, fmt.Errorf("无法创建部署器: 未知类型 '%s'", ctx.Manifest.Type)
+	return nil, fmt.Errorf(i18n.T("无法创建部署器: 未知类型 '%s'"), ctx.Manifest.Type)
 }
 
 // HealthcheckTimeoutSec 取健康检查超时秒数

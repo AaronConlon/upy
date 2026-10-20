@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/AaronConlon/upy/internal/i18n"
 )
 
 // State 部署状态
@@ -29,11 +31,11 @@ func Read(root string) (*State, error) {
 		if os.IsNotExist(err) {
 			return &State{}, nil
 		}
-		return nil, fmt.Errorf("无法读取 state.json: %v", err)
+		return nil, fmt.Errorf(i18n.T("无法读取 state.json: %v"), err)
 	}
 	var s State
 	if err := json.Unmarshal(data, &s); err != nil {
-		return nil, fmt.Errorf("state.json 无效: %v", err)
+		return nil, fmt.Errorf(i18n.T("state.json 无效: %v"), err)
 	}
 	return &s, nil
 }
@@ -44,16 +46,16 @@ func WriteAtomic(root string, s *State) error {
 	tmp := p + ".tmp." + randomSuffix()
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
-		return fmt.Errorf("无法序列化 state.json: %v", err)
+		return fmt.Errorf(i18n.T("无法序列化 state.json: %v"), err)
 	}
 	data = append(data, '\n')
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		os.Remove(tmp)
-		return fmt.Errorf("无法写入 state.json: %v", err)
+		return fmt.Errorf(i18n.T("无法写入 state.json: %v"), err)
 	}
 	if err := os.Rename(tmp, p); err != nil {
 		os.Remove(tmp)
-		return fmt.Errorf("无法写入 state.json: %v", err)
+		return fmt.Errorf(i18n.T("无法写入 state.json: %v"), err)
 	}
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/term"
 	"io"
 	"net/http"
 	"os"
@@ -15,8 +14,10 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/server"
+	"golang.org/x/term"
 )
 
 type ServerArgs struct {
@@ -56,7 +57,7 @@ func Server(args ServerArgs) error {
 		return runDaemonStop()
 
 	case "restart":
-		log.Step("正在停止已有 server 进程...")
+		log.Step(i18n.T("正在停止已有 server 进程..."))
 		_ = runDaemonStop()
 		time.Sleep(200 * time.Millisecond)
 		if args.Daemon && !args.Foreground {
@@ -66,19 +67,19 @@ func Server(args ServerArgs) error {
 
 	case "auth":
 		if !term.IsTerminal(int(os.Stdout.Fd())) {
-			return fmt.Errorf("请在交互终端执行 upy server auth；二维码不会写入管道或日志")
+			return i18n.Error("请在交互终端执行 upy server auth；二维码不会写入管道或日志")
 		}
 		return renderServerAuth(serverCfg, os.Stdout)
 	case "status":
 		return runDaemonStatus(serverCfg.EffectiveListen())
 
 	default:
-		return fmt.Errorf("未知操作 %q，支持的操作为: start, stop, restart, status, auth", action)
+		return fmt.Errorf(i18n.T("未知操作 %q，支持的操作为: start, stop, restart, status, auth"), action)
 	}
 }
 
 func runDaemonStart(cfg config.ServerConfig) error {
-	log.Step("正在启动 upy server 后台静默进程...")
+	log.Step(i18n.T("正在启动 upy server 后台静默进程..."))
 	pid, err := server.StartDaemon(server.DaemonFlags{
 		Listen: cfg.EffectiveListen(),
 		Token:  cfg.Token,
@@ -87,24 +88,24 @@ func runDaemonStart(cfg config.ServerConfig) error {
 		return err
 	}
 
-	log.Ok(fmt.Sprintf("upy server 已在后台静默运行 (PID: %d)", pid))
-	log.Info("监听地址: " + log.Sky(cfg.EffectiveListen()))
-	log.Info("运行日志: " + log.Path(server.ServerLogPath()))
-	log.Info("查看状态: " + log.Cyan("upy server status"))
-	log.Info("绑定认证器: " + log.Cyan("upy server auth") + "（在终端显示二维码）")
-	log.Info("停止命令: " + log.Cyan("upy server stop"))
+	log.Ok(fmt.Sprintf(i18n.T("upy server 已在后台静默运行 (PID: %d)"), pid))
+	log.Info(i18n.T("监听地址: ") + log.Sky(cfg.EffectiveListen()))
+	log.Info(i18n.T("运行日志: ") + log.Path(server.ServerLogPath()))
+	log.Info(i18n.T("查看状态: ") + log.Cyan("upy server status"))
+	log.Info(i18n.T("绑定认证器: ") + log.Cyan("upy server auth") + i18n.T("（在终端显示二维码）"))
+	log.Info(i18n.T("停止命令: ") + log.Cyan("upy server stop"))
 	return nil
 }
 
 func runForegroundServer(cfg config.ServerConfig) error {
 	listenAddr := cfg.EffectiveListen()
-	log.Step("正在启动 upy server (前台模式)...")
-	log.Info("监听地址: " + log.Sky(listenAddr))
+	log.Step(i18n.T("正在启动 upy server (前台模式)..."))
+	log.Info(i18n.T("监听地址: ") + log.Sky(listenAddr))
 	if strings.TrimSpace(cfg.Token) != "" {
 		log.RegisterSecret(cfg.Token)
-		log.Info("全局 Token: 已启用 (***)")
+		log.Info(i18n.T("全局 Token: 已启用 (***)"))
 	} else {
-		log.Warn("全局 Token: 未配置 (建议在 ~/.upy/config.yaml 中配置 server.token)")
+		log.Warn(i18n.T("全局 Token: 未配置 (建议在 ~/.upy/config.yaml 中配置 server.token)"))
 	}
 
 	srv := server.NewServer(cfg, os.Stderr)
@@ -120,8 +121,8 @@ func runForegroundServer(cfg config.ServerConfig) error {
 		close(errChan)
 	}()
 
-	log.Ok("upy server 就绪，按 Ctrl+C 可停止")
-	log.Info("绑定认证器: 请在另一个终端运行 " + log.Cyan("upy server auth"))
+	log.Ok(i18n.T("upy server 就绪，按 Ctrl+C 可停止"))
+	log.Info(i18n.T("绑定认证器: 请在另一个终端运行 ") + log.Cyan("upy server auth"))
 
 	select {
 	case err := <-errChan:
@@ -129,13 +130,13 @@ func runForegroundServer(cfg config.ServerConfig) error {
 			return err
 		}
 	case <-ctx.Done():
-		log.Step("接收到退出信号，正在优雅关闭服务...")
+		log.Step(i18n.T("接收到退出信号，正在优雅关闭服务..."))
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(shutdownCtx); err != nil {
-			log.Warn("优雅关闭出错: " + err.Error())
+			log.Warn(i18n.T("优雅关闭出错: ") + err.Error())
 		}
-		log.Ok("upy server 已安全退出")
+		log.Ok(i18n.T("upy server 已安全退出"))
 	}
 
 	return nil
@@ -146,7 +147,7 @@ func runDaemonStop() error {
 	if err != nil {
 		return err
 	}
-	log.Ok(fmt.Sprintf("upy server (PID: %d) 已成功停止", pid))
+	log.Ok(fmt.Sprintf(i18n.T("upy server (PID: %d) 已成功停止"), pid))
 	return nil
 }
 
@@ -156,19 +157,19 @@ func runDaemonStatus(configuredListen string) error {
 		return err
 	}
 	if !st.Running {
-		log.Info("upy server 当前未在运行")
+		log.Info(i18n.T("upy server 当前未在运行"))
 		return nil
 	}
 
-	log.Ok(fmt.Sprintf("upy server 正在运行 (PID: %s)", log.Green(strconv.Itoa(st.PID))))
-	log.Info("监听地址: " + log.Sky(st.Listen))
+	log.Ok(fmt.Sprintf(i18n.T("upy server 正在运行 (PID: %s)"), log.Green(strconv.Itoa(st.PID))))
+	log.Info(i18n.T("监听地址: ") + log.Sky(st.Listen))
 	if st.Uptime != "" {
-		log.Info("运行时长: " + st.Uptime)
+		log.Info(i18n.T("运行时长: ") + st.Uptime)
 	}
 	if st.Version != "" {
-		log.Info("版本信息: " + st.Version)
+		log.Info(i18n.T("版本信息: ") + st.Version)
 	}
-	log.Info("日志文件: " + log.Path(server.ServerLogPath()))
+	log.Info(i18n.T("日志文件: ") + log.Path(server.ServerLogPath()))
 	return nil
 }
 
@@ -181,10 +182,10 @@ func renderServerAuth(cfg config.ServerConfig, out io.Writer) error {
 	maxViews := cfg.EffectiveTOTPMaxViews()
 	remaining, allowed, err := tm.RecordView(maxViews)
 	if err != nil {
-		return fmt.Errorf("读取绑定次数失败: %w", err)
+		return fmt.Errorf(i18n.T("读取绑定次数失败: %w"), err)
 	}
 	if !allowed {
-		return fmt.Errorf("绑定二维码查看次数已达上限 (%d/%d 次)，已禁止再次渲染", maxViews, maxViews)
+		return fmt.Errorf(i18n.T("绑定二维码查看次数已达上限 (%d/%d 次)，已禁止再次渲染"), maxViews, maxViews)
 	}
 	host, _ := os.Hostname()
 	account := "admin"
@@ -195,6 +196,6 @@ func renderServerAuth(cfg config.ServerConfig, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(out, "upy · 认证器绑定\n\n请用 Google Authenticator、1Password 等扫描下方二维码：\n\n%s\n绑定后访问控制台首页，输入 6 位动态验证码登录。\n此命令复用现有密钥（剩余展示次数：%d / %d 次）。\n", qr, remaining, maxViews)
+	_, err = fmt.Fprintf(out, i18n.T("upy · 认证器绑定\n\n请用 Google Authenticator、1Password 等扫描下方二维码：\n\n%s\n绑定后访问控制台首页，输入 6 位动态验证码登录。\n此命令复用现有密钥（剩余展示次数：%d / %d 次）。\n"), qr, remaining, maxViews)
 	return err
 }

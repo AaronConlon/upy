@@ -2,13 +2,14 @@
 package projectlock
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/AaronConlon/upy/internal/i18n"
 )
 
 // LockFileName 项目锁文件名
@@ -16,7 +17,7 @@ const LockFileName = ".deploy.lock"
 
 var (
 	// ErrLocked 表示项目已被其他进程或操作锁定
-	ErrLocked = errors.New("项目已被锁定")
+	ErrLocked = i18n.Error("项目已被锁定")
 
 	mu        sync.Mutex
 	heldLocks = make(map[string]*lockEntry)
@@ -56,7 +57,7 @@ func Acquire(root, action string) (*Lock, error) {
 	// 2. 打开或创建锁文件
 	f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o644)
 	if err != nil {
-		return nil, fmt.Errorf("无法创建或打开项目锁文件 %s: %w", lockPath, err)
+		return nil, fmt.Errorf(i18n.T("无法创建或打开项目锁文件 %s: %w"), lockPath, err)
 	}
 
 	// 3. 尝试跨进程文件锁 (非阻塞)
@@ -64,9 +65,9 @@ func Acquire(root, action string) (*Lock, error) {
 		_ = f.Close()
 		info := readLockInfo(lockPath)
 		if info != "" {
-			return nil, fmt.Errorf("项目正在进行 %s，无法获取项目锁，请稍后再试: %w", info, ErrLocked)
+			return nil, fmt.Errorf(i18n.T("项目正在进行 %s，无法获取项目锁，请稍后再试: %w"), info, ErrLocked)
 		}
-		return nil, fmt.Errorf("项目已被其他操作锁定，无法执行 %s，请稍后再试: %w", action, ErrLocked)
+		return nil, fmt.Errorf(i18n.T("项目已被其他操作锁定，无法执行 %s，请稍后再试: %w"), action, ErrLocked)
 	}
 
 	// 4. 写入当前进程与动作信息

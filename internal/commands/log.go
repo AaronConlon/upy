@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/server"
 	"github.com/AaronConlon/upy/internal/ui"
@@ -64,16 +65,16 @@ func Log(args LogArgs) error {
 	// 4. -c, --clear 清空日志
 	if args.Clear {
 		if err := os.WriteFile(logPath, []byte{}, 0o644); err != nil {
-			return fmt.Errorf("清空日志文件失败: %w", err)
+			return fmt.Errorf(i18n.T("清空日志文件失败: %w"), err)
 		}
-		log.Ok("已成功清空日志: " + log.Sky(label) + " (" + log.Path(logPath) + ")")
+		log.Ok(i18n.T("已成功清空日志: ") + log.Sky(label) + " (" + log.Path(logPath) + ")")
 		return nil
 	}
 
 	// 5. 检查文件是否存在
 	if _, err := os.Stat(logPath); err != nil {
 		if os.IsNotExist(err) {
-			log.Info("日志文件尚未生成: " + log.Path(logPath))
+			log.Info(i18n.T("日志文件尚未生成: ") + log.Path(logPath))
 			if !args.Follow {
 				return nil
 			}
@@ -88,7 +89,7 @@ func Log(args LogArgs) error {
 		tailLines = 50
 	}
 
-	log.Step(fmt.Sprintf("查看日志 %s (末尾 %d 行): %s", log.Sky(label), tailLines, log.Path(logPath)))
+	log.Step(fmt.Sprintf(i18n.T("查看日志 %s (末尾 %d 行): %s"), log.Sky(label), tailLines, log.Path(logPath)))
 
 	lines, lastOffset, _ := readLastNLines(logPath, tailLines)
 	for _, l := range lines {
@@ -107,9 +108,9 @@ func resolveLogFilePath(logsDir, target string) (path string, label string, err 
 	lower := strings.ToLower(target)
 	switch lower {
 	case "server":
-		return server.ServerLogPath(), "server 服务日志", nil
+		return server.ServerLogPath(), i18n.T("server 服务日志"), nil
 	case "upy", "cli", "self":
-		return filepath.Join(logsDir, "upy.log"), "upy 运行日志", nil
+		return filepath.Join(logsDir, "upy.log"), i18n.T("upy 运行日志"), nil
 	}
 
 	// 尝试作为项目目录处理
@@ -134,7 +135,7 @@ func resolveLogFilePath(logsDir, target string) (path string, label string, err 
 					return infoI.ModTime().After(infoJ.ModTime())
 				})
 				latest := logFiles[0]
-				return latest, fmt.Sprintf("项目 %s 部署日志 (%s)", target, filepath.Base(latest)), nil
+				return latest, fmt.Sprintf(i18n.T("项目 %s 部署日志 (%s)"), target, filepath.Base(latest)), nil
 			}
 		}
 	}
@@ -161,8 +162,8 @@ func selectLogTarget(logsDir string) (string, bool, error) {
 	}
 
 	options := []ui.SelectOption{
-		{Label: "server 服务运行日志", Hint: "server.log (API/Webhook/请求访问)"},
-		{Label: "upy 自身执行日志", Hint: "upy.log (CLI 命令与执行流水)"},
+		{Label: i18n.T("server 服务运行日志"), Hint: i18n.T("server.log (API/Webhook/请求访问)")},
+		{Label: i18n.T("upy 自身执行日志"), Hint: i18n.T("upy.log (CLI 命令与执行流水)")},
 	}
 
 	// 扫描已有项目日志
@@ -172,14 +173,14 @@ func selectLogTarget(logsDir string) (string, bool, error) {
 			if e.IsDir() {
 				projName := e.Name()
 				options = append(options, ui.SelectOption{
-					Label: fmt.Sprintf("项目 %s 部署日志", projName),
-					Hint:  fmt.Sprintf("%s/ 最新任务", projName),
+					Label: fmt.Sprintf(i18n.T("项目 %s 部署日志"), projName),
+					Hint:  fmt.Sprintf(i18n.T("%s/ 最新任务"), projName),
 				})
 			}
 		}
 	}
 
-	idx, err := ui.Select("请选择要查看的日志", options)
+	idx, err := ui.Select(i18n.T("请选择要查看的日志"), options)
 	if err != nil {
 		return "", false, err
 	}
@@ -190,14 +191,14 @@ func selectLogTarget(logsDir string) (string, bool, error) {
 	case 1:
 		return "upy", true, nil
 	default:
-		projName := strings.TrimPrefix(options[idx].Label, "项目 ")
-		projName = strings.TrimSuffix(projName, " 部署日志")
+		projName := strings.TrimPrefix(options[idx].Label, i18n.T("项目 "))
+		projName = strings.TrimSuffix(projName, i18n.T(" 部署日志"))
 		return projName, true, nil
 	}
 }
 
 func listAllLogs(logsDir string) error {
-	log.Step("日志目录: " + log.Path(logsDir))
+	log.Step(i18n.T("日志目录: ") + log.Path(logsDir))
 	fmt.Println()
 
 	type fileItem struct {
@@ -214,7 +215,7 @@ func listAllLogs(logsDir string) error {
 	if fi, err := os.Stat(serverPath); err == nil {
 		items = append(items, fileItem{
 			Name:     "server.log",
-			Category: "服务运行",
+			Category: i18n.T("服务运行"),
 			Size:     log.HumanSize(fi.Size()),
 			ModTime:  formatRelTime(fi.ModTime()),
 		})
@@ -225,7 +226,7 @@ func listAllLogs(logsDir string) error {
 	if fi, err := os.Stat(upyPath); err == nil {
 		items = append(items, fileItem{
 			Name:     "upy.log",
-			Category: "CLI 运行",
+			Category: i18n.T("CLI 运行"),
 			Size:     log.HumanSize(fi.Size()),
 			ModTime:  formatRelTime(fi.ModTime()),
 		})
@@ -251,7 +252,7 @@ func listAllLogs(logsDir string) error {
 					}
 					items = append(items, fileItem{
 						Name:     filepath.Join(projName, se.Name()),
-						Category: "项目部署",
+						Category: i18n.T("项目部署"),
 						Size:     sz,
 						ModTime:  mt,
 					})
@@ -261,11 +262,11 @@ func listAllLogs(logsDir string) error {
 	}
 
 	if len(items) == 0 {
-		log.Info("当前暂无任何日志文件。")
+		log.Info(i18n.T("当前暂无任何日志文件。"))
 		return nil
 	}
 
-	fmt.Printf("  %-30s  %-10s  %-10s  %s\n", "日志文件", "类别", "大小", "最后修改")
+	fmt.Printf("  %-30s  %-10s  %-10s  %s\n", i18n.T("日志文件"), i18n.T("类别"), i18n.T("大小"), i18n.T("最后修改"))
 	fmt.Println("  " + strings.Repeat("─", 65))
 	for _, it := range items {
 		fmt.Printf("  %-30s  %-10s  %-10s  %s\n", it.Name, it.Category, it.Size, it.ModTime)
@@ -303,7 +304,7 @@ func followLog(filePath string, startOffset int64) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	log.Info("正在实时追踪日志... (按 Ctrl+C 退出)")
+	log.Info(i18n.T("正在实时追踪日志... (按 Ctrl+C 退出)"))
 	offset := startOffset
 
 	ticker := time.NewTicker(150 * time.Millisecond)
@@ -313,7 +314,7 @@ func followLog(filePath string, startOffset int64) error {
 		select {
 		case <-ctx.Done():
 			fmt.Println()
-			log.Info("已退出实时日志追踪")
+			log.Info(i18n.T("已退出实时日志追踪"))
 			return nil
 		case <-ticker.C:
 			fi, err := os.Stat(filePath)
@@ -346,11 +347,11 @@ func formatRelTime(t time.Time) string {
 	d := time.Since(t)
 	switch {
 	case d < time.Minute:
-		return "刚刚"
+		return i18n.T("刚刚")
 	case d < time.Hour:
-		return fmt.Sprintf("%d分钟前", int(d.Minutes()))
+		return fmt.Sprintf(i18n.T("%d分钟前"), int(d.Minutes()))
 	case d < 24*time.Hour:
-		return fmt.Sprintf("%d小时前", int(d.Hours()))
+		return fmt.Sprintf(i18n.T("%d小时前"), int(d.Hours()))
 	default:
 		return t.Format("2006-01-02")
 	}

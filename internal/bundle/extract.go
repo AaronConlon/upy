@@ -8,13 +8,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/AaronConlon/upy/internal/i18n"
 )
 
 // SafeExtract 解压 zipPath 到 destDir, 逐条校验路径防 ZIP Slip
 func SafeExtract(zipPath, destDir string) error {
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
-		return fmt.Errorf("无法读取压缩包: %s (%v)", zipPath, err)
+		return fmt.Errorf(i18n.T("无法读取压缩包: %s (%v)"), zipPath, err)
 	}
 	defer r.Close()
 
@@ -31,12 +33,12 @@ func SafeExtract(zipPath, destDir string) error {
 		absPath := filepath.Join(absDest, filepath.FromSlash(name))
 		rel, err := filepath.Rel(absDest, absPath)
 		if err != nil || rel == "." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
-			return fmt.Errorf("检测到 zip slip 攻击: 条目 '%s' 试图逃逸目标目录，已拒绝", name)
+			return fmt.Errorf(i18n.T("检测到 zip slip 攻击: 条目 '%s' 试图逃逸目标目录，已拒绝"), name)
 		}
 		// 进一步: 任意路径段为 ".." 也拒绝
 		for _, seg := range strings.Split(filepath.ToSlash(rel), "/") {
 			if seg == ".." {
-				return fmt.Errorf("检测到 zip slip 攻击: 条目 '%s' 试图逃逸目标目录，已拒绝", name)
+				return fmt.Errorf(i18n.T("检测到 zip slip 攻击: 条目 '%s' 试图逃逸目标目录，已拒绝"), name)
 			}
 		}
 

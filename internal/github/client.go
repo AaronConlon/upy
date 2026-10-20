@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 )
 
@@ -165,7 +166,7 @@ func ghGet(url, token string, allow404 bool) (*http.Response, error) {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("仓库访问失败: %v", log.Redact(err.Error()))
+		return nil, fmt.Errorf(i18n.T("仓库访问失败: %v"), log.Redact(err.Error()))
 	}
 	if resp.StatusCode == 401 || resp.StatusCode == 403 || resp.StatusCode == 404 {
 		if allow404 && resp.StatusCode == 404 {
@@ -176,10 +177,10 @@ func ghGet(url, token string, allow404 bool) (*http.Response, error) {
 		if _, err := config.ResolveGitHubTokenForRepo(repo); err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("仓库 %s 无法访问 (HTTP %d，请检查 token 权限)。", repo, resp.StatusCode)
+		return nil, fmt.Errorf(i18n.T("仓库 %s 无法访问 (HTTP %d，请检查 token 权限)。"), repo, resp.StatusCode)
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("GitHub API 错误 (%d): %s", resp.StatusCode, strings.TrimPrefix(url, apiBase))
+		return nil, fmt.Errorf(i18n.T("GitHub API 错误 (%d): %s"), resp.StatusCode, strings.TrimPrefix(url, apiBase))
 	}
 	return resp, nil
 }
@@ -225,9 +226,9 @@ func GetLatest(repo string) (*GHRelease, error) {
 	if resp.StatusCode == 404 {
 		owner := config.ParseRepoOwner(repo)
 		if tok == "" {
-			return nil, fmt.Errorf("仓库 %s 不可访问或没有发布版本。若为私有仓库，请通过 upy init %s <token> 添加访问权限。", repo, owner)
+			return nil, fmt.Errorf(i18n.T("仓库 %s 不可访问或没有发布版本。若为私有仓库，请通过 upy init %s <token> 添加访问权限。"), repo, owner)
 		}
-		return nil, fmt.Errorf("仓库 %s 没有已发布的正式版本（请检查该 token 是否具有目标仓库权限）。", repo)
+		return nil, fmt.Errorf(i18n.T("仓库 %s 没有已发布的正式版本（请检查该 token 是否具有目标仓库权限）。"), repo)
 	}
 	defer resp.Body.Close()
 	var r GHRelease
@@ -248,9 +249,9 @@ func GetByTag(repo, tag string) (*GHRelease, error) {
 	if resp.StatusCode == 404 {
 		owner := config.ParseRepoOwner(repo)
 		if tok == "" {
-			return nil, fmt.Errorf("仓库 %s 找不到版本 %s。若为私有仓库，请通过 upy init %s <token> 添加访问权限。", repo, tag, owner)
+			return nil, fmt.Errorf(i18n.T("仓库 %s 找不到版本 %s。若为私有仓库，请通过 upy init %s <token> 添加访问权限。"), repo, tag, owner)
 		}
-		return nil, fmt.Errorf("仓库 %s 找不到版本 %s（请检查版本号或 token 权限）。", repo, tag)
+		return nil, fmt.Errorf(i18n.T("仓库 %s 找不到版本 %s（请检查版本号或 token 权限）。"), repo, tag)
 	}
 	defer resp.Body.Close()
 	var r GHRelease
@@ -281,7 +282,7 @@ func FindAsset(release *GHRelease, name, projectName, repoShort string) (*GHAsse
 		names = append(names, rs)
 	}
 	if len(names) == 0 {
-		return nil, fmt.Errorf("版本 %s 中不存在资产 \"%s\"。", release.Tag, name)
+		return nil, fmt.Errorf(i18n.T("版本 %s 中不存在资产 \"%s\"。"), release.Tag, name)
 	}
 
 	normTag := strings.TrimPrefix(release.Tag, "v")
@@ -306,7 +307,7 @@ func FindAsset(release *GHRelease, name, projectName, repoShort string) (*GHAsse
 	}
 
 	if len(candidates) == 0 {
-		return nil, fmt.Errorf("版本 %s 中找不到与项目相关的 bundle 资产（可用资产: %s）", release.Tag, listAssets(release))
+		return nil, fmt.Errorf(i18n.T("版本 %s 中找不到与项目相关的 bundle 资产（可用资产: %s）"), release.Tag, listAssets(release))
 	}
 	// 多个候选时优先匹配含完整 "v<tag>" 的 (如 v0.5.1)
 	for _, c := range candidates {
@@ -429,7 +430,7 @@ func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 		}
 		// 若 API 端点下载失败且存在公开下载直链，自动降级重试公开直链 (与 install.sh 保持一致)
 		if asset.URL != "" {
-			log.Info(fmt.Sprintf("API 资产端点下载失败 (%v)，正在降级尝试公开直链...", log.Redact(err.Error())))
+			log.Info(fmt.Sprintf(i18n.T("API 资产端点下载失败 (%v)，正在降级尝试公开直链..."), log.Redact(err.Error())))
 			if err2 := downloadToFile(asset.URL, "", asset, dest); err2 == nil {
 				return nil
 			}
@@ -439,7 +440,7 @@ func DownloadAsset(repo string, asset *GHAsset, dest string) error {
 
 	// 无 token，公开仓库直接通过 Browser Download URL 下载
 	if asset.URL == "" {
-		return fmt.Errorf("资产 %s 无公开下载地址，请配置 GitHub token", asset.Name)
+		return fmt.Errorf(i18n.T("资产 %s 无公开下载地址，请配置 GitHub token"), asset.Name)
 	}
 	return downloadToFile(asset.URL, "", asset, dest)
 }
@@ -457,7 +458,7 @@ func DownloadSelfUpdateAsset(asset *GHAsset, dest string) error {
 func selfUpdateProxyURL(raw string) (string, error) {
 	u, err := url.Parse(raw)
 	if err != nil || u.Scheme != "https" || u.Host != "github.com" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || !strings.HasPrefix(u.Path, "/AaronConlon/upy/releases/download/") {
-		return "", fmt.Errorf("自更新加速只支持 AaronConlon/upy 的 GitHub Release 公开下载地址")
+		return "", i18n.Error("自更新加速只支持 AaronConlon/upy 的 GitHub Release 公开下载地址")
 	}
 	return "https://ghfast.top/" + raw, nil
 }
@@ -516,11 +517,11 @@ func downloadToFile(url, token string, asset *GHAsset, dest string) error {
 			cancel()
 			lastErr = err
 			if attempt <= maxDownloadRetries {
-				log.Warn(fmt.Sprintf("下载连接中断 (%v)，正在尝试断点续传 (第 %d/%d 次)...",
+				log.Warn(fmt.Sprintf(i18n.T("下载连接中断 (%v)，正在尝试断点续传 (第 %d/%d 次)..."),
 					log.Redact(err.Error()), attempt, maxDownloadRetries))
 				continue
 			}
-			return fmt.Errorf("下载失败: %v", log.Redact(err.Error()))
+			return fmt.Errorf(i18n.T("下载失败: %v"), log.Redact(err.Error()))
 		}
 
 		isPartial := resp.StatusCode == http.StatusPartialContent
@@ -533,22 +534,22 @@ func downloadToFile(url, token string, asset *GHAsset, dest string) error {
 			cancel()
 			_ = os.Truncate(tmpDest, 0)
 			if attempt <= maxDownloadRetries {
-				log.Warn(fmt.Sprintf("Range 请求无效 (HTTP 416)，已重置为从头下载 (第 %d/%d 次)...", attempt, maxDownloadRetries))
+				log.Warn(fmt.Sprintf(i18n.T("Range 请求无效 (HTTP 416)，已重置为从头下载 (第 %d/%d 次)..."), attempt, maxDownloadRetries))
 				continue
 			}
-			return fmt.Errorf("资产 %s 下载失败 (HTTP 416)", asset.Name)
+			return fmt.Errorf(i18n.T("资产 %s 下载失败 (HTTP 416)"), asset.Name)
 		}
 
 		if !isPartial && !isOK {
 			resp.Body.Close()
 			idleTimer.Stop()
 			cancel()
-			lastErr = fmt.Errorf("资产 %s 下载失败 (%d)", asset.Name, resp.StatusCode)
+			lastErr = fmt.Errorf(i18n.T("资产 %s 下载失败 (%d)"), asset.Name, resp.StatusCode)
 			if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 				return lastErr
 			}
 			if attempt <= maxDownloadRetries {
-				log.Warn(fmt.Sprintf("服务端异常 (%d)，准备重试 (第 %d/%d 次)...", resp.StatusCode, attempt, maxDownloadRetries))
+				log.Warn(fmt.Sprintf(i18n.T("服务端异常 (%d)，准备重试 (第 %d/%d 次)..."), resp.StatusCode, attempt, maxDownloadRetries))
 				continue
 			}
 			return lastErr
@@ -596,11 +597,11 @@ func downloadToFile(url, token string, asset *GHAsset, dest string) error {
 		if copyErr != nil {
 			lastErr = copyErr
 			if attempt <= maxDownloadRetries {
-				log.Warn(fmt.Sprintf("传输中断 (%v)，正在尝试断点续传 (第 %d/%d 次)...",
+				log.Warn(fmt.Sprintf(i18n.T("传输中断 (%v)，正在尝试断点续传 (第 %d/%d 次)..."),
 					log.Redact(copyErr.Error()), attempt, maxDownloadRetries))
 				continue
 			}
-			return fmt.Errorf("下载失败: %v", log.Redact(copyErr.Error()))
+			return fmt.Errorf(i18n.T("下载失败: %v"), log.Redact(copyErr.Error()))
 		}
 
 		fi, statErr := os.Stat(tmpDest)
@@ -608,9 +609,9 @@ func downloadToFile(url, token string, asset *GHAsset, dest string) error {
 			return statErr
 		}
 		if asset.Size > 0 && fi.Size() != asset.Size {
-			lastErr = fmt.Errorf("资产 %s 下载不完整: 预期 %d 字节，实际得到 %d 字节", asset.Name, asset.Size, fi.Size())
+			lastErr = fmt.Errorf(i18n.T("资产 %s 下载不完整: 预期 %d 字节，实际得到 %d 字节"), asset.Name, asset.Size, fi.Size())
 			if attempt <= maxDownloadRetries {
-				log.Warn(fmt.Sprintf("下载大小不一致 (已下载 %s / 预期 %s)，正在重试续传 (第 %d/%d 次)...",
+				log.Warn(fmt.Sprintf(i18n.T("下载大小不一致 (已下载 %s / 预期 %s)，正在重试续传 (第 %d/%d 次)..."),
 					log.HumanSize(fi.Size()), log.HumanSize(asset.Size), attempt, maxDownloadRetries))
 				continue
 			}

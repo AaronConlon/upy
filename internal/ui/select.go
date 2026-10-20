@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AlecAivazis/survey/v2"
 	"golang.org/x/term"
 )
@@ -45,14 +46,14 @@ func surveySelect(message string, options []SelectOption) (int, error) {
 
 	var picked string
 	if err := survey.AskOne(prompt, &picked); err != nil {
-		return 0, fmt.Errorf("已取消")
+		return 0, i18n.Error("已取消")
 	}
 	for i, o := range options {
 		if o.Label == picked {
 			return i, nil
 		}
 	}
-	return 0, fmt.Errorf("无效选择")
+	return 0, i18n.Error("无效选择")
 }
 
 func numberedSelect(message string, options []SelectOption) (int, error) {
@@ -64,13 +65,13 @@ func numberedSelect(message string, options []SelectOption) (int, error) {
 		}
 		fmt.Fprintf(os.Stderr, "  [%d] %s%s\n", i+1, o.Label, hint)
 	}
-	fmt.Fprint(os.Stderr, "输入序号: ")
+	fmt.Fprint(os.Stderr, i18n.T("输入序号: "))
 	var n int
 	if _, err := fmt.Scanln(&n); err != nil {
-		return 0, fmt.Errorf("无效选择")
+		return 0, i18n.Error("无效选择")
 	}
 	if n < 1 || n > len(options) {
-		return 0, fmt.Errorf("无效选择: %d", n)
+		return 0, fmt.Errorf(i18n.T("无效选择: %d"), n)
 	}
 	return n - 1, nil
 }
@@ -84,7 +85,7 @@ func Confirm(message string, defaultVal bool) (bool, error) {
 			Default: defaultVal,
 		}
 		if err := survey.AskOne(prompt, &confirmed); err != nil {
-			return false, fmt.Errorf("已取消")
+			return false, i18n.Error("已取消")
 		}
 		return confirmed, nil
 	}

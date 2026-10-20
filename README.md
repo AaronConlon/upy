@@ -79,7 +79,7 @@ Paired with intelligent **disk space pruning and active version protection** (`u
 Run the one-line installation script on Linux or macOS to automatically detect architecture (x64 / arm64) and install `upy`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash -s -- --lang en
 ```
 
 > **Note**: Default install location is `/usr/local/bin` (requests sudo when needed). The installer automatically configures shell tab completions for `zsh`, `bash`, and `fish`.
@@ -90,13 +90,23 @@ You can specify custom install paths or pin specific release versions:
 
 ```bash
 # Install to user home directory (no root required)
-INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | INSTALL_DIR=~/.local/bin bash -s -- --lang en
 
 # Install a specific version
-VERSION=v0.2.0 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | VERSION=v0.2.0 bash -s -- --lang en
 ```
 
 ---
+
+### CLI language
+
+The CLI defaults to English. Set `language` in `~/.upy/config.yaml` (or the file selected by `UPY_CONFIG`):
+
+```yaml
+language: en # en or zh-CN
+```
+
+The installer accepts `--lang en` or `--lang zh-CN`, uses it for installation messages, and saves it for subsequent CLI commands. Reinstalling the same version also saves the chosen language. Existing tokens, server settings, and project registrations are preserved. A one-off override is available with `UPY_LANG=zh-CN upy analysis`. This release localizes CLI messages only; Web console text, notifications, external command output, and JSON field names are unchanged.
 
 ## Initialization
 
@@ -444,7 +454,7 @@ As servers accumulate more web applications, container stacks, and release histo
 ### Highlights
 
 - **Complete Host Project Catalog**: Automatically discovers all projects deployed via `upy`, synthesizing their **running status**, **deployment type** (SPA / Docker / Systemd), **active version**, and **disk space**.
-- **100% Benchmark Relative Comparison**: Uses the project with the largest disk footprint as the **100.0% baseline reference**, rendering uniform ANSI horizontal bar charts (e.g. `[████████░░░░░░░░░░░░]  40.0%`) to immediately spot storage hogs.
+- **100% Benchmark Relative Comparison**: Uses the project with the largest disk footprint as the **100.0% baseline reference**, rendering thin, project-colored bars (e.g. `━━━━━━━━────────────`) without numeric percentages to immediately spot storage hogs.
 - **Top Spotlight for Latest Deployment**: Prominently spotlights the most recently deployed project at the top card, showing its name, version, stack type, humanized relative duration (e.g. `22 minutes ago`), and service status.
 - **Strict Symlink Protection**: Does not recurse into `current` symlinks, guaranteeing that active releases are never double-counted in disk space calculations.
 - **Deep Subdirectory Breakdowns (`--detail`)**: Visualizes individual subdirectories including `releases/` (active vs historical old versions), `bundles/` download cache, `backups/` archives, and `shared/` persistence.
@@ -463,10 +473,10 @@ upy analysis — 客户端项目与磁盘分析
 
 ━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)
-1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     [████████████████████] 100.0%
-2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    [███████░░░░░░░░░░░░░]  32.5%
-3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    [█░░░░░░░░░░░░░░░░░░░]   5.8%
-4   demo-spa            ⚪ undeployed  static   -            14.2 MB    [▏░░░░░░░░░░░░░░░░░░░]   0.9%
+1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     ━━━━━━━━━━━━━━━━━━━━
+2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    ━━━━━━━─────────────
+3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    ━───────────────────
+4   demo-spa            ⚪ undeployed  static   -            14.2 MB    ━───────────────────
 
 ━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   📊 纳管项目: 4 个

@@ -12,6 +12,7 @@ import (
 
 	"github.com/AaronConlon/upy/internal/commands"
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/platform"
 	"github.com/AaronConlon/upy/internal/version"
@@ -19,86 +20,87 @@ import (
 
 func printHelp() {
 	lines := []string{
-		"upy " + version.String() + " — 轻量级 Web 项目部署工具",
+		"upy " + version.String() + i18n.T(" — 轻量级 Web 项目部署工具"),
 		"",
-		"用法: upy [命令] [选项]",
+		i18n.T("用法: upy [命令] [选项]"),
 		"",
-		"命令:",
-		"  （不带命令）                  选择已登记的本地项目并交互部署",
-		"  release [list|latest|<版本>]   从 GitHub Release 获取并部署 bundle",
-		"                                 (不带参数时交互选择版本)",
-		"  deploy [项目名称]              部署已登记项目的最新正式版本",
-		"  clean [项目名称]               清理项目数据 (Bundle 缓存、旧版本、临时目录、注销或清空)",
-		"  backup [项目名称]              执行项目约定备份 (执行 backup.sh 并管理 backups/ 归档)",
-		"  analysis [项目名称]            分析客户端项目、磁盘空间占用与最近一次部署",
-		"  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)",
-		"  version                        查看当前版本并检查更新",
-		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
-		"  init [owner] <token>           初始化或添加 GitHub 访问 token (支持按组织/用户归属)",
-		"  server [start|stop|restart|status|auth]     启动 Webhook 服务或管理后台守护进程",
-		"  log [server|upy|<项目>]        查看自身、server 或项目的运行与部署日志",
+		i18n.T("命令:"),
+		i18n.T("  （不带命令）                  选择已登记的本地项目并交互部署"),
+		i18n.T("  release [list|latest|<版本>]   从 GitHub Release 获取并部署 bundle"),
+		i18n.T("                                 (不带参数时交互选择版本)"),
+		i18n.T("  deploy [项目名称]              部署已登记项目的最新正式版本"),
+		i18n.T("  clean [项目名称]               清理项目数据 (Bundle 缓存、旧版本、临时目录、注销或清空)"),
+		i18n.T("  backup [项目名称]              执行项目约定备份 (执行 backup.sh 并管理 backups/ 归档)"),
+		i18n.T("  analysis [项目名称]            分析客户端项目、磁盘空间占用与最近一次部署"),
+		i18n.T("  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)"),
+		i18n.T("  version                        查看当前版本并检查更新"),
+		i18n.T("  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)"),
+		i18n.T("  init [owner] <token>           初始化或添加 GitHub 访问 token (支持按组织/用户归属)"),
+		i18n.T("  server [start|stop|restart|status|auth]     启动 Webhook 服务或管理后台守护进程"),
+		i18n.T("  log [server|upy|<项目>]        查看自身、server 或项目的运行与部署日志"),
 		"",
-		"选项:",
-		"  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载",
-		"  --root <目录>                  项目目录 (默认当前目录)",
-		"  -f, --follow                   log 专用: 实时追踪后续新增日志输出",
-		"  -n, --tail <行数>              log 专用: 查看末尾 N 行日志 (默认 50)",
-		"  -c, --clear                    log 专用: 清空指定的日志文件",
-		"  -s, --server                   log 专用: 直接查看 server 服务日志",
-		"  -d, --daemon                   server 专用: 以后台静默守护进程形式启动",
-		"  --listen <地址>                server 专用: 指定监听地址 (如 :8999 或 127.0.0.1:8999)",
-		"  --token <密钥>                 server 专用: 指定 API 鉴权 Token",
-		"  --detail                       analysis 专用: 展开子目录 (releases/bundles/backups) 空间明细",
-		"  --json                         analysis 专用: 输出 JSON 结构化分析数据",
-		"  --sort <size|time|name>        analysis 专用: 指定排序规则 (默认按磁盘占用 size 降序)",
-		"  --bundles                      clean 专用: 仅清理 Bundle 缓存压缩包",
-		"  --old-releases                 clean 专用: 仅清理历史旧版本与残留临时目录",
-		"  --all                          clean / backup 通用: 批量处理所有已登记项目",
-		"  --purge                        clean 专用: 彻底清空项目所有部署产物",
-		"  --unregister                   clean 专用: 从本地项目列表中注销此项目",
-		"  --list                         backup 专用: 查看历史备份归档列表与体积",
-		"  --prune <数量>                 backup 专用: 轮转保留最近 N 份备份",
-		"  --script <路径>                backup 专用: 指定自定义备份脚本路径",
-		"  -y, --yes                      clean / backup 专用: 跳过交互确认直接执行",
-		"  -V, --version                  打印版本后退出",
-		"  -h, --help                     打印帮助后退出",
+		i18n.T("选项:"),
+		i18n.T("  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载"),
+		i18n.T("  --root <目录>                  项目目录 (默认当前目录)"),
+		i18n.T("  -f, --follow                   log 专用: 实时追踪后续新增日志输出"),
+		i18n.T("  -n, --tail <行数>              log 专用: 查看末尾 N 行日志 (默认 50)"),
+		i18n.T("  -c, --clear                    log 专用: 清空指定的日志文件"),
+		i18n.T("  -s, --server                   log 专用: 直接查看 server 服务日志"),
+		i18n.T("  -d, --daemon                   server 专用: 以后台静默守护进程形式启动"),
+		i18n.T("  --listen <地址>                server 专用: 指定监听地址 (如 :8999 或 127.0.0.1:8999)"),
+		i18n.T("  --token <密钥>                 server 专用: 指定 API 鉴权 Token"),
+		i18n.T("  --detail                       analysis 专用: 展开子目录 (releases/bundles/backups) 空间明细"),
+		i18n.T("  --json                         analysis 专用: 输出 JSON 结构化分析数据"),
+		i18n.T("  --sort <size|time|name>        analysis 专用: 指定排序规则 (默认按磁盘占用 size 降序)"),
+		i18n.T("  --bundles                      clean 专用: 仅清理 Bundle 缓存压缩包"),
+		i18n.T("  --old-releases                 clean 专用: 仅清理历史旧版本与残留临时目录"),
+		i18n.T("  --all                          clean / backup 通用: 批量处理所有已登记项目"),
+		i18n.T("  --purge                        clean 专用: 彻底清空项目所有部署产物"),
+		i18n.T("  --unregister                   clean 专用: 从本地项目列表中注销此项目"),
+		i18n.T("  --list                         backup 专用: 查看历史备份归档列表与体积"),
+		i18n.T("  --prune <数量>                 backup 专用: 轮转保留最近 N 份备份"),
+		i18n.T("  --script <路径>                backup 专用: 指定自定义备份脚本路径"),
+		i18n.T("  -y, --yes                      clean / backup 专用: 跳过交互确认直接执行"),
+		i18n.T("  -V, --version                  打印版本后退出"),
+		i18n.T("  -h, --help                     打印帮助后退出"),
 		"",
-		"配置:",
-		"  ~/.upy/config.yaml            用户配置 (可用 UPY_CONFIG 覆盖)",
-		"  github.token                   默认 GitHub 访问令牌",
-		"  github.tokens.<owner>          按组织或个人归属的 GitHub 访问令牌",
+		i18n.T("配置:"),
+		i18n.T("  ~/.upy/config.yaml            用户配置 (可用 UPY_CONFIG 覆盖)"),
+		i18n.T("  github.token                   默认 GitHub 访问令牌"),
+		"  language: en | zh-CN           CLI language (default: en)",
+		i18n.T("  github.tokens.<owner>          按组织或个人归属的 GitHub 访问令牌"),
 		"",
-		"环境变量:",
-		"  DEPLOY_GITHUB_TOKEN            GitHub 访问令牌兜底 (配置文件未写时使用)",
-		"  UPY_CONFIG                    覆盖用户配置文件路径",
+		i18n.T("环境变量:"),
+		i18n.T("  DEPLOY_GITHUB_TOKEN            GitHub 访问令牌兜底 (配置文件未写时使用)"),
+		i18n.T("  UPY_CONFIG                    覆盖用户配置文件路径"),
 		"",
-		"示例:",
-		"  upy release list              查看项目仓库的发布历史",
-		"  upy release latest            部署最新版本",
-		"  upy release v0.3.0            部署指定版本",
-		"  upy deploy codia              部署本机项目 codia 的最新版本",
-		"  upy clean                     交互式选择项目并清理数据",
-		"  upy clean codia               清理指定项目 codia 的数据",
-		"  upy clean --all -y            静默执行当前项目常规瘦身",
-		"  upy backup                    交互式选择项目并执行约定备份",
-		"  upy backup codia              执行指定项目 codia 的约定备份",
-		"  upy backup codia --list       查看 codia 项目的历史备份列表",
-		"  upy backup --all -y           一键批量备份所有已登记项目",
-		"  upy analysis                  分析全机所有已部署项目及磁盘占用柱状图",
-		"  upy analysis --detail         查看全机项目各子目录细分空间分布",
-		"  upy analysis codia            查看指定项目的磁盘占用与子模块分布",
-		"  upy analysis --json           以 JSON 格式输出分析报表",
-		"  upy bundle ./bundle.zip       部署本地 bundle",
-		"  upy init ghp_xxx              设置默认全局 GitHub token",
-		"  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token",
-		"  upy update                    自更新到最新版本",
-		"  upy update v0.1.0             更新/切换到指定版本",
-		"  upy server auth               在服务器终端显示 TOTP 绑定二维码",
-		"  upy log                       交互式选择并查看日志",
-		"  upy log server -f             实时查看 server 服务运行日志",
-		"  upy log upy -n 100            查看 upy 自身最近 100 行执行流水",
-		"  upy log codia                 查看 codia 项目最近一次部署日志",
-		"  upy log --list                列出本机所有日志文件及体积",
+		i18n.T("示例:"),
+		i18n.T("  upy release list              查看项目仓库的发布历史"),
+		i18n.T("  upy release latest            部署最新版本"),
+		i18n.T("  upy release v0.3.0            部署指定版本"),
+		i18n.T("  upy deploy codia              部署本机项目 codia 的最新版本"),
+		i18n.T("  upy clean                     交互式选择项目并清理数据"),
+		i18n.T("  upy clean codia               清理指定项目 codia 的数据"),
+		i18n.T("  upy clean --all -y            静默执行当前项目常规瘦身"),
+		i18n.T("  upy backup                    交互式选择项目并执行约定备份"),
+		i18n.T("  upy backup codia              执行指定项目 codia 的约定备份"),
+		i18n.T("  upy backup codia --list       查看 codia 项目的历史备份列表"),
+		i18n.T("  upy backup --all -y           一键批量备份所有已登记项目"),
+		i18n.T("  upy analysis                  分析全机所有已部署项目及磁盘占用柱状图"),
+		i18n.T("  upy analysis --detail         查看全机项目各子目录细分空间分布"),
+		i18n.T("  upy analysis codia            查看指定项目的磁盘占用与子模块分布"),
+		i18n.T("  upy analysis --json           以 JSON 格式输出分析报表"),
+		i18n.T("  upy bundle ./bundle.zip       部署本地 bundle"),
+		i18n.T("  upy init ghp_xxx              设置默认全局 GitHub token"),
+		i18n.T("  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token"),
+		i18n.T("  upy update                    自更新到最新版本"),
+		i18n.T("  upy update v0.1.0             更新/切换到指定版本"),
+		i18n.T("  upy server auth               在服务器终端显示 TOTP 绑定二维码"),
+		i18n.T("  upy log                       交互式选择并查看日志"),
+		i18n.T("  upy log server -f             实时查看 server 服务运行日志"),
+		i18n.T("  upy log upy -n 100            查看 upy 自身最近 100 行执行流水"),
+		i18n.T("  upy log codia                 查看 codia 项目最近一次部署日志"),
+		i18n.T("  upy log --list                列出本机所有日志文件及体积"),
 	}
 	fmt.Println(strings.Join(lines, "\n"))
 }
@@ -251,6 +253,27 @@ func parseArgs(argv []string) parsedArgs {
 func main() {
 	platform.SetDefaultUmask()
 	cmdStartedAt := time.Now()
+	// 安装器调用此入口保存语言；不启动部署或注册任何项目。
+	if len(os.Args) == 3 && os.Args[1] == "__set-language" {
+		if _, err := config.SaveLanguage(os.Args[2]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	userCfg, configErr := config.LoadUserConfig()
+	if configErr != nil {
+		fmt.Fprintln(os.Stderr, configErr)
+		os.Exit(1)
+	}
+	language := userCfg.Language
+	if override := os.Getenv("UPY_LANG"); override != "" {
+		language = override
+	}
+	if err := i18n.SetLanguage(language); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	logCloser := log.EnableFileLog(filepath.Join(config.UserDataDir(), "logs"), os.Args)
 	defer logCloser()
@@ -258,18 +281,18 @@ func main() {
 	if len(os.Args) == 2 && os.Args[1] == "__install-completion" {
 		result, err := commands.InstallShellCompletion()
 		if err != nil {
-			log.Fail("命令补全安装失败: " + err.Error())
+			log.Fail(i18n.T("命令补全安装失败: ") + err.Error())
 			os.Exit(1)
 		}
 		if !result.Supported {
-			log.Info("检测到当前 shell: " + result.Shell + "（暂不支持自动安装 Tab 补全）")
+			log.Info(i18n.T("检测到当前 shell: ") + result.Shell + i18n.T("（暂不支持自动安装 Tab 补全）"))
 			return
 		}
-		log.Info("检测到当前 shell: " + result.Shell)
+		log.Info(i18n.T("检测到当前 shell: ") + result.Shell)
 		if len(result.ScriptPaths) > 1 {
-			log.Ok("已安装 Tab 命令补全 (" + strings.Join(result.ScriptPaths, ", ") + ")（新开终端后生效）")
+			log.Ok(i18n.T("已安装 Tab 命令补全 (") + strings.Join(result.ScriptPaths, ", ") + i18n.T(")（新开终端后生效）"))
 		} else {
-			log.Ok("已安装 Tab 命令补全: " + result.ScriptPath + "（新开终端后生效）")
+			log.Ok(i18n.T("已安装 Tab 命令补全: ") + result.ScriptPath + i18n.T("（新开终端后生效）"))
 		}
 		return
 	}
@@ -289,7 +312,7 @@ func main() {
 	if root == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			log.Fail("无法获取当前目录: " + err.Error())
+			log.Fail(i18n.T("无法获取当前目录: ") + err.Error())
 			os.Exit(1)
 		}
 		root = cwd

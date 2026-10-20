@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/state"
 )
@@ -19,14 +20,14 @@ type BannerOptions struct {
 // DescribeType 描述部署类型
 func DescribeType(m *config.Manifest) string {
 	if m.Type == "static" {
-		return "静态站点 (static)"
+		return i18n.T("静态站点 (static)")
 	}
 	if m.Type == "docker" {
 		mode := "container"
 		if m.Docker != nil && m.Docker.Mode == "compose" {
 			mode = "compose"
 		}
-		label := "Docker 容器"
+		label := i18n.T("Docker 容器")
 		if mode == "compose" {
 			label = "Docker Compose"
 		}
@@ -37,7 +38,7 @@ func DescribeType(m *config.Manifest) string {
 
 // PrintProjectBanner 打印项目横幅
 func PrintProjectBanner(root string, opts BannerOptions) {
-	name := "未知项目"
+	name := i18n.T("未知项目")
 	if cfg, err := config.ReadProjectConfig(root); err == nil && cfg.Name != "" {
 		name = cfg.Name
 	}
@@ -49,22 +50,22 @@ func PrintProjectBanner(root string, opts BannerOptions) {
 		}
 	}
 
-	current := "未部署"
+	current := i18n.T("未部署")
 	if st, err := state.Read(root); err == nil && st.CurrentVersion != "" {
 		current = st.CurrentVersion
 	}
 
 	line := log.Cyan(strings.Repeat("━", 44))
 	os.Stderr.WriteString(line + "\n")
-	os.Stderr.WriteString("  📦 项目: " + log.Green(log.Bold(name)) + "\n")
-	os.Stderr.WriteString("  📁 目录: " + log.Path(root) + "\n")
+	os.Stderr.WriteString(i18n.T("  📦 项目: ") + log.Green(log.Bold(name)) + "\n")
+	os.Stderr.WriteString(i18n.T("  📁 目录: ") + log.Path(root) + "\n")
 	if bannerType != "" {
-		os.Stderr.WriteString("  🧩 类型: " + log.Sky(bannerType) + "\n")
+		os.Stderr.WriteString(i18n.T("  🧩 类型: ") + log.Sky(bannerType) + "\n")
 	}
-	if current == "未部署" {
-		os.Stderr.WriteString("  🏷 当前版本: " + log.Yellow(current) + "\n")
+	if current == i18n.T("未部署") {
+		os.Stderr.WriteString(i18n.T("  🏷 当前版本: ") + log.Yellow(current) + "\n")
 	} else {
-		os.Stderr.WriteString("  🏷 当前版本: " + log.Green(current) + "\n")
+		os.Stderr.WriteString(i18n.T("  🏷 当前版本: ") + log.Green(current) + "\n")
 	}
 	os.Stderr.WriteString(line + "\n")
 }

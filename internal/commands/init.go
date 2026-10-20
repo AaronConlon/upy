@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AlecAivazis/survey/v2"
 	"golang.org/x/term"
@@ -59,12 +60,12 @@ func Init(args InitArgs) error {
 	// 若未传 token 且处于交互终端中，发起友好交互提示
 	if strings.TrimSpace(token) == "" {
 		if !term.IsTerminal(int(os.Stdin.Fd())) {
-			return fmt.Errorf("请提供 GitHub token。\n用法:\n  upy init <token>              # 设置全局默认 token\n  upy init <owner> <token>      # 为组织或个人仓库设置专属 token\n  upy init <owner>:<token>      # 冒号简写形式")
+			return i18n.Error("请提供 GitHub token。\n用法:\n  upy init <token>              # 设置全局默认 token\n  upy init <owner> <token>      # 为组织或个人仓库设置专属 token\n  upy init <owner>:<token>      # 冒号简写形式")
 		}
 
 		if strings.TrimSpace(owner) == "" {
 			ownerPrompt := &survey.Input{
-				Message: "归属组织或个人用户名 (留空则作为全局默认 token):",
+				Message: i18n.T("归属组织或个人用户名 (留空则作为全局默认 token):"),
 			}
 			if err := survey.AskOne(ownerPrompt, &owner); err != nil {
 				return err
@@ -82,7 +83,7 @@ func Init(args InitArgs) error {
 	token = strings.TrimSpace(token)
 	owner = strings.TrimSpace(owner)
 	if token == "" {
-		return fmt.Errorf("GitHub token 不能为空")
+		return i18n.Error("GitHub token 不能为空")
 	}
 
 	path, err := config.SaveGitHubToken(owner, token)
@@ -90,12 +91,12 @@ func Init(args InitArgs) error {
 		return err
 	}
 
-	targetDesc := "全局默认 (default)"
+	targetDesc := i18n.T("全局默认 (default)")
 	if owner != "" && !strings.EqualFold(owner, "default") {
-		targetDesc = fmt.Sprintf("组织/个人 [%s]", owner)
+		targetDesc = fmt.Sprintf(i18n.T("组织/个人 [%s]"), owner)
 	}
 
-	log.Ok(fmt.Sprintf("GitHub token 已成功保存到 %s", path))
-	log.Info(fmt.Sprintf("归属范围: %s", targetDesc))
+	log.Ok(fmt.Sprintf(i18n.T("GitHub token 已成功保存到 %s"), path))
+	log.Info(fmt.Sprintf(i18n.T("归属范围: %s"), targetDesc))
 	return nil
 }

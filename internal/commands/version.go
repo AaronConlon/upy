@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/AaronConlon/upy/internal/github"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/semver"
 	"github.com/AaronConlon/upy/internal/version"
@@ -19,9 +20,9 @@ func VersionCmd() error {
 		return nil
 	}
 	if semver.Newer(tag, version.Value) {
-		log.Info("发现新版本: " + tag + "，可执行 upy update 升级")
+		log.Info(i18n.T("发现新版本: ") + tag + i18n.T("，可执行 upy update 升级"))
 	} else {
-		log.Info("已是最新版本。")
+		log.Info(i18n.T("已是最新版本。"))
 	}
 	return nil
 }

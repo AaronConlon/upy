@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/AaronConlon/upy/internal/cleaner"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 )
 
@@ -53,38 +55,59 @@ func padRight(s string, width int) string {
 
 // RenderBar 渲染基准条形图，以最大项目为 100%
 func RenderBar(percent float64, width int) string {
+	return renderProjectBar(percent, width, 0)
+}
+
+// 细线色条使用较低的字形高度，让相邻项目自然分隔；无颜色时仍可比较长度。
+func renderProjectBar(percent float64, width, colorIndex int) string {
 	if width <= 0 {
 		width = 20
 	}
-	if percent < 0 {
+	if math.IsNaN(percent) || percent < 0 {
 		percent = 0
 	}
 	if percent > 100 {
 		percent = 100
 	}
-
-	filled := int(math.Round((percent / 100.0) * float64(width)))
+	filled := int(math.Round(percent / 100 * float64(width)))
 	if percent > 0 && filled == 0 {
-		filled = 1 // 保留极微小刻度，提示有数据
+		filled = 1
 	}
-	if filled > width {
-		filled = width
-	}
-	empty := width - filled
-
-	barStr := strings.Repeat("█", filled) + strings.Repeat("░", empty)
-
-	var coloredBar string
-	switch {
-	case percent >= 70.0:
-		coloredBar = log.Cyan(barStr)
-	case percent >= 30.0:
-		coloredBar = log.Green(barStr)
+	bar := strings.Repeat("━", filled)
+	// 黄金角分布色相，固定饱和度和亮度适配常见终端；RGB 仅在 TTY 启用。
+	hue := math.Mod(float64(colorIndex)*137.508+195, 360) / 60
+	x := 0.55 * (1 - math.Abs(math.Mod(hue, 2)-1))
+	r, g, b := 0.0, 0.0, 0.0
+	switch int(hue) {
+	case 0:
+		r, g = 0.55, x
+	case 1:
+		r, g = x, 0.55
+	case 2:
+		g, b = 0.55, x
+	case 3:
+		g, b = x, 0.55
+	case 4:
+		r, b = x, 0.55
 	default:
-		coloredBar = log.Dim(barStr)
+		r, b = 0.55, x
 	}
+	colored := log.RGB(bar, int((r+0.35)*255), int((g+0.35)*255), int((b+0.35)*255))
+	return colored + log.Dim(strings.Repeat("─", width-filled))
+}
 
-	return fmt.Sprintf("[%s] %5.1f%%", coloredBar, percent)
+// 名称排序决定颜色序号，与磁盘/时间等显示排序无关。
+func projectColors(projects []ProjectAnalysis) map[string]int {
+	names := make([]string, 0, len(projects))
+	for _, p := range projects {
+		names = append(names, p.Name)
+	}
+	sort.Strings(names)
+	colors := make(map[string]int, len(names))
+	for i, name := range names {
+		colors[name] = i
+	}
+	return colors
 }
 
 // SectionHeader 生成带统一宽度的装饰标题分割线
@@ -103,26 +126,27 @@ func SectionHeader(title string, totalWidth int) string {
 // RenderTerminal 渲染漂亮的终端分析报告
 func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 	var sb strings.Builder
+	colors := projectColors(report.Projects)
 
-	sb.WriteString(log.Bold("upy analysis — 客户端项目与磁盘分析") + "\n\n")
+	sb.WriteString(log.Bold(i18n.T("upy analysis — 客户端项目与磁盘分析")) + "\n\n")
 
 	// 1. 最近一次部署动态 Spotlight
-	sb.WriteString(SectionHeader("最近一次部署动态", 72) + "\n")
+	sb.WriteString(SectionHeader(i18n.T("最近一次部署动态"), 72) + "\n")
 	if report.LatestDeploy == nil {
-		sb.WriteString("  💡 " + log.Dim("暂无部署记录（可在项目根目录运行 upy release 或 upy deploy 进行首次部署）") + "\n\n")
+		sb.WriteString("  💡 " + log.Dim(i18n.T("暂无部署记录（可在项目根目录运行 upy release 或 upy deploy 进行首次部署）")) + "\n\n")
 	} else {
 		ld := report.LatestDeploy
 		ver := ld.CurrentVersion
 		if ver == "" {
 			ver = "-"
 		}
-		sb.WriteString(fmt.Sprintf("  📦 项目: %s (%s)\n", log.Bold(ld.Name), log.Cyan(ver)))
+		sb.WriteString(fmt.Sprintf(i18n.T("  📦 项目: %s (%s)\n"), log.Bold(ld.Name), log.Cyan(ver)))
 
 		typeDesc := formatTypeDesc(ld.Type)
 		if ld.UnitName != "" {
 			typeDesc += " · " + ld.UnitName
 		}
-		sb.WriteString(fmt.Sprintf("  🧩 类型: %s\n", typeDesc))
+		sb.WriteString(fmt.Sprintf(i18n.T("  🧩 类型: %s\n"), typeDesc))
 
 		now := time.Now()
 		relTime := FormatRelativeTime(ld.DeployedAt, now)
@@ -130,16 +154,16 @@ func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 		if ld.DeployedAt != nil {
 			timeDetail = ld.DeployedAt.Local().Format("2006-01-02 15:04:05")
 		}
-		sb.WriteString(fmt.Sprintf("  ⏱  时间: %s (%s)\n", log.Bold(relTime), log.Dim(timeDetail)))
+		sb.WriteString(fmt.Sprintf(i18n.T("  ⏱  时间: %s (%s)\n"), log.Bold(relTime), log.Dim(timeDetail)))
 
 		statusDesc := formatStatusDesc(ld.Status)
-		sb.WriteString(fmt.Sprintf("  🟢 状态: %s\n\n", statusDesc))
+		sb.WriteString(fmt.Sprintf(i18n.T("  🟢 状态: %s\n\n"), statusDesc))
 	}
 
 	// 2. 项目分析 (状态 · 空间基准对比 · 类型 · 版本号)
-	sb.WriteString(SectionHeader("项目分析 (状态 · 空间基准对比 · 类型 · 版本号)", 72) + "\n")
+	sb.WriteString(SectionHeader(i18n.T("项目分析 (状态 · 空间基准对比 · 类型 · 版本号)"), 72) + "\n")
 	if len(report.Projects) == 0 {
-		sb.WriteString("  " + log.Dim("本机暂未发现通过 upy 纳管的项目。") + "\n\n")
+		sb.WriteString("  " + log.Dim(i18n.T("本机暂未发现通过 upy 纳管的项目。")) + "\n\n")
 	} else {
 		// 计算项目名称的最大宽度
 		nameColWidth := 16
@@ -155,26 +179,26 @@ func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 
 		headerLine := fmt.Sprintf("%s %s %s %s %s %s %s",
 			padRight("#", 3),
-			padRight("项目名称", nameColWidth+2),
-			padRight("状态", 14),
-			padRight("类型", 8),
-			padRight("当前版本", 10),
-			padRight("磁盘占用", 11),
-			"基准对比 (Max)",
+			padRight(i18n.T("项目名称"), nameColWidth+2),
+			padRight(i18n.T("状态"), 14),
+			padRight(i18n.T("类型"), 8),
+			padRight(i18n.T("当前版本"), 10),
+			padRight(i18n.T("磁盘占用"), 11),
+			i18n.T("基准对比 (Max)"),
 		)
 		sb.WriteString(log.Dim(headerLine) + "\n")
 
 		for i, p := range report.Projects {
-			// 项目行之间留一行空白，避免终端中相邻项目紧贴。
-			if i > 0 {
-				sb.WriteString("\n")
-			}
 			idxStr := padRight(fmt.Sprintf("%d", i+1), 3)
 
 			displayName := p.Name
 			if stringWidth(displayName) > nameColWidth {
 				// 截断超长名称
-				displayName = displayName[:nameColWidth-2] + ".."
+				runes := []rune(displayName)
+				for stringWidth(string(runes)) > nameColWidth-2 {
+					runes = runes[:len(runes)-1]
+				}
+				displayName = string(runes) + ".."
 			}
 			nameStr := padRight(displayName, nameColWidth+2)
 			statusStr := padRight(formatTableStatus(p.Status), 14)
@@ -188,11 +212,11 @@ func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 
 			sizeStr := cleaner.FormatBytes(p.TotalBytes)
 			if p.IsMissingRoot {
-				sizeStr = "目录丢失"
+				sizeStr = i18n.T("目录丢失")
 			}
 			sizeStr = padRight(sizeStr, 11)
 
-			barStr := RenderBar(p.PercentOfMax, 20)
+			barStr := renderProjectBar(p.PercentOfMax, 20, colors[p.Name])
 
 			line := fmt.Sprintf("%s %s %s %s %s %s %s",
 				idxStr,
@@ -210,34 +234,34 @@ func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 
 	// 3. 细分明细视图 (--detail 模式)
 	if showDetail && len(report.Projects) > 0 {
-		sb.WriteString(SectionHeader("各项目内部存储分布明细 (--detail)", 72) + "\n")
+		sb.WriteString(SectionHeader(i18n.T("各项目内部存储分布明细 (--detail)"), 72) + "\n")
 		for i, p := range report.Projects {
-			sb.WriteString(fmt.Sprintf("%d  %s (%s / %s) — %s [%.1f%%]\n",
+			sb.WriteString(fmt.Sprintf("%d  %s (%s / %s) — %s %s\n",
 				i+1,
 				log.Bold(p.Name),
 				p.Type,
 				log.Cyan(p.CurrentVersion),
 				cleaner.FormatBytes(p.TotalBytes),
-				p.PercentOfMax,
+				renderProjectBar(p.PercentOfMax, 20, colors[p.Name]),
 			))
 
 			// releases
 			relNote := ""
 			if p.OldReleaseBytes > 0 {
-				relNote = fmt.Sprintf(" (活跃: %s / 旧版: %s %s)",
+				relNote = fmt.Sprintf(i18n.T(" (活跃: %s / 旧版: %s %s)"),
 					cleaner.FormatBytes(p.ActiveBytes),
 					cleaner.FormatBytes(p.OldReleaseBytes),
-					log.Dim("[可使用 upy clean 释放]"),
+					log.Dim(i18n.T("[可使用 upy clean 释放]")),
 				)
 			} else if p.ActiveBytes > 0 {
-				relNote = fmt.Sprintf(" (活跃: %s)", cleaner.FormatBytes(p.ActiveBytes))
+				relNote = fmt.Sprintf(i18n.T(" (活跃: %s)"), cleaner.FormatBytes(p.ActiveBytes))
 			}
 			sb.WriteString(fmt.Sprintf("   ├── releases/  %9s%s\n", cleaner.FormatBytes(p.ReleasesBytes), relNote))
 
 			// bundles
 			bundleNote := ""
 			if p.BundlesBytes > 0 {
-				bundleNote = " " + log.Dim("[Bundle 缓存，可清理]")
+				bundleNote = " " + log.Dim(i18n.T("[Bundle 缓存，可清理]"))
 			}
 			sb.WriteString(fmt.Sprintf("   ├── bundles/   %9s%s\n", cleaner.FormatBytes(p.BundlesBytes), bundleNote))
 
@@ -253,32 +277,24 @@ func RenderTerminal(report *AnalysisReport, showDetail bool) string {
 	}
 
 	// 4. 存储汇总统计
-	sb.WriteString(SectionHeader("存储汇总统计", 72) + "\n")
-	sb.WriteString(fmt.Sprintf("  📊 纳管项目: %d 个\n", report.TotalProjects))
+	sb.WriteString(SectionHeader(i18n.T("存储汇总统计"), 72) + "\n")
+	sb.WriteString(fmt.Sprintf(i18n.T("  📊 纳管项目: %d 个\n"), report.TotalProjects))
 
 	avgBytes := int64(0)
 	if report.TotalProjects > 0 {
 		avgBytes = report.TotalBytes / int64(report.TotalProjects)
 	}
-	sb.WriteString(fmt.Sprintf("  💾 累计占用: %s (平均每个项目 %s)\n",
+	sb.WriteString(fmt.Sprintf(i18n.T("  💾 累计占用: %s (平均每个项目 %s)\n"),
 		log.Bold(cleaner.FormatBytes(report.TotalBytes)),
 		cleaner.FormatBytes(avgBytes),
 	))
 
 	if report.TotalProjects > 0 && report.MaxBytes > 0 {
-		maxPercent := float64(0)
-		if report.TotalBytes > 0 {
-			maxPercent = float64(report.MaxBytes) / float64(report.TotalBytes) * 100.0
-		}
-		sb.WriteString(fmt.Sprintf("  👑 空间首位: %s (%s, 占全机 upy 空间的 %.1f%%)\n",
-			log.Bold(report.MaxProjectName),
-			log.Cyan(cleaner.FormatBytes(report.MaxBytes)),
-			maxPercent,
-		))
+		sb.WriteString(fmt.Sprintf(i18n.T("  👑 空间首位: %s (%s)\n"), log.Bold(report.MaxProjectName), cleaner.FormatBytes(report.MaxBytes)))
 	}
 
 	if !showDetail {
-		sb.WriteString("  💡 " + log.Dim("提示: 可使用 upy analysis --detail 查看各子目录详细空间分布") + "\n")
+		sb.WriteString("  💡 " + log.Dim(i18n.T("提示: 可使用 upy analysis --detail 查看各子目录详细空间分布")) + "\n")
 	}
 
 	return sb.String()
@@ -296,28 +312,28 @@ func RenderJSON(report *AnalysisReport) (string, error) {
 func formatTypeDesc(t string) string {
 	switch strings.ToLower(t) {
 	case "system":
-		return "Systemd 系统服务 (system)"
+		return i18n.T("Systemd 系统服务 (system)")
 	case "docker":
-		return "Docker 容器应用 (docker)"
+		return i18n.T("Docker 容器应用 (docker)")
 	case "static":
-		return "SPA 静态站点 (static)"
+		return i18n.T("SPA 静态站点 (static)")
 	default:
-		return fmt.Sprintf("通用应用 (%s)", t)
+		return fmt.Sprintf(i18n.T("通用应用 (%s)"), t)
 	}
 }
 
 func formatStatusDesc(st string) string {
 	switch strings.ToLower(st) {
 	case "active":
-		return log.Green("正常运行 (active)")
+		return log.Green(i18n.T("正常运行 (active)"))
 	case "degraded":
-		return log.Yellow("降级运行 (degraded)")
+		return log.Yellow(i18n.T("降级运行 (degraded)"))
 	case "failed":
-		return log.Red("异常退出 (failed)")
+		return log.Red(i18n.T("异常退出 (failed)"))
 	case "missing":
-		return log.Yellow("目录丢失 (missing)")
+		return log.Yellow(i18n.T("目录丢失 (missing)"))
 	case "undeployed":
-		return log.Dim("尚未部署 (undeployed)")
+		return log.Dim(i18n.T("尚未部署 (undeployed)"))
 	default:
 		return st
 	}

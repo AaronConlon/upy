@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"gopkg.in/yaml.v3"
 )
 
@@ -77,28 +78,28 @@ func (m *Manifest) ActiveWebhooks() []ProjectWebhook {
 func ParseManifest(content []byte) (*Manifest, error) {
 	var m Manifest
 	if err := yaml.Unmarshal(content, &m); err != nil {
-		return nil, fmt.Errorf("bundle 清单 YAML 无效: %v", err)
+		return nil, fmt.Errorf(i18n.T("bundle 清单 YAML 无效: %v"), err)
 	}
 	if strings.TrimSpace(m.Name) == "" {
-		return nil, fmt.Errorf("bundle 清单无效: name 为必填")
+		return nil, i18n.Error("bundle 清单无效: name 为必填")
 	}
 	if strings.TrimSpace(m.Version) == "" {
-		return nil, fmt.Errorf("bundle 清单无效: version 为必填")
+		return nil, i18n.Error("bundle 清单无效: version 为必填")
 	}
 	switch m.Type {
 	case "static":
 		if m.Docker != nil || m.System != nil {
-			return nil, fmt.Errorf("bundle 清单无效: static 类型不允许携带 docker 或 system 配置")
+			return nil, i18n.Error("bundle 清单无效: static 类型不允许携带 docker 或 system 配置")
 		}
 		if m.Static == nil || strings.TrimSpace(m.Static.Directory) == "" {
 			m.Static = &ManifestStatic{Directory: "dist"}
 		}
 	case "docker":
 		if m.Static != nil || m.System != nil {
-			return nil, fmt.Errorf("bundle 清单无效: docker 类型不允许携带 static 或 system 配置")
+			return nil, i18n.Error("bundle 清单无效: docker 类型不允许携带 static 或 system 配置")
 		}
 		if m.Docker == nil {
-			return nil, fmt.Errorf("bundle 清单无效: type 为 docker 但缺少 docker 配置")
+			return nil, i18n.Error("bundle 清单无效: type 为 docker 但缺少 docker 配置")
 		}
 		switch m.Docker.Mode {
 		case "container":
@@ -110,33 +111,33 @@ func ParseManifest(content []byte) (*Manifest, error) {
 				m.Docker.ComposeFile = "docker-compose.yml"
 			}
 		default:
-			return nil, fmt.Errorf("bundle 清单无效: docker.mode 必须为 'container' 或 'compose'，当前为 '%s'", m.Docker.Mode)
+			return nil, fmt.Errorf(i18n.T("bundle 清单无效: docker.mode 必须为 'container' 或 'compose'，当前为 '%s'"), m.Docker.Mode)
 		}
 	case "system", "service":
 		if m.Static != nil || m.Docker != nil {
-			return nil, fmt.Errorf("bundle 清单无效: %s 类型不允许携带 static 或 docker 配置", m.Type)
+			return nil, fmt.Errorf(i18n.T("bundle 清单无效: %s 类型不允许携带 static 或 docker 配置"), m.Type)
 		}
 		if m.System == nil {
-			return nil, fmt.Errorf("bundle 清单无效: type 为 %s 但缺少 system 配置", m.Type)
+			return nil, fmt.Errorf(i18n.T("bundle 清单无效: type 为 %s 但缺少 system 配置"), m.Type)
 		}
 		m.Type = "system"
 		cmdList, err := ParseCommand(m.System.Command)
 		if err != nil {
-			return nil, fmt.Errorf("bundle 清单无效: %v", err)
+			return nil, fmt.Errorf(i18n.T("bundle 清单无效: %v"), err)
 		}
 		if len(cmdList) == 0 {
-			return nil, fmt.Errorf("bundle 清单无效: system.command 不能为空")
+			return nil, i18n.Error("bundle 清单无效: system.command 不能为空")
 		}
 		if m.Healthcheck == nil && m.System.Healthcheck != nil {
 			m.Healthcheck = m.System.Healthcheck
 		}
 	default:
-		return nil, fmt.Errorf("bundle 清单无效: type 必须为 'static'、'docker' 或 'system'，当前为 '%s'", m.Type)
+		return nil, fmt.Errorf(i18n.T("bundle 清单无效: type 必须为 'static'、'docker' 或 'system'，当前为 '%s'"), m.Type)
 	}
 	// 健康检查 timeout 校验
 	if m.Healthcheck != nil {
 		if strings.TrimSpace(m.Healthcheck.URL) == "" {
-			return nil, fmt.Errorf("bundle 清单无效: healthcheck.url 为必填")
+			return nil, i18n.Error("bundle 清单无效: healthcheck.url 为必填")
 		}
 		sec, err := ParseTimeout(m.Healthcheck.Timeout)
 		if err != nil {
@@ -162,19 +163,19 @@ func ParseCommand(v any) ([]string, error) {
 			}
 		}
 	default:
-		return nil, fmt.Errorf("system.command 必须是字符串或字符串列表")
+		return nil, i18n.Error("system.command 必须是字符串或字符串列表")
 	}
 
 	if len(rawList) == 0 {
-		return nil, fmt.Errorf("system.command 不能为空")
+		return nil, i18n.Error("system.command 不能为空")
 	}
 
 	exec := strings.TrimSpace(rawList[0])
 	if exec == "" {
-		return nil, fmt.Errorf("可执行文件路径不能为空")
+		return nil, i18n.Error("可执行文件路径不能为空")
 	}
 	if strings.ContainsAny(exec, "\r\n\x00") {
-		return nil, fmt.Errorf("system.command 参数包含非法控制字符或换行符: %q", exec)
+		return nil, fmt.Errorf(i18n.T("system.command 参数包含非法控制字符或换行符: %q"), exec)
 	}
 
 	res := []string{exec}
@@ -182,7 +183,7 @@ func ParseCommand(v any) ([]string, error) {
 	for i := 1; i < len(rawList); i++ {
 		arg := rawList[i]
 		if strings.ContainsAny(arg, "\r\n\x00") {
-			return nil, fmt.Errorf("system.command 参数包含非法控制字符或换行符: %q", arg)
+			return nil, fmt.Errorf(i18n.T("system.command 参数包含非法控制字符或换行符: %q"), arg)
 		}
 		res = append(res, arg)
 	}
@@ -192,7 +193,7 @@ func ParseCommand(v any) ([]string, error) {
 // EscapeSystemdArg 对单个 systemd ExecStart 参数进行转义与防护
 func EscapeSystemdArg(arg string) (string, error) {
 	if strings.ContainsAny(arg, "\r\n\x00") {
-		return "", fmt.Errorf("参数包含非法控制字符或换行符: %q", arg)
+		return "", fmt.Errorf(i18n.T("参数包含非法控制字符或换行符: %q"), arg)
 	}
 	if arg == "" {
 		return `""`, nil
@@ -245,5 +246,5 @@ func ParseTimeout(v any) (int, error) {
 			return n * mult, nil
 		}
 	}
-	return 0, fmt.Errorf("healthcheck.timeout 必须是正数秒或时长字符串，如 '30s'")
+	return 0, i18n.Error("healthcheck.timeout 必须是正数秒或时长字符串，如 '30s'")
 }

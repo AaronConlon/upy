@@ -78,7 +78,7 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
 在 Linux / macOS 终端执行以下一键安装脚本，自动识别系统架构（x64 / arm64）并安装到系统路径：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash -s -- --lang zh-CN
 ```
 
 > **说明**：默认安装至 `/usr/local/bin`（必要时自动请求 sudo 权限）。脚本会自动为 `zsh`、`bash`、`fish` 配置 Tab 命令补全，新开终端窗口后生效。
@@ -89,13 +89,23 @@ curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | b
 
 ```bash
 # 安装到用户个人目录（无需 root 权限）
-INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | INSTALL_DIR=~/.local/bin bash -s -- --lang zh-CN
 
 # 安装指定版本
-VERSION=v0.2.0 curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AaronConlon/upy/main/install.sh | VERSION=v0.2.0 bash -s -- --lang zh-CN
 ```
 
 ---
+
+### CLI 语言
+
+CLI 默认使用英文。在 `~/.upy/config.yaml`（或 `UPY_CONFIG` 指定的文件）中设置：
+
+```yaml
+language: zh-CN # 支持 en、zh-CN，默认 en
+```
+
+安装时使用 `--lang en` 或 `--lang zh-CN`，会同时设置安装提示和后续 CLI 的语言。同版本重新安装也会保存语言选择，并保留已有 Token、server 设置和项目注册。单次运行可用 `UPY_LANG=zh-CN upy analysis` 覆盖配置。本次覆盖 CLI 与安装脚本，Web 控制台、通知、外部命令原始输出和 JSON 字段保持不变。
 
 ## 如何初始化
 
@@ -443,7 +453,7 @@ upy backup --all -y
 ### 核心亮点
 
 - **全机项目动态盘点**：自动发现本机所有通过 `upy` 纳管的项目，综合呈现**运行状态**、**部署类型**（SPA / Docker / Systemd）、**当前版本号**与**磁盘占用**。
-- **最大空间 100% 基准对比**：以占用磁盘最大的项目为 **100.0% 基准**，自动绘制等宽 ANSI 横向百分比条形图（如 `[████████░░░░░░░░░░░░] 40.0%`），一眼识别存储大户。
+- **最大空间 100% 基准对比**：以占用磁盘最大的项目为 **100.0% 基准**，自动绘制纤细的项目色条（如 `━━━━━━━━────────────`），不展示数字百分比，一眼识别存储大户。
 - **最近一次部署动态置顶**：在顶栏 Spotlight 卡片中高亮显示最近一次部署的项目名称、版本号、部署类型、相对时间（如“22分钟前”）及运行状态。
 - **杜绝软链双重计数**：精准排除 `current` 软链接对版本目录的重复深度遍历，保障磁盘统计真实可靠。
 - **深度子模块展开 (`--detail`)**：细分各项目 `releases/`（活跃版本与历史旧版）、`bundles/` 缓存、`backups/` 备份归档与共享存储的体积分布。
@@ -462,10 +472,10 @@ upy analysis — 客户端项目与磁盘分析
 
 ━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)
-1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     [████████████████████] 100.0%
-2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    [███████░░░░░░░░░░░░░]  32.5%
-3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    [█░░░░░░░░░░░░░░░░░░░]   5.8%
-4   demo-spa            ⚪ undeployed  static   -            14.2 MB    [▏░░░░░░░░░░░░░░░░░░░]   0.9%
+1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     ━━━━━━━━━━━━━━━━━━━━
+2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    ━━━━━━━─────────────
+3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    ━───────────────────
+4   demo-spa            ⚪ undeployed  static   -            14.2 MB    ━───────────────────
 
 ━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   📊 纳管项目: 4 个

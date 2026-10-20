@@ -12,6 +12,7 @@ import (
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/deploy"
 	"github.com/AaronConlon/upy/internal/github"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/ui"
 )
@@ -44,37 +45,37 @@ func Release(args ReleaseArgs) error {
 	var release *github.GHRelease
 	switch {
 	case args.Target == "":
-		log.Step("正在列出 " + log.Sky(cfg.Release.Repository) + " 的版本...")
+		log.Step(i18n.T("正在列出 ") + log.Sky(cfg.Release.Repository) + i18n.T(" 的版本..."))
 		rels, err := github.ListReleases(cfg.Release.Repository)
 		if err != nil {
 			return err
 		}
 		if len(rels) == 0 {
-			return fmt.Errorf("仓库 %s 没有任何已发布版本。", cfg.Release.Repository)
+			return fmt.Errorf(i18n.T("仓库 %s 没有任何已发布版本。"), cfg.Release.Repository)
 		}
 		opts := make([]ui.SelectOption, len(rels))
 		for i, r := range rels {
 			opts[i] = ui.SelectOption{Label: r.Tag, Hint: r.Name}
 		}
-		idx, err := ui.Select("请选择要部署的版本", opts)
+		idx, err := ui.Select(i18n.T("请选择要部署的版本"), opts)
 		if err != nil {
 			return err
 		}
 		release = &rels[idx]
 	case args.Target == "latest":
-		log.Step("正在获取 " + log.Sky(cfg.Release.Repository) + " 的最新版本...")
+		log.Step(i18n.T("正在获取 ") + log.Sky(cfg.Release.Repository) + i18n.T(" 的最新版本..."))
 		release, err = github.GetLatest(cfg.Release.Repository)
 		if err != nil {
 			return err
 		}
 	default:
-		log.Step("正在获取 " + log.Sky(cfg.Release.Repository) + " 的 " + log.Sky(args.Target) + " 版本...")
+		log.Step(i18n.T("正在获取 ") + log.Sky(cfg.Release.Repository) + i18n.T(" 的 ") + log.Sky(args.Target) + i18n.T(" 版本..."))
 		release, err = github.GetByTag(cfg.Release.Repository, args.Target)
 		if err != nil {
 			return err
 		}
 	}
-	log.Ok("已选择版本 " + log.Green(release.Tag))
+	log.Ok(i18n.T("已选择版本 ") + log.Green(release.Tag))
 
 	// 资产名不固定 (如 "项目名-版本tag-日期.zip"): 先精确匹配, 未命中则按 项目名+版本号 模糊匹配
 	repoShort := ""
@@ -103,19 +104,19 @@ func Release(args ReleaseArgs) error {
 
 	if !reuseCache {
 		_ = os.Remove(localZip)
-		log.Step("⬇️  正在下载资产 " + asset.Name + "（" + humanSize(asset.Size) + "）...")
+		log.Step(i18n.T("⬇️  正在下载资产 ") + asset.Name + "（" + humanSize(asset.Size) + "）...")
 		if err := github.DownloadAsset(cfg.Release.Repository, asset, localZip); err != nil {
 			_ = os.Remove(localZip)
 			return err
 		}
 		if v := bundle.ManifestVersionFromZip(localZip); v == "" {
 			_ = os.Remove(localZip)
-			return fmt.Errorf("下载完成但 bundle 格式无效或缺少 upy.yaml 清单文件，已清理损坏文件")
+			return i18n.Error("下载完成但 bundle 格式无效或缺少 upy.yaml 清单文件，已清理损坏文件")
 		}
-		log.Ok("已保存到 " + log.Path(localZip))
+		log.Ok(i18n.T("已保存到 ") + log.Path(localZip))
 	}
 
-	log.Info(fmt.Sprintf("开始部署 %s v%s%s", cfg.Name, stripV(release.Tag), forceSuffix(args.Force)))
+	log.Info(fmt.Sprintf(i18n.T("开始部署 %s v%s%s"), cfg.Name, stripV(release.Tag), forceSuffix(args.Force)))
 	_, err = deploy.DeployBundle(zipPath, deploy.Options{
 		Force:     args.Force,
 		Root:      args.Root,
@@ -126,24 +127,24 @@ func Release(args ReleaseArgs) error {
 	}
 	// 只在 release 完整成功后登记；下载、解压或部署失败时不会污染本地项目列表。
 	if err := config.SaveLocalProject(cfg.Name, args.Root); err != nil {
-		log.Warn("部署成功，但无法记录本地项目: " + err.Error())
+		log.Warn(i18n.T("部署成功，但无法记录本地项目: ") + err.Error())
 	}
 	return nil
 }
 
 func listReleaseHistory(repo string) error {
-	log.Step("正在列出 " + log.Sky(repo) + " 的版本...")
+	log.Step(i18n.T("正在列出 ") + log.Sky(repo) + i18n.T(" 的版本..."))
 	rels, err := github.ListReleases(repo)
 	if err != nil {
 		return err
 	}
 	if len(rels) == 0 {
-		log.Info("仓库 " + repo + " 没有任何已发布版本。")
+		log.Info(i18n.T("仓库 ") + repo + i18n.T(" 没有任何已发布版本。"))
 		return nil
 	}
-	fmt.Println("\n发布历史:")
+	fmt.Println(i18n.T("\n发布历史:"))
 	for i, r := range rels {
-		assets := "无资产"
+		assets := i18n.T("无资产")
 		if len(r.Assets) > 0 {
 			parts := make([]string, 0, len(r.Assets))
 			for _, a := range r.Assets {
@@ -153,10 +154,10 @@ func listReleaseHistory(repo string) error {
 		}
 		flags := ""
 		if i == 0 {
-			flags = "  [最新]"
+			flags = i18n.T("  [最新]")
 		}
 		if r.Prerelease {
-			flags += "  [预发布]"
+			flags += i18n.T("  [预发布]")
 		}
 		fmt.Printf("  %s%s\n", r.Tag, flags)
 		fmt.Printf("    %s — %s\n", r.Name, assets)
@@ -197,21 +198,21 @@ func checkBundleCache(localZip, targetTag string, force bool) bool {
 		return false
 	}
 	if force {
-		log.Info("♻️  --force 已指定，重新下载覆盖本地 bundle")
+		log.Info(i18n.T("♻️  --force 已指定，重新下载覆盖本地 bundle"))
 		return false
 	}
 	// 复用前校验: zip 必须有效且 manifest 的 version 必须与目标版本一致, 否则清理并重新下载
 	v := bundle.ManifestVersionFromZip(localZip)
 	if v == "" {
-		log.Warn("⚠️  本地缓存 bundle 损坏或无效，清理后重新下载")
+		log.Warn(i18n.T("⚠️  本地缓存 bundle 损坏或无效，清理后重新下载"))
 		_ = os.Remove(localZip)
 		return false
 	}
 	if !sameVersion(v, targetTag) {
-		log.Info(fmt.Sprintf("⚠️  本地缓存 bundle 的版本是 %s，与目标版本 %s 不一致，重新下载", v, targetTag))
+		log.Info(fmt.Sprintf(i18n.T("⚠️  本地缓存 bundle 的版本是 %s，与目标版本 %s 不一致，重新下载"), v, targetTag))
 		_ = os.Remove(localZip)
 		return false
 	}
-	log.Info("📦 本地已存在 bundle，直接复用 " + log.Path(localZip) + "（--force 可强制重新下载）")
+	log.Info(i18n.T("📦 本地已存在 bundle，直接复用 ") + log.Path(localZip) + i18n.T("（--force 可强制重新下载）"))
 	return true
 }

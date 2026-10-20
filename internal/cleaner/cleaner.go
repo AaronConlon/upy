@@ -14,13 +14,14 @@ import (
 	"github.com/AaronConlon/upy/internal/cmdrun"
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/deployer"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/projectlock"
 	"github.com/AaronConlon/upy/internal/state"
 )
 
 var (
 	// ErrUnknownActiveVersion 当存在版本目录但无法从状态或软链识别活跃版本时返回
-	ErrUnknownActiveVersion = errors.New("无法确定项目活跃版本（state.json 与 current 软链均无效），拒绝清理历史版本；如需彻底清空请使用 --purge")
+	ErrUnknownActiveVersion = i18n.Error("无法确定项目活跃版本（state.json 与 current 软链均无效），拒绝清理历史版本；如需彻底清空请使用 --purge")
 )
 
 // ProjectStats 项目可清理资源统计信息
@@ -158,7 +159,7 @@ func AnalyzeProject(root string) (*ProjectStats, error) {
 
 // CleanBundles 清理 bundles/ 目录下的所有 zip 压缩包
 func CleanBundles(root string) (int64, int, error) {
-	lock, err := projectlock.Acquire(root, "清理 Bundle 缓存")
+	lock, err := projectlock.Acquire(root, i18n.T("清理 Bundle 缓存"))
 	if err != nil {
 		return 0, 0, err
 	}
@@ -183,11 +184,11 @@ func CleanBundles(root string) (int64, int, error) {
 		filePath := filepath.Join(bundlesDir, e.Name())
 		info, err := e.Info()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("读取 bundle 文件信息失败 %s: %w", e.Name(), err))
+			errs = append(errs, fmt.Errorf(i18n.T("读取 bundle 文件信息失败 %s: %w"), e.Name(), err))
 			continue
 		}
 		if removeErr := os.Remove(filePath); removeErr != nil {
-			errs = append(errs, fmt.Errorf("删除 bundle 缓存失败 %s: %w", e.Name(), removeErr))
+			errs = append(errs, fmt.Errorf(i18n.T("删除 bundle 缓存失败 %s: %w"), e.Name(), removeErr))
 		} else {
 			freedBytes += info.Size()
 			count++
@@ -202,7 +203,7 @@ func PruneBundles(root string, keepCount int) (int64, []string, error) {
 	if keepCount < 0 {
 		keepCount = 0
 	}
-	lock, err := projectlock.Acquire(root, "清理 Bundle 缓存")
+	lock, err := projectlock.Acquire(root, i18n.T("清理 Bundle 缓存"))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -260,7 +261,7 @@ func PruneBundles(root string, keepCount int) (int64, []string, error) {
 	for i := keepCount; i < len(items); i++ {
 		item := items[i]
 		if err := os.Remove(item.path); err != nil {
-			errs = append(errs, fmt.Errorf("删除 bundle 缓存失败 %s: %w", item.name, err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除 bundle 缓存失败 %s: %w"), item.name, err))
 		} else {
 			freedBytes += item.size
 			deleted = append(deleted, item.name)
@@ -272,7 +273,7 @@ func PruneBundles(root string, keepCount int) (int64, []string, error) {
 
 // CleanOldReleases 清理 releases/ 下所有非活跃历史版本目录
 func CleanOldReleases(root string) (int64, []string, error) {
-	lock, err := projectlock.Acquire(root, "清理历史旧版本")
+	lock, err := projectlock.Acquire(root, i18n.T("清理历史旧版本"))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -296,7 +297,7 @@ func CleanOldReleases(root string) (int64, []string, error) {
 		targetDir := filepath.Join(releasesDir, v)
 		size, _ := dirSize(targetDir)
 		if err := os.RemoveAll(targetDir); err != nil {
-			errs = append(errs, fmt.Errorf("删除历史版本 %s 失败: %w", v, err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除历史版本 %s 失败: %w"), v, err))
 		} else {
 			freedBytes += size
 			cleaned = append(cleaned, v)
@@ -308,7 +309,7 @@ func CleanOldReleases(root string) (int64, []string, error) {
 
 // CleanTmpDeployDirs 清理 releases/ 下残留的 .tmp-deploy-* 临时目录
 func CleanTmpDeployDirs(root string) (int64, int, error) {
-	lock, err := projectlock.Acquire(root, "清理残留临时目录")
+	lock, err := projectlock.Acquire(root, i18n.T("清理残留临时目录"))
 	if err != nil {
 		return 0, 0, err
 	}
@@ -333,7 +334,7 @@ func CleanTmpDeployDirs(root string) (int64, int, error) {
 		dirPath := filepath.Join(releasesDir, e.Name())
 		size, _ := dirSize(dirPath)
 		if err := os.RemoveAll(dirPath); err != nil {
-			errs = append(errs, fmt.Errorf("删除临时目录 %s 失败: %w", e.Name(), err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除临时目录 %s 失败: %w"), e.Name(), err))
 		} else {
 			freedBytes += size
 			count++
@@ -349,7 +350,7 @@ func PurgeProject(root string) (int64, error) {
 		return 0, err
 	}
 
-	lock, err := projectlock.Acquire(absRoot, "彻底清空项目部署产物")
+	lock, err := projectlock.Acquire(absRoot, i18n.T("彻底清空项目部署产物"))
 	if err != nil {
 		return 0, err
 	}
@@ -384,7 +385,7 @@ func PurgeProject(root string) (int64, error) {
 				_ = cmdrun.Run("systemctl", []string{"stop", unitName}, cmdrun.Options{AllowNonZero: true})
 				_ = cmdrun.Run("systemctl", []string{"disable", unitName}, cmdrun.Options{AllowNonZero: true})
 				if err := os.Remove(unitPath); err != nil {
-					errs = append(errs, fmt.Errorf("删除 unit 文件 %s 失败: %w", unitPath, err))
+					errs = append(errs, fmt.Errorf(i18n.T("删除 unit 文件 %s 失败: %w"), unitPath, err))
 				}
 				_ = cmdrun.Run("systemctl", []string{"daemon-reload"}, cmdrun.Options{})
 				_ = cmdrun.Run("systemctl", []string{"reset-failed", unitName}, cmdrun.Options{AllowNonZero: true})
@@ -397,7 +398,7 @@ func PurgeProject(root string) (int64, error) {
 	releasesDir := filepath.Join(absRoot, "releases")
 	if size, _ := dirSize(releasesDir); size > 0 {
 		if err := os.RemoveAll(releasesDir); err != nil {
-			errs = append(errs, fmt.Errorf("删除 releases 目录失败: %w", err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除 releases 目录失败: %w"), err))
 		} else {
 			totalFreed += size
 		}
@@ -407,7 +408,7 @@ func PurgeProject(root string) (int64, error) {
 	bundlesDir := filepath.Join(absRoot, "bundles")
 	if size, _ := dirSize(bundlesDir); size > 0 {
 		if err := os.RemoveAll(bundlesDir); err != nil {
-			errs = append(errs, fmt.Errorf("删除 bundles 目录失败: %w", err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除 bundles 目录失败: %w"), err))
 		} else {
 			totalFreed += size
 		}
@@ -417,7 +418,7 @@ func PurgeProject(root string) (int64, error) {
 	currentLink := filepath.Join(absRoot, "current")
 	if _, err := os.Lstat(currentLink); err == nil {
 		if err := os.Remove(currentLink); err != nil {
-			errs = append(errs, fmt.Errorf("删除 current 软链失败: %w", err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除 current 软链失败: %w"), err))
 		}
 	}
 
@@ -426,7 +427,7 @@ func PurgeProject(root string) (int64, error) {
 	if info, err := os.Stat(stateFile); err == nil {
 		size := info.Size()
 		if err := os.Remove(stateFile); err != nil {
-			errs = append(errs, fmt.Errorf("删除 state.json 失败: %w", err))
+			errs = append(errs, fmt.Errorf(i18n.T("删除 state.json 失败: %w"), err))
 		} else {
 			totalFreed += size
 		}

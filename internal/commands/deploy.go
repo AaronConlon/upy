@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/ui"
 )
@@ -23,7 +24,7 @@ func SelectProjectAndRelease(force bool, startedAt ...time.Time) error {
 	if err != nil || !ok {
 		return err
 	}
-	log.Info("已选择项目 " + project.Name + "（" + log.Path(project.Root) + "）")
+	log.Info(i18n.T("已选择项目 ") + project.Name + "（" + log.Path(project.Root) + "）")
 	return Release(ReleaseArgs{Force: force, Root: project.Root, StartedAt: start})
 }
 
@@ -39,7 +40,7 @@ func Deploy(projectName string, force bool, startedAt ...time.Time) error {
 	if err != nil || !ok {
 		return err
 	}
-	log.Info("正在项目 " + project.Name + "（" + log.Path(project.Root) + "）部署最新版本。")
+	log.Info(i18n.T("正在项目 ") + project.Name + "（" + log.Path(project.Root) + i18n.T("）部署最新版本。"))
 	// Root 贯穿下载、解压、部署与状态读写，效果等同于切入该目录执行 upy release latest。
 	return Release(ReleaseArgs{Target: "latest", Force: force, Root: project.Root, StartedAt: start})
 }
@@ -50,7 +51,7 @@ func selectLocalProject(projectName string) (config.LocalProject, bool, error) {
 		return config.LocalProject{}, false, err
 	}
 	if len(projects) == 0 {
-		log.Info("没有可用的本地项目。请先在项目根目录执行一次 upy release 成功部署。")
+		log.Info(i18n.T("没有可用的本地项目。请先在项目根目录执行一次 upy release 成功部署。"))
 		return config.LocalProject{}, false, nil
 	}
 
@@ -61,14 +62,14 @@ func selectLocalProject(projectName string) (config.LocalProject, bool, error) {
 				return project, true, nil
 			}
 		}
-		return config.LocalProject{}, false, fmt.Errorf("找不到本地项目 %q。请先在项目根目录执行一次 upy release 成功部署", projectName)
+		return config.LocalProject{}, false, fmt.Errorf(i18n.T("找不到本地项目 %q。请先在项目根目录执行一次 upy release 成功部署"), projectName)
 	}
 
 	options := make([]ui.SelectOption, len(projects))
 	for i, project := range projects {
 		options[i] = ui.SelectOption{Label: project.Name, Hint: project.Root}
 	}
-	idx, err := ui.Select("请选择本地项目", options)
+	idx, err := ui.Select(i18n.T("请选择本地项目"), options)
 	if err != nil {
 		return config.LocalProject{}, false, err
 	}

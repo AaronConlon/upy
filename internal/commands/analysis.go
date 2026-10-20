@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/AaronConlon/upy/internal/analysis"
+	"github.com/AaronConlon/upy/internal/i18n"
 )
 
 // AnalysisArgs analysis 命令执行参数
@@ -21,7 +22,7 @@ type AnalysisArgs struct {
 func Analysis(args AnalysisArgs) error {
 	projects, err := analysis.CollectAll(args.Root)
 	if err != nil {
-		return fmt.Errorf("收集项目信息失败: %w", err)
+		return fmt.Errorf(i18n.T("收集项目信息失败: %w"), err)
 	}
 
 	targetName := strings.TrimSpace(args.ProjectName)
@@ -42,7 +43,7 @@ func Analysis(args AnalysisArgs) error {
 		}
 
 		if len(matched) == 0 {
-			return fmt.Errorf("未找到项目: %s（可在项目目录运行 upy deploy 完成登记，或使用 upy analysis 查看全量列表）", targetName)
+			return fmt.Errorf(i18n.T("未找到项目: %s（可在项目目录运行 upy deploy 完成登记，或使用 upy analysis 查看全量列表）"), targetName)
 		}
 		projects = matched
 		// 单项目分析时，默认开启详细子目录分解
@@ -54,7 +55,7 @@ func Analysis(args AnalysisArgs) error {
 	if args.JSON {
 		jsonStr, err := analysis.RenderJSON(report)
 		if err != nil {
-			return fmt.Errorf("序列化分析报告失败: %w", err)
+			return fmt.Errorf(i18n.T("序列化分析报告失败: %w"), err)
 		}
 		fmt.Println(jsonStr)
 		return nil

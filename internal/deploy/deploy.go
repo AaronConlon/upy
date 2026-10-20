@@ -13,6 +13,7 @@ import (
 	"github.com/AaronConlon/upy/internal/cleaner"
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/deployer"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/notify"
 	"github.com/AaronConlon/upy/internal/platform"
@@ -53,14 +54,14 @@ func DeployBundle(zipPath string, opts Options) (*Result, error) {
 }
 
 func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Result, error) {
-	lock, err := projectlock.Acquire(root, "部署")
+	lock, err := projectlock.Acquire(root, i18n.T("部署"))
 	if err != nil {
 		return nil, err
 	}
 	defer lock.Release()
 
 	if _, err := os.Stat(zipPath); err != nil {
-		return nil, fmt.Errorf("未找到 bundle 文件: %s", zipPath)
+		return nil, fmt.Errorf(i18n.T("未找到 bundle 文件: %s"), zipPath)
 	}
 
 	// 保证 releases 目录就绪；临时解压目录建在 releasesDir 下，保证与目标目录在同一分区/设备，避免跨设备 rename 报错 (EXDEV)
@@ -87,11 +88,11 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		}
 	}()
 
-	log.Step("正在解压 bundle...")
+	log.Step(i18n.T("正在解压 bundle..."))
 	if err := bundle.SafeExtract(zipPath, tmp); err != nil {
 		return nil, err
 	}
-	log.Ok("bundle 解压完成")
+	log.Ok(i18n.T("bundle 解压完成"))
 
 	manifest, err := bundle.ReadManifest(tmp)
 	if err != nil {
@@ -102,8 +103,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	// 平台兼容性
 	to, ta := targetSpec(manifest)
 	if !platform.IsCompatible(to, ta) {
-		return nil, fmt.Errorf("bundle 目标平台 %s/%s 与当前主机 (%s/%s) 不兼容，拒绝部署",
-			def(to, "未声明"), def(ta, "未声明"), platform.CurrentOS(), platform.CurrentArch())
+		return nil, fmt.Errorf(i18n.T("bundle 目标平台 %s/%s 与当前主机 (%s/%s) 不兼容，拒绝部署"),
+			def(to, i18n.T("未声明")), def(ta, i18n.T("未声明")), platform.CurrentOS(), platform.CurrentArch())
 	}
 
 	st, err := state.Read(root)
@@ -113,23 +114,23 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 
 	// 相同版本跳过
 	if st.CurrentVersion != "" && st.CurrentVersion == manifest.Version && !force {
-		log.Info(fmt.Sprintf("当前已是 %s，跳过部署（--force 可强制重新部署）", manifest.Version))
+		log.Info(fmt.Sprintf(i18n.T("当前已是 %s，跳过部署（--force 可强制重新部署）"), manifest.Version))
 		elapsedStr := ui.FormatDuration(time.Since(startedAt))
-		log.Info("⏱ 部署耗时: " + log.Green(log.Bold(elapsedStr)))
+		log.Info(i18n.T("⏱ 部署耗时: ") + log.Green(log.Bold(elapsedStr)))
 		return &Result{Skipped: true, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 	}
 
 	releaseDir := filepath.Join(releasesDir, manifest.Version)
-	log.Step("版本目录: " + log.Path(releaseDir))
+	log.Step(i18n.T("版本目录: ") + log.Path(releaseDir))
 	var backupReleaseDir string
 	if _, err := os.Stat(releaseDir); err == nil {
 		// SYS-005: 同版本 force 重发时保留旧版本目录备份，避免在 Deactivate 前就地删除正在运行的产物
 		backupReleaseDir = filepath.Join(releasesDir, fmt.Sprintf(".old-%s-%d", manifest.Version, time.Now().UnixNano()))
 		if err := moveDir(releaseDir, backupReleaseDir); err != nil {
-			return nil, fmt.Errorf("暂存既有版本目录失败: %w", err)
+			return nil, fmt.Errorf(i18n.T("暂存既有版本目录失败: %w"), err)
 		}
 	}
-	log.Step("正在安装版本 " + manifest.Version + "...")
+	log.Step(i18n.T("正在安装版本 ") + manifest.Version + "...")
 	if err := moveDir(tmp, releaseDir); err != nil {
 		if backupReleaseDir != "" {
 			_ = moveDir(backupReleaseDir, releaseDir)
@@ -137,11 +138,11 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		return nil, err
 	}
 	cleanupTmp = false
-	log.Ok("版本已安装到 releases/" + manifest.Version)
+	log.Ok(i18n.T("版本已安装到 releases/") + manifest.Version)
 
 	// 规范化版本目录权限: 确保目录为 0755, 文件为 0644/0755, 供 Nginx 等 Web 服务器正常访问
 	if err := EnsurePermissions(releaseDir); err != nil {
-		log.Warn("设置版本目录权限失败: " + err.Error())
+		log.Warn(i18n.T("设置版本目录权限失败: ") + err.Error())
 	}
 
 	ctx := &deployer.DeployContext{
@@ -172,7 +173,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 
 	// 激活与健康检查阶段：停掉上一版本并启动新版本。若失败，执行回滚
 	if err := runActiveDeployer(d); err != nil {
-		log.Warn("部署失败，正在尝试回滚...")
+		log.Warn(i18n.T("部署失败，正在尝试回滚..."))
 		if backupReleaseDir != "" {
 			// SYS-15: 必须在调用 Rollback() 重新拉起旧服务前，先将原版本的二进制和配置还原到 releaseDir！
 			_ = os.RemoveAll(releaseDir)
@@ -180,7 +181,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 			backupReleaseDir = ""
 		}
 		if rbErr := d.Rollback(); rbErr != nil {
-			log.Warn("回滚出错: " + rbErr.Error())
+			log.Warn(i18n.T("回滚出错: ") + rbErr.Error())
 		}
 		return nil, err
 	}
@@ -191,7 +192,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 
 	// docker / system 类型额外切换 current 软链
 	if manifest.Type == "docker" || manifest.Type == "system" || manifest.Type == "service" {
-		log.Step("正在切换 current -> releases/" + manifest.Version + "...")
+		log.Step(i18n.T("正在切换 current -> releases/") + manifest.Version + "...")
 		if err := deployer.AtomicSymlink(releaseDir, filepath.Join(root, "current")); err != nil {
 			return nil, err
 		}
@@ -212,7 +213,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	if err := state.WriteAtomic(root, newState); err != nil {
 		return nil, err
 	}
-	log.Ok("部署完成: " + manifest.Name + " " + manifest.Version)
+	log.Ok(i18n.T("部署完成: ") + manifest.Name + " " + manifest.Version)
 
 	// 先清理旧版本目录与旧 Bundle 缓存, 再输出最终目录结构, 最后打印耗时
 	cleanupOldReleases(root, newState)
@@ -220,7 +221,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 	ui.PrintProjectLayout(root)
 
 	elapsedStr := ui.FormatDuration(time.Since(startedAt))
-	log.Info("⏱ 部署耗时: " + log.Green(log.Bold(elapsedStr)))
+	log.Info(i18n.T("⏱ 部署耗时: ") + log.Green(log.Bold(elapsedStr)))
 
 	return &Result{Skipped: false, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 }
@@ -254,7 +255,7 @@ func cleanupOldReleases(root string, st *state.State) {
 		if e.Name() == st.CurrentVersion || (st.PreviousVersion != "" && e.Name() == st.PreviousVersion) {
 			continue
 		}
-		log.Info("🗑 清理旧版本目录 " + e.Name())
+		log.Info(i18n.T("🗑 清理旧版本目录 ") + e.Name())
 		os.RemoveAll(filepath.Join(releasesDir, e.Name()))
 	}
 }
@@ -267,10 +268,10 @@ func cleanupOldBundles(root string) {
 	}
 	_, deleted, err := cleaner.PruneBundles(root, bundlesKeep)
 	if err != nil {
-		log.Warn("清理旧 Bundle 缓存出错: " + err.Error())
+		log.Warn(i18n.T("清理旧 Bundle 缓存出错: ") + err.Error())
 	}
 	for _, name := range deleted {
-		log.Info("🗑 清理旧 Bundle 缓存 " + name)
+		log.Info(i18n.T("🗑 清理旧 Bundle 缓存 ") + name)
 	}
 }
 
@@ -282,7 +283,7 @@ func moveDir(src, dst string) error {
 	// 跨文件系统 (EXDEV) 或其他 rename 失败时，回退到 copy + remove
 	if err := copyDir(src, dst); err != nil {
 		_ = os.RemoveAll(dst)
-		return fmt.Errorf("移动目录失败，且跨分区复制失败: %w", err)
+		return fmt.Errorf(i18n.T("移动目录失败，且跨分区复制失败: %w"), err)
 	}
 	_ = os.RemoveAll(src)
 	return nil

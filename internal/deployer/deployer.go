@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 )
 
@@ -106,7 +107,7 @@ func PollHealth(url string, timeoutSec int) error {
 		}
 		time.Sleep(time.Second)
 	}
-	return fmt.Errorf("健康检查超时（%ds）: %s", timeoutSec, log.Redact(lastErr))
+	return fmt.Errorf(i18n.T("健康检查超时（%ds）: %s"), timeoutSec, log.Redact(lastErr))
 }
 
 // AtomicSymlink 原子切换符号链接 (临时 symlink + rename)
@@ -118,11 +119,11 @@ func AtomicSymlink(target, linkPath string) error {
 	}
 	tmp := linkPath + ".upy-tmp-" + fmt.Sprintf("%d", time.Now().UnixNano())
 	if err := os.Symlink(linkTarget, tmp); err != nil {
-		return fmt.Errorf("无法创建符号链接: %v", log.Redact(err.Error()))
+		return fmt.Errorf(i18n.T("无法创建符号链接: %v"), log.Redact(err.Error()))
 	}
 	if err := os.Rename(tmp, linkPath); err != nil {
 		os.Remove(tmp)
-		return fmt.Errorf("无法激活符号链接: %v", log.Redact(err.Error()))
+		return fmt.Errorf(i18n.T("无法激活符号链接: %v"), log.Redact(err.Error()))
 	}
 	return nil
 }

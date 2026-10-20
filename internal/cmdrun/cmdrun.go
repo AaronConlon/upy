@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 )
 
@@ -54,7 +55,7 @@ func RealRun(cmd string, args []string, opts Options) error {
 	if errors.As(err, &ee) {
 		code = ee.ExitCode()
 	}
-	msg := fmt.Sprintf("命令执行失败（退出码 %d）: %s %s", code, cmd, strings.Join(args, " "))
+	msg := fmt.Sprintf(i18n.T("命令执行失败（退出码 %d）: %s %s"), code, cmd, strings.Join(args, " "))
 	log.Fail(msg)
 	return fmt.Errorf("%s", log.Redact(msg))
 }
@@ -76,6 +77,6 @@ func RealOutput(cmd string, args []string, opts Options) (string, error) {
 	if errors.As(err, &ee) {
 		code = ee.ExitCode()
 	}
-	msg := fmt.Sprintf("命令执行失败（退出码 %d）: %s %s", code, cmd, strings.Join(args, " "))
+	msg := fmt.Sprintf(i18n.T("命令执行失败（退出码 %d）: %s %s"), code, cmd, strings.Join(args, " "))
 	return "", fmt.Errorf("%s", log.Redact(msg))
 }

@@ -6,6 +6,9 @@
 #   upy init <token>              # 设置全局默认 token
 #   upy init <owner> <token>      # 设置指定组织或个人的专属 token
 
+# CLI language: en (default) or zh-CN. Web console and notifications are unchanged.
+language: en
+
 github:
   # 全局默认 / 兜底 token (可选)
   token: github_pat_default_xxx

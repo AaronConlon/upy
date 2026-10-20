@@ -10,6 +10,7 @@ import (
 
 	"github.com/AaronConlon/upy/internal/backup"
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/notify"
 	"github.com/AaronConlon/upy/internal/ui"
@@ -40,7 +41,7 @@ func Backup(args BackupArgs) error {
 		return err
 	}
 	if len(targets) == 0 {
-		log.Info("未找到任何项目。")
+		log.Info(i18n.T("未找到任何项目。"))
 		return nil
 	}
 
@@ -103,7 +104,7 @@ func resolveBackupTargets(args BackupArgs) ([]backupTarget, bool, error) {
 		if cfg, err := config.ReadProjectConfig(cwd); err == nil && strings.EqualFold(cfg.Name, args.ProjectName) {
 			return []backupTarget{{Name: cfg.Name, Root: cwd}}, false, nil
 		}
-		return nil, false, fmt.Errorf("找不到已登记的项目 %q。可在项目目录下运行，或直接运行 upy backup 交互选择", args.ProjectName)
+		return nil, false, fmt.Errorf(i18n.T("找不到已登记的项目 %q。可在项目目录下运行，或直接运行 upy backup 交互选择"), args.ProjectName)
 	}
 
 	// 显式指定 --all
@@ -124,7 +125,7 @@ func resolveBackupTargets(args BackupArgs) ([]backupTarget, bool, error) {
 			}
 		}
 		if len(list) == 0 {
-			return nil, false, fmt.Errorf("未找到任何已登记项目，无法执行批量备份")
+			return nil, false, i18n.Error("未找到任何已登记项目，无法执行批量备份")
 		}
 		return list, true, nil
 	}
@@ -145,7 +146,7 @@ func resolveBackupTargets(args BackupArgs) ([]backupTarget, bool, error) {
 
 	if cwdIsProject {
 		options = append(options, ui.SelectOption{
-			Label: fmt.Sprintf("[当前目录项目] %s", cwdName),
+			Label: fmt.Sprintf(i18n.T("[当前目录项目] %s"), cwdName),
 			Hint:  log.Path(cwd),
 		})
 		items = append(items, backupTarget{Name: cwdName, Root: cwd, IsCwd: true})
@@ -163,18 +164,18 @@ func resolveBackupTargets(args BackupArgs) ([]backupTarget, bool, error) {
 	}
 
 	if len(items) == 0 {
-		return nil, false, fmt.Errorf("未找到任何项目。请在包含 deploy.yaml 的项目目录下执行，或先通过 upy 部署一个项目")
+		return nil, false, i18n.Error("未找到任何项目。请在包含 deploy.yaml 的项目目录下执行，或先通过 upy 部署一个项目")
 	}
 
 	if len(items) > 1 {
 		options = append(options, ui.SelectOption{
-			Label: "[全部已登记项目]",
-			Hint:  fmt.Sprintf("批量对 %d 个项目依次执行约定备份", len(items)),
+			Label: i18n.T("[全部已登记项目]"),
+			Hint:  fmt.Sprintf(i18n.T("批量对 %d 个项目依次执行约定备份"), len(items)),
 		})
-		items = append(items, backupTarget{Name: "全部项目", IsAll: true})
+		items = append(items, backupTarget{Name: i18n.T("全部项目"), IsAll: true})
 	}
 
-	idx, err := ui.Select("请选择要备份的项目:", options)
+	idx, err := ui.Select(i18n.T("请选择要备份的项目:"), options)
 	if err != nil {
 		return nil, false, err
 	}
@@ -208,21 +209,21 @@ func listProjectBackups(target backupTarget) error {
 		return err
 	}
 
-	fmt.Printf("\n项目 %s 历史备份列表 (%s):\n\n", log.Sky(target.Name), log.Path(backupDir))
+	fmt.Printf(i18n.T("\n项目 %s 历史备份列表 (%s):\n\n"), log.Sky(target.Name), log.Path(backupDir))
 	if len(files) == 0 {
-		fmt.Println("  (当前暂无备份产物)")
+		fmt.Println(i18n.T("  (当前暂无备份产物)"))
 		return nil
 	}
 
 	var totalSize int64
-	fmt.Printf("  %-48s %-12s %s\n", "文件名称", "文件体积", "生成时间")
+	fmt.Printf("  %-48s %-12s %s\n", i18n.T("文件名称"), i18n.T("文件体积"), i18n.T("生成时间"))
 	fmt.Println("  " + strings.Repeat("-", 76))
 	for _, f := range files {
 		totalSize += f.Size
 		fmt.Printf("  %-48s %-12s %s\n", f.Name, humanSize(f.Size), f.ModTime.Format("2006-01-02 15:04:05"))
 	}
 	fmt.Println("  " + strings.Repeat("-", 76))
-	fmt.Printf("  累计 %d 个备份文件，总占用空间: %s\n\n", len(files), humanSize(totalSize))
+	fmt.Printf(i18n.T("  累计 %d 个备份文件，总占用空间: %s\n\n"), len(files), humanSize(totalSize))
 	return nil
 }
 
@@ -242,11 +243,11 @@ func pruneProjectBackups(target backupTarget, keep int) error {
 	}
 
 	if len(deleted) == 0 {
-		log.Info(fmt.Sprintf("项目 %s 备份数量未超过 %d 份，无需清理。", target.Name, keep))
+		log.Info(fmt.Sprintf(i18n.T("项目 %s 备份数量未超过 %d 份，无需清理。"), target.Name, keep))
 		return nil
 	}
 
-	log.Ok(fmt.Sprintf("项目 %s 成功清理 %d 份陈旧备份 (保留最近 %d 份):", target.Name, len(deleted), keep))
+	log.Ok(fmt.Sprintf(i18n.T("项目 %s 成功清理 %d 份陈旧备份 (保留最近 %d 份):"), target.Name, len(deleted), keep))
 	for _, f := range deleted {
 		fmt.Printf("  - %s\n", f)
 	}
@@ -254,7 +255,7 @@ func pruneProjectBackups(target backupTarget, keep int) error {
 }
 
 func backupSingleProject(target backupTarget, args BackupArgs) error {
-	log.Step(fmt.Sprintf("正在对项目 %s 执行约定备份...", log.Sky(target.Name)))
+	log.Step(fmt.Sprintf(i18n.T("正在对项目 %s 执行约定备份..."), log.Sky(target.Name)))
 
 	opts := backup.Options{
 		Root:         target.Root,
@@ -274,20 +275,20 @@ func backupSingleProject(target backupTarget, args BackupArgs) error {
 		return err
 	}
 
-	log.Ok(fmt.Sprintf("项目 %s 备份执行完成！", target.Name))
+	log.Ok(fmt.Sprintf(i18n.T("项目 %s 备份执行完成！"), target.Name))
 	if len(result.CreatedFiles) > 0 {
 		for _, f := range result.CreatedFiles {
-			fmt.Printf("  📦 归档产物: %s (%s)\n", log.Sky(f.Name), humanSize(f.Size))
+			fmt.Printf(i18n.T("  📦 归档产物: %s (%s)\n"), log.Sky(f.Name), humanSize(f.Size))
 		}
 	} else {
-		fmt.Printf("  📦 备份目录: %s (脚本未输出新增文件)\n", log.Path(result.BackupDir))
+		fmt.Printf(i18n.T("  📦 备份目录: %s (脚本未输出新增文件)\n"), log.Path(result.BackupDir))
 	}
 
 	if len(result.PrunedFiles) > 0 {
-		fmt.Printf("  🛡️  自动轮转: 清理了 %d 份历史备份\n", len(result.PrunedFiles))
+		fmt.Printf(i18n.T("  🛡️  自动轮转: 清理了 %d 份历史备份\n"), len(result.PrunedFiles))
 	}
 
-	fmt.Printf("  ⏱  总耗时:   %s\n", ui.FormatDuration(result.Duration))
+	fmt.Printf(i18n.T("  ⏱  总耗时:   %s\n"), ui.FormatDuration(result.Duration))
 
 	notify.Send(notify.Event{
 		Kind:    notify.KindBackupSuccess,
@@ -301,14 +302,14 @@ func backupSingleProject(target backupTarget, args BackupArgs) error {
 }
 
 func backupAllProjects(targets []backupTarget, args BackupArgs) error {
-	fmt.Printf("\n🚀 准备对全部 %d 个项目依次执行约定备份...\n\n", len(targets))
+	fmt.Printf(i18n.T("\n🚀 准备对全部 %d 个项目依次执行约定备份...\n\n"), len(targets))
 
 	var successCount int
 	var failCount int
 	var totalBytes int64
 
 	for i, target := range targets {
-		fmt.Printf("[%d/%d] 正在备份项目 %s (%s)...\n", i+1, len(targets), log.Sky(target.Name), log.Path(target.Root))
+		fmt.Printf(i18n.T("[%d/%d] 正在备份项目 %s (%s)...\n"), i+1, len(targets), log.Sky(target.Name), log.Path(target.Root))
 		opts := backup.Options{
 			Root:         target.Root,
 			CustomScript: args.Script,
@@ -318,7 +319,7 @@ func backupAllProjects(targets []backupTarget, args BackupArgs) error {
 		ctx := context.Background()
 		res, err := backup.Run(ctx, opts)
 		if err != nil {
-			log.Warn(fmt.Sprintf("项目 %s 备份失败: %v", target.Name, err))
+			log.Warn(fmt.Sprintf(i18n.T("项目 %s 备份失败: %v"), target.Name, err))
 			failCount++
 			notify.Send(notify.Event{
 				Kind:    notify.KindBackupFailure,
@@ -335,9 +336,9 @@ func backupAllProjects(targets []backupTarget, args BackupArgs) error {
 		if len(res.CreatedFiles) > 0 {
 			outName = res.CreatedFiles[0].Name
 		} else {
-			outName = "完成"
+			outName = i18n.T("完成")
 		}
-		log.Ok(fmt.Sprintf("项目 %s 备份成功 (%s, 耗时 %s)", target.Name, outName, ui.FormatDuration(res.Duration)))
+		log.Ok(fmt.Sprintf(i18n.T("项目 %s 备份成功 (%s, 耗时 %s)"), target.Name, outName, ui.FormatDuration(res.Duration)))
 
 		notify.Send(notify.Event{
 			Kind:    notify.KindBackupSuccess,
@@ -348,14 +349,14 @@ func backupAllProjects(targets []backupTarget, args BackupArgs) error {
 		})
 	}
 
-	fmt.Printf("\n🎉 批量备份结束：成功 %d 个，失败 %d 个，累计生成产物 %s\n\n",
+	fmt.Printf(i18n.T("\n🎉 批量备份结束：成功 %d 个，失败 %d 个，累计生成产物 %s\n\n"),
 		successCount, failCount, humanSize(totalBytes))
 	return nil
 }
 
 func summarizeFiles(files []backup.BackupFile) string {
 	if len(files) == 0 {
-		return "备份成功"
+		return i18n.T("备份成功")
 	}
 	var names []string
 	for _, f := range files {

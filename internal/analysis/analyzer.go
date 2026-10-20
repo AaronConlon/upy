@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/AaronConlon/upy/internal/i18n"
 )
 
 // Analyze 对采集到的各项目执行基准计算、百分比换算、全机最新部署甄选及排序
@@ -118,31 +120,31 @@ func FormatRelativeTime(t *time.Time, now time.Time) string {
 	}
 	diff := now.Sub(*t)
 	if diff < 0 {
-		return "刚刚"
+		return i18n.T("刚刚")
 	}
 	if diff < time.Minute {
-		return "刚刚"
+		return i18n.T("刚刚")
 	}
 	if diff < time.Hour {
 		mins := int(diff.Minutes())
 		if mins <= 0 {
 			mins = 1
 		}
-		return fmt.Sprintf("%d分钟前", mins)
+		return fmt.Sprintf(i18n.T("%d分钟前"), mins)
 	}
 	if diff < 24*time.Hour {
 		hours := int(diff.Hours())
 		if hours <= 0 {
 			hours = 1
 		}
-		return fmt.Sprintf("%d小时前", hours)
+		return fmt.Sprintf(i18n.T("%d小时前"), hours)
 	}
 	if diff < 30*24*time.Hour {
 		days := int(diff.Hours() / 24)
 		if days <= 0 {
 			days = 1
 		}
-		return fmt.Sprintf("%d天前", days)
+		return fmt.Sprintf(i18n.T("%d天前"), days)
 	}
 	return t.Format("2006-01-02")
 }

@@ -492,3 +492,30 @@ func TestUpdateProxyConfiguration(t *testing.T) {
 		}
 	}
 }
+
+func TestSaveLanguagePreservesConfiguration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	t.Setenv("UPY_CONFIG", path)
+	original := "github:\n  token: keep-token\nupdate:\n  proxy_enabled: true\nserver:\n  listen: 127.0.0.1:8999\nprojects:\n  - name: demo\n    root: /srv/demo\n"
+	if err := os.WriteFile(path, []byte(original), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := SaveLanguage("zh"); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Language != "zh-CN" || cfg.GitHub.Token != "keep-token" || !cfg.Update.ProxyEnabled || len(cfg.Projects) != 1 || cfg.Server.Listen != "127.0.0.1:8999" {
+		t.Fatalf("configuration lost: %+v", cfg)
+	}
+	before, _ := os.ReadFile(path)
+	if _, err := SaveLanguage("unsupported"); err == nil {
+		t.Fatal("invalid language accepted")
+	}
+	after, _ := os.ReadFile(path)
+	if string(before) != string(after) {
+		t.Fatal("invalid language changed configuration")
+	}
+}

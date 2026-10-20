@@ -33,19 +33,19 @@ func TestStringWidthAndPadding(t *testing.T) {
 func TestRenderBar(t *testing.T) {
 	// 100%
 	b100 := RenderBar(100.0, 20)
-	if !strings.Contains(b100, "100.0%") || !strings.Contains(b100, "████████████████████") {
+	if strings.Contains(b100, "%") || stripANSI(b100) != strings.Repeat("━", 20) {
 		t.Errorf("unexpected 100%% bar: %s", b100)
 	}
 
 	// 0%
 	b0 := RenderBar(0.0, 20)
-	if !strings.Contains(b0, "0.0%") || !strings.Contains(b0, "░░░░░░░░░░░░░░░░░░░░") {
+	if strings.Contains(b0, "%") || stripANSI(b0) != strings.Repeat("─", 20) {
 		t.Errorf("unexpected 0%% bar: %s", b0)
 	}
 
 	// Small positive percentage
 	b1 := RenderBar(0.5, 20)
-	if !strings.Contains(b1, "0.5%") || !strings.Contains(b1, "█") {
+	if strings.Contains(b1, "%") || !strings.Contains(b1, "━") {
 		t.Errorf("expected at least 1 filled block for tiny non-zero percent: %s", b1)
 	}
 }
@@ -103,8 +103,8 @@ func TestRenderTerminalAndDetail(t *testing.T) {
 	if !strings.Contains(out, "app-small (v1.2.0)") {
 		t.Errorf("expected spotlight project in output")
 	}
-	if !strings.Contains(out, "100.0%") || !strings.Contains(out, "50.0%") {
-		t.Errorf("expected benchmark percentages in output")
+	if strings.Contains(out, "%") || !strings.Contains(out, strings.Repeat("━", 20)) {
+		t.Errorf("expected graphic-only comparison bars")
 	}
 	if !strings.Contains(out, "存储汇总统计") {
 		t.Errorf("expected summary section in output")

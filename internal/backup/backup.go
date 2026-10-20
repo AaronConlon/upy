@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/projectlock"
 	"github.com/AaronConlon/upy/internal/state"
 )
@@ -29,7 +30,7 @@ const DefaultRetention = 7
 
 var (
 	// ErrNoScript 未找到可执行备份脚本
-	ErrNoScript = errors.New("未找到备份脚本（请在项目根目录下创建 backup.sh、scripts/backup.sh，或在 deploy.yaml 中配置 backup.script）")
+	ErrNoScript = i18n.Error("未找到备份脚本（请在项目根目录下创建 backup.sh、scripts/backup.sh，或在 deploy.yaml 中配置 backup.script）")
 )
 
 // BackupFile 描述一个备份产物文件
@@ -55,7 +56,7 @@ func FindScript(root, customScript string) (string, error) {
 		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
 			return p, nil
 		}
-		return "", fmt.Errorf("指定的自定义备份脚本不存在: %s", customScript)
+		return "", fmt.Errorf(i18n.T("指定的自定义备份脚本不存在: %s"), customScript)
 	}
 
 	candidates := []string{
@@ -80,7 +81,7 @@ func ScanBackups(backupDir string) ([]BackupFile, error) {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("读取备份目录失败: %w", err)
+		return nil, fmt.Errorf(i18n.T("读取备份目录失败: %w"), err)
 	}
 
 	var files []BackupFile
@@ -136,7 +137,7 @@ func PruneBackups(backupDir string, keepCount int) ([]string, error) {
 		if err := os.Remove(f.Path); err == nil {
 			deleted = append(deleted, f.Name)
 		} else if !os.IsNotExist(err) {
-			return deleted, fmt.Errorf("删除陈旧备份文件 %s 失败: %w", f.Name, err)
+			return deleted, fmt.Errorf(i18n.T("删除陈旧备份文件 %s 失败: %w"), f.Name, err)
 		}
 	}
 
@@ -169,13 +170,13 @@ type Result struct {
 func Run(ctx context.Context, opts Options) (*Result, error) {
 	absRoot, err := filepath.Abs(opts.Root)
 	if err != nil {
-		return nil, fmt.Errorf("无效的项目路径: %w", err)
+		return nil, fmt.Errorf(i18n.T("无效的项目路径: %w"), err)
 	}
 
 	// 1. 获取跨进程排他锁
-	lock, err := projectlock.Acquire(absRoot, "备份中")
+	lock, err := projectlock.Acquire(absRoot, i18n.T("备份中"))
 	if err != nil {
-		return nil, fmt.Errorf("获取项目锁失败: %w", err)
+		return nil, fmt.Errorf(i18n.T("获取项目锁失败: %w"), err)
 	}
 	defer lock.Release()
 
@@ -228,7 +229,7 @@ func Run(ctx context.Context, opts Options) (*Result, error) {
 		backupDir = filepath.Join(absRoot, backupDir)
 	}
 	if err := os.MkdirAll(backupDir, 0o755); err != nil {
-		return nil, fmt.Errorf("创建备份输出目录失败: %w", err)
+		return nil, fmt.Errorf(i18n.T("创建备份输出目录失败: %w"), err)
 	}
 
 	// 5. 记录执行前的备份目录快照
@@ -280,9 +281,9 @@ func Run(ctx context.Context, opts Options) (*Result, error) {
 
 	if runErr != nil {
 		if errors.Is(runCtx.Err(), context.DeadlineExceeded) {
-			return nil, fmt.Errorf("备份脚本执行超时 (超过 %s)", timeout)
+			return nil, fmt.Errorf(i18n.T("备份脚本执行超时 (超过 %s)"), timeout)
 		}
-		return nil, fmt.Errorf("备份脚本执行失败: %w", runErr)
+		return nil, fmt.Errorf(i18n.T("备份脚本执行失败: %w"), runErr)
 	}
 
 	// 8. 扫描生成的新增或更新文件
