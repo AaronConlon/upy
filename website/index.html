@@ -73,7 +73,7 @@
         ><a href="#start">Install</a
         ><a href="https://github.com/AaronConlon/upy#readme">Docs ↗</a
         ><a href="https://github.com/AaronConlon/upy">GitHub ↗</a>
-        <a href="./zh.html" class="lang-switch" aria-label="切换到中文版本">中文</a>
+        <a href="./zh.html" class="lang-switch" aria-label="Switch to Chinese">中文</a>
       </nav>
     </header>
     <main id="main">
@@ -175,7 +175,7 @@
           </p>
           <a
             class="text-link"
-            href="https://github.com/AaronConlon/upy#如何安装"
+            href="https://github.com/AaronConlon/upy#installation"
             >View installation docs ↗</a
           >
         </div>
@@ -216,7 +216,7 @@
               Supports SHA-256 integrity verification, resumable downloads, and offline local bundles.
             </p>
             <a
-              href="https://github.com/AaronConlon/upy#如何部署"
+              href="https://github.com/AaronConlon/upy#how-to-deploy"
               class="text-link"
               >View deployment guide ↗</a
             >
@@ -339,7 +339,7 @@ releases:
               </div>
             </div>
 
-            <!-- Terminal Window (独占一行) -->
+            <!-- Terminal Window (full-width row) -->
             <div class="terminal-window">
               <div class="terminal-bar">
                 <div class="terminal-dots" aria-hidden="true">
@@ -375,7 +375,7 @@ releases:
               </div>
             </div>
 
-            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <!-- Guarantees: flat grid without nested gray surfaces -->
             <div class="showcase-guarantees">
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
@@ -445,7 +445,7 @@ service:
               </div>
             </div>
 
-            <!-- Terminal Window (独占一行) -->
+            <!-- Terminal Window (full-width row) -->
             <div class="terminal-window">
               <div class="terminal-bar">
                 <div class="terminal-dots" aria-hidden="true">
@@ -485,7 +485,7 @@ service:
               </div>
             </div>
 
-            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <!-- Guarantees: flat grid without nested gray surfaces -->
             <div class="showcase-guarantees">
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
@@ -547,7 +547,7 @@ release:
               </div>
             </div>
 
-            <!-- Terminal Window (独占一行) -->
+            <!-- Terminal Window (full-width row) -->
             <div class="terminal-window">
               <div class="terminal-bar">
                 <div class="terminal-dots" aria-hidden="true">
@@ -587,7 +587,7 @@ release:
               </div>
             </div>
 
-            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <!-- Guarantees: flat grid without nested gray surfaces -->
             <div class="showcase-guarantees">
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
@@ -615,7 +615,7 @@ release:
               Dual-layer active protection ensures the active <code>current</code> version is never deleted, backed by cross-process locks against concurrent operations.
             </p>
             <a
-              href="https://github.com/AaronConlon/upy#如何清理与维护"
+              href="https://github.com/AaronConlon/upy#disk-maintenance--pruning"
               class="text-link"
               >View cleanup docs ↗</a
             >
@@ -681,7 +681,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               </div>
             </div>
 
-            <!-- Terminal Window (独占一行) -->
+            <!-- Terminal Window (full-width row) -->
             <div class="terminal-window">
               <div class="terminal-bar">
                 <div class="terminal-dots" aria-hidden="true">
@@ -731,11 +731,11 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               </div>
             </div>
 
-            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <!-- Guarantees: flat grid without nested gray surfaces -->
             <div class="showcase-guarantees">
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
-                <div><strong>Cross-Process Mutual Exclusion:</strong> Acquires exclusive <code>.deploy.lock</code> (<code>action: 备份中</code>), strictly preventing dirty snapshots from concurrent releases or cleanups.</div>
+                <div><strong>Cross-Process Mutual Exclusion:</strong> Acquires exclusive <code>.deploy.lock</code> during backup operations, strictly preventing dirty snapshots from concurrent releases or cleanups.</div>
               </div>
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
@@ -793,7 +793,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               </div>
             </div>
 
-            <!-- Terminal Window (独占一行) -->
+            <!-- Terminal Window (full-width row) -->
             <div class="terminal-window">
               <div class="terminal-bar">
                 <div class="terminal-dots" aria-hidden="true">
@@ -848,7 +848,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               </div>
             </div>
 
-            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <!-- Guarantees: flat grid without nested gray surfaces -->
             <div class="showcase-guarantees">
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
@@ -964,19 +964,19 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
                   <span class="step-card-title">04 / Payload Standards <span>Rich Context Generated Automatically</span></span>
                   <span class="step-card-file">Title &amp; Body Structure</span>
                 </div>
-                <pre><code><span class="comment"># Title and Body are assembled automatically from deployment state:</span>
-<span class="string">Title:</span> upy 部署成功 · my-api-service
+                <pre><code><span class="comment"># Title and Body are assembled automatically (translated example):</span>
+<span class="string">Title:</span> upy deployment successful · my-api-service
 <span class="string">Body:</span>
-  项目: my-api-service
-  版本: v1.2.0
-  类型: Systemd 系统服务
-  目录: /opt/my-api-service
-  耗时: 3.2s
-  <span class="comment"># Failure alerts automatically append "原因: &lt;diagnostic error&gt;"</span></code></pre>
+  Project: my-api-service
+  Version: v1.2.0
+  Type: Systemd service
+  Directory: /opt/my-api-service
+  Duration: 3.2s
+  <span class="comment"># Failure alerts automatically append "Reason: &lt;diagnostic error&gt;"</span></code></pre>
               </div>
             </div>
 
-            <!-- Terminal Window (独占一行) -->
+            <!-- Terminal Window (full-width row) -->
             <div class="terminal-window">
               <div class="terminal-bar">
                 <div class="terminal-dots" aria-hidden="true">
@@ -1005,8 +1005,8 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               </div>
             </div>
 
-            <!-- Push Notification Preview Cards (Title & Body) -->
-            <div class="bark-push-preview">
+            <!-- Push Notification Preview Cards (translated examples) -->
+            <div class="bark-push-preview" aria-label="Translated notification examples">
               <!-- Push Card 1: Deploy Success -->
               <div class="push-card">
                 <div class="push-card-header">
@@ -1018,13 +1018,13 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
                 </div>
                 <div class="push-card-title">
                   <span class="field-label">Title:</span>
-                  <span>upy 部署成功 · my-api-service</span>
+                  <span>upy deployment successful · my-api-service</span>
                 </div>
-                <pre class="push-card-body">项目: my-api-service
-版本: v1.2.0
-类型: Systemd 系统服务
-目录: /opt/my-api-service
-耗时: 3.2s</pre>
+                <pre class="push-card-body">Project: my-api-service
+Version: v1.2.0
+Type: Systemd service
+Directory: /opt/my-api-service
+Duration: 3.2s</pre>
               </div>
 
               <!-- Push Card 2: Backup Success -->
@@ -1038,16 +1038,16 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
                 </div>
                 <div class="push-card-title">
                   <span class="field-label">Title:</span>
-                  <span>upy 备份成功 · my-api-service</span>
+                  <span>upy backup successful · my-api-service</span>
                 </div>
-                <pre class="push-card-body">项目: my-api-service
-归档: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
-目录: /opt/my-api-service
-耗时: 2.4s</pre>
+                <pre class="push-card-body">Project: my-api-service
+Archive: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+Directory: /opt/my-api-service
+Duration: 2.4s</pre>
               </div>
             </div>
 
-            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <!-- Guarantees: flat grid without nested gray surfaces -->
             <div class="showcase-guarantees">
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
