@@ -5,11 +5,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/AaronConlon/upy/internal/commands"
+	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/platform"
 	"github.com/AaronConlon/upy/internal/version"
@@ -34,10 +36,15 @@ func printHelp() {
 		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
 		"  init [owner] <token>           初始化或添加 GitHub 访问 token (支持按组织/用户归属)",
 		"  server [start|stop|status]     启动 Webhook 服务或管理后台守护进程",
+		"  log [server|upy|<项目>]        查看自身、server 或项目的运行与部署日志",
 		"",
 		"选项:",
 		"  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载",
 		"  --root <目录>                  项目目录 (默认当前目录)",
+		"  -f, --follow                   log 专用: 实时追踪后续新增日志输出",
+		"  -n, --tail <行数>              log 专用: 查看末尾 N 行日志 (默认 50)",
+		"  -c, --clear                    log 专用: 清空指定的日志文件",
+		"  -s, --server                   log 专用: 直接查看 server 服务日志",
 		"  -d, --daemon                   server 专用: 以后台静默守护进程形式启动",
 		"  --listen <地址>                server 专用: 指定监听地址 (如 :8999 或 127.0.0.1:8999)",
 		"  --token <密钥>                 server 专用: 指定 API 鉴权 Token",
@@ -86,6 +93,11 @@ func printHelp() {
 		"  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token",
 		"  upy update                    自更新到最新版本",
 		"  upy update v0.1.0             更新/切换到指定版本",
+		"  upy log                       交互式选择并查看日志",
+		"  upy log server -f             实时查看 server 服务运行日志",
+		"  upy log upy -n 100            查看 upy 自身最近 100 行执行流水",
+		"  upy log codia                 查看 codia 项目最近一次部署日志",
+		"  upy log --list                列出本机所有日志文件及体积",
 	}
 	fmt.Println(strings.Join(lines, "\n"))
 }
@@ -111,6 +123,10 @@ type parsedArgs struct {
 	foreground  bool
 	listen      string
 	token       string
+	follow      bool
+	tail        int
+	clear       bool
+	serverLog   bool
 	showVersion bool
 	showHelp    bool
 }
@@ -120,7 +136,7 @@ func parseArgs(argv []string) parsedArgs {
 	known := map[string]bool{
 		"release": true, "deploy": true, "clean": true, "backup": true,
 		"analysis": true, "bundle": true, "version": true, "update": true, "init": true,
-		"server": true,
+		"server": true, "log": true, "logs": true,
 	}
 	for i := 0; i < len(argv); i++ {
 		a := argv[i]
@@ -129,6 +145,27 @@ func parseArgs(argv []string) parsedArgs {
 			p.showHelp = true
 		case a == "-V" || a == "--version":
 			p.showVersion = true
+		case a == "-f" || a == "--follow":
+			p.follow = true
+		case a == "-c" || a == "--clear":
+			p.clear = true
+		case a == "-s" || a == "--server":
+			p.serverLog = true
+		case a == "-n" || a == "--tail" || a == "--lines":
+			if i+1 < len(argv) {
+				i++
+				if n, err := strconv.Atoi(argv[i]); err == nil {
+					p.tail = n
+				}
+			}
+		case strings.HasPrefix(a, "--tail="):
+			if n, err := strconv.Atoi(strings.TrimPrefix(a, "--tail=")); err == nil {
+				p.tail = n
+			}
+		case strings.HasPrefix(a, "--lines="):
+			if n, err := strconv.Atoi(strings.TrimPrefix(a, "--lines=")); err == nil {
+				p.tail = n
+			}
 		case a == "-d" || a == "--daemon":
 			p.daemon = true
 		case a == "--foreground":
@@ -213,6 +250,9 @@ func parseArgs(argv []string) parsedArgs {
 func main() {
 	platform.SetDefaultUmask()
 	cmdStartedAt := time.Now()
+
+	logCloser := log.EnableFileLog(filepath.Join(config.UserDataDir(), "logs"), os.Args)
+	defer logCloser()
 
 	if len(os.Args) == 2 && os.Args[1] == "__install-completion" {
 		result, err := commands.InstallShellCompletion()
@@ -338,6 +378,19 @@ func main() {
 			Foreground: p.foreground,
 			Listen:     p.listen,
 			Token:      p.token,
+		})
+	case "log", "logs":
+		target := ""
+		if len(p.positional) > 0 {
+			target = p.positional[0]
+		}
+		err = commands.Log(commands.LogArgs{
+			Target: target,
+			Follow: p.follow,
+			Tail:   p.tail,
+			Clear:  p.clear,
+			List:   p.list,
+			Server: p.serverLog,
 		})
 	}
 

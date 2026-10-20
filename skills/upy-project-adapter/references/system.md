@@ -1,6 +1,6 @@
 # Linux system 部署
 
-至少核对目标 upy 支持 type: system 与 target，服务器是 Linux 且 systemd 为 PID1、有 systemctl、部署者有管理 unit 的权限。当前模板契约核对至 v0.3.0；不把尚未发布修复视为已安装。
+至少核对目标 upy 支持 type: system 与 target，服务器是 Linux 且 systemd 为 PID1、有 systemctl、部署者有管理 unit 的权限。当前模板契约核对至 v0.4.0；不把尚未发布修复视为已安装。
 
 Go：从 go.mod 获取 Go 版本，找真正 main package；测试后构建 `GOOS=linux GOARCH=<arch> CGO_ENABLED=0 go build -trimpath -o <stage>/bin/server <main-package>`。CGO_ENABLED=0 仅适用于无需 CGO 的项目；否则采用匹配 libc/架构的构建环境或 Docker。打包前 chmod 0755，检查 ELF 架构。target.os=linux、target.arch=amd64/arm64；不同架构分别生成精确资产名。
 

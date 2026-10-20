@@ -383,7 +383,15 @@ func (s *Server) handleLogDetailPage(w http.ResponseWriter, r *http.Request) {
 	duration := "-"
 	var logPath string
 
-	if task, ok := s.taskMgr.Get(taskID); ok {
+	if taskID == "server" {
+		project = "server (运行服务)"
+		status = "running"
+		logPath = ServerLogPath()
+	} else if taskID == "upy" {
+		project = "upy (CLI 执行)"
+		status = "completed"
+		logPath = filepath.Join(config.UserDataDir(), "logs", "upy.log")
+	} else if task, ok := s.taskMgr.Get(taskID); ok {
 		project = task.Project
 		status = string(task.Status)
 		exitCode = task.ExitCode
@@ -405,8 +413,12 @@ func (s *Server) handleLogDetailPage(w http.ResponseWriter, r *http.Request) {
 
 	contentBytes, err := os.ReadFile(logPath)
 	if err != nil {
-		http.Error(w, "读取日志失败: "+err.Error(), http.StatusInternalServerError)
-		return
+		if os.IsNotExist(err) {
+			contentBytes = []byte("日志文件尚未生成。\n")
+		} else {
+			http.Error(w, "读取日志失败: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	rawLog := string(contentBytes)

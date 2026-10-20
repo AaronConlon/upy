@@ -7,3 +7,5 @@ static-pnpm：owner/demo-web、Vite dist、Node20、pnpm9.15.0。go-system：own
 Go 示例已在临时最小 HTTP 项目执行两种架构的编译与打包，检查 ELF 和 UNIX 权限；SPA 示例仅做语法检查，未安装真实 Vue 依赖或运行构建。未触发 GitHub Actions，未发布或部署。保持现有项目 tests，在 workflow 对应步骤执行。
 
 server 配置默认省略 releases.keep：该字段不能决定当前清理保留数量。示例契约参见 references/contracts.md。
+
+两个 workflow 都提供可复制的 CI `deploy` job：它在 GitHub Release 创建成功后调用 `POST /api/v1/webhook/{project}`，发送精确 tag 并使用 `X-Hub-Signature-256` HMAC。启用它时，在仓库 Actions Secrets 配置 `UPY_WEBHOOK_URL` 与 `UPY_WEBHOOK_SECRET`，并在服务器 `<root>/deploy.yaml` 设置相同的 `webhook.secret`；不需要自动部署时删除整个 `deploy` job。`202 Accepted` 只代表异步任务已创建；项目必须先手动成功部署一次，且 `upy server` 需要通过 HTTPS reverse proxy 可被 GitHub Actions 访问。

@@ -1,6 +1,6 @@
 # 配置契约
 
-依据：AaronConlon/upy v0.3.0，internal/config/{manifest,project,user}.go 与 internal/deployer。升级后核对目标版本。
+依据：AaronConlon/upy v0.4.0，internal/config/{manifest,project,user}.go、internal/server 与 internal/deployer。升级后核对目标版本。
 
 ## 服务器 <root>/deploy.yaml
 ```yaml
@@ -17,6 +17,44 @@ service: # 仅 system，预先创建用户/组，确认部署目录可读、数�
 static/docker 删除 service。asset 必须与 Release 中文件名完全一致；多架构不能统一用模糊名字。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。
 
 私有仓库 token 保存在用户级 `~/.upy/config.yaml` 的 github.token / github.tokens，或使用 `DEPLOY_GITHUB_TOKEN` 环境变量；不要假定普通 GITHUB_TOKEN 是 upy 的读取入口。只按目标仓库授予读取 Release 所需权限。CI 发布使用 github.token 是另一条认证链，不能拿它当服务器长期 token。不要打印、提交或打包 token。
+
+## CI 入站 Webhook（upy v0.4.0）
+
+`upy server` 提供给 CI 触发部署的接口。它与项目配置中的 `notify.webhook`（部署结果的出站通知）是两条相反方向的链路，不要混用。
+
+服务器用户配置 `~/.upy/config.yaml` 可设置监听地址与全局 API Token：
+
+```yaml
+server:
+  listen: "127.0.0.1:8999"
+  token: "仅保存在服务器上的全局 API Token"
+```
+
+项目服务器配置 `<root>/deploy.yaml` 可设置项目专属入站密钥；该文件不进入 Bundle：
+
+```yaml
+name: example-app
+release:
+  provider: github
+  repository: owner/repository
+  asset: bundle.zip
+webhook:
+  secret: "仅保存在服务器与 GitHub Actions Secret 中的共享密钥"
+```
+
+接口为 `POST /api/v1/webhook/{project}`，其中 `{project}` 必须与 `deploy.yaml` 的 `name` 及首次成功部署登记的本地项目名一致。推荐 CI 在 Release 创建成功后发送精确 tag，不要依赖 `latest`：
+
+```http
+POST /api/v1/webhook/example-app
+Content-Type: application/json
+X-Hub-Signature-256: sha256=<hex_hmac>
+
+{"target":"v1.2.3","force":false}
+```
+
+HMAC 使用请求正文原文和 `webhook.secret` 计算 SHA-256；也可使用 `Authorization: Bearer <token>` 或 `X-Upy-Token: <token>`。鉴权优先使用项目 secret，缺失时回退到全局 `server.token`；两者都未配置时拒绝请求。请求也支持 `target`/`force` query 参数，缺少 target 时默认为 `latest`。
+
+成功响应为 `202 Accepted`，表示异步部署任务已创建，不表示部署已完成。常见失败状态为 `401`（鉴权失败）、`404`（项目尚未登记或项目名错误）和 `409`（该项目已有运行中的部署任务）。首次启用 CI Webhook 前，必须在服务器上手动成功部署一次以登记项目，并通过反向代理或其他网络方式让 Actions 能访问 `server.listen`；不要把服务直接暴露公网而不配置密钥。
 
 ## Bundle ZIP 根目录 upy.yaml (兼容 deploy.yaml)
 公共字段：name、version、type；仅选择 static/docker/system 中一个配置块。version 必须非空且安全作为目录名，建议严格 SemVer；发布新版本使用新 tag/version，不默认 --force 覆盖。

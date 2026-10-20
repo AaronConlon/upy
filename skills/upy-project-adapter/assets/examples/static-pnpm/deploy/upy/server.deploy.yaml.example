@@ -4,3 +4,6 @@ release:
   provider: github
   repository: owner/demo-web
   asset: bundle.zip
+# 可选：CI 发布 Release 后自动触发 upy 部署；只保存在服务器，不放入 bundle。
+# webhook:
+#   secret: "与 GitHub Actions Secret UPY_WEBHOOK_SECRET 一致的随机密钥"

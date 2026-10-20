@@ -57,3 +57,24 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: gh release create "$RELEASE_TAG" artifacts/bundle.zip artifacts/bundle.zip.sha256 --verify-tag --generate-notes
+
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Trigger upy deployment
+        env:
+          UPY_WEBHOOK_URL: ${{ secrets.UPY_WEBHOOK_URL }}
+          UPY_WEBHOOK_SECRET: ${{ secrets.UPY_WEBHOOK_SECRET }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test -n "$UPY_WEBHOOK_URL"
+          test -n "$UPY_WEBHOOK_SECRET"
+          payload="$(python3 -c 'import json, os; print(json.dumps({"target": os.environ["RELEASE_TAG"], "force": False}, separators=(",", ":")))')"
+          signature="$(printf %s "$payload" | openssl dgst -sha256 -hmac "$UPY_WEBHOOK_SECRET" | sed 's/^.*= //')"
+          curl --fail-with-body --silent --show-error --request POST "$UPY_WEBHOOK_URL" \
+            --header 'Content-Type: application/json' \
+            --header "X-Hub-Signature-256: sha256=$signature" \
+            --data "$payload"

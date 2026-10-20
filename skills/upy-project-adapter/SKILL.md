@@ -1,6 +1,6 @@
 ---
 name: upy-project-adapter
-description: 为应用项目接入 upy 部署，生成服务器配置、bundle upy.yaml、GitHub Actions 构建和 GitHub Release 资产。用户提到适配 upy、upy 配置、发布 bundle、Release 自动部署、Go 二进制 systemd 部署、SPA 或 Docker Compose 接入 upy 时使用，包括检查和修复已有接入。适用于应用仓库，不要与 upy CLI 自身的发布流程混淆。
+description: 为应用项目接入 upy 部署，生成服务器配置、bundle upy.yaml、GitHub Actions 构建、GitHub Release 资产和 CI Webhook 自动部署。用户提到适配 upy、upy 配置、发布 bundle、Release 自动部署、CI webhook 部署、Go 二进制 systemd 部署、SPA 或 Docker Compose 接入 upy 时使用，包括检查和修复已有接入。适用于应用仓库，不要与 upy CLI 自身的发布流程混淆。
 ---
 
 # upy 项目接入
@@ -19,7 +19,9 @@ description: 为应用项目接入 upy 部署，生成服务器配置、bundle u
 - Linux 原生常驻服务，尤其 Go binary：`system`，由 systemd 托管。先核对目标 upy 与系统能力。
 - Java JAR、Python 可以通过 system 调用服务器已有 runtime，但必须明确 Java/Python 版本与依赖交付方式；venv 不跨机器打包。依赖复杂时建议 Docker 并说明取舍。
 
-读取 [配置契约](references/contracts.md)，再按需读取 [静态与容器](references/static-docker.md)、[system](references/system.md)、[Release 流程](references/release.md)。契约基于 upy v0.3.0 和 2026-10-20 源码；目标版本的实现优先于本文。不要把工作区未发布功能写成已发布能力。
+读取 [配置契约](references/contracts.md)，再按需读取 [静态与容器](references/static-docker.md)、[system](references/system.md)、[Release 流程](references/release.md)。契约基于 upy v0.4.0 和 2026-10-20 源码；目标版本的实现优先于本文。不要把工作区未发布功能写成已发布能力。
+
+upy v0.4.0 起支持 `upy server` 的 CI 入站 Webhook。若用户要求 CI 发布后自动部署，确认服务器已运行 `upy server`、项目已经成功手动部署过一次并登记到本机项目列表；服务器项目配置中的 `webhook.secret` 用于验证 CI 请求。不要把项目配置里的入站 `webhook.secret` 与 `notify.webhook` 的出站通知端点混为一谈。
 
 ## 2. 生成接入文件
 
@@ -31,9 +33,11 @@ scripts/upy/pack_bundle.py            # 从本 Skill scripts 复制
 .github/workflows/upy-release.yml
 docs/upy-deployment.md
 ```
-Bundle manifest 在 staging 根目录生成官方文件名 `upy.yaml`；upy v0.3.0 仍兼容读取旧版 `deploy.yaml`，但新接入不要继续生成旧名。服务器配置仍是 `<root>/deploy.yaml`，不得误放入 ZIP。不要提交真实 token、service.env、数据库或整个工作目录。构建 staging 只复制已列明的产物和运行必需文件。
+Bundle manifest 在 staging 根目录生成官方文件名 `upy.yaml`；upy v0.4.0 仍兼容读取旧版 `deploy.yaml`，但新接入不要继续生成旧名。服务器配置仍是 `<root>/deploy.yaml`，不得误放入 ZIP。不要提交真实 token、service.env、数据库或整个工作目录。构建 staging 只复制已列明的产物和运行必需文件。
 
 可参考 [完整接入示例](assets/examples/README.md) 中的配置、构建脚本和 workflow。使用 assets 中 server 和 manifest 样例作结构参考，必须替换项目名、仓库、目录、端口、入口等。生成 workflow 时遵循 references/release.md，不能只交付未替换的模板。
+
+若要求 CI 发布后自动部署，workflow 必须在 Release 创建成功之后再执行 deploy job，向 `POST /api/v1/webhook/{project}` 发送精确 tag（例如 `v1.2.3`）作为 `target`；优先用项目级 secret 计算 `X-Hub-Signature-256: sha256=<hex>`，不要把密钥写入仓库。服务器端 `<root>/deploy.yaml` 的 `webhook.secret` 与 GitHub Actions Secret（例如 `UPY_WEBHOOK_SECRET`）必须一致，Webhook URL 必须包含与配置 `name` 完全一致的项目名。该接口是异步部署，`202 Accepted` 只代表任务已创建，不代表服务已完成升级；不要在 workflow 中把它描述成部署 E2E 已通过。
 
 打包工具用标准库读取 **JSON 格式** manifest（文件名必须为 `upy.yaml`；JSON 是 YAML 的子集）。调用方式：
 ```
@@ -47,6 +51,6 @@ python3 scripts/upy/pack_bundle.py --stage .upy-stage --output artifacts/bundle.
 
 `upy bundle <zip> --root <dir>` 是**真实部署命令，不是打包或 dry-run**。只在授权的隔离目标上执行；system 要 Linux + systemd PID1，不能把 macOS 编译通过当作真实运行通过。没有服务器时交付步骤与未验证项。
 
-部署说明必须包含：服务器配置与 bundle 区别、运行依赖、shared 环境变量与持久化、精确资产名、认证、首次部署、升级与失败演练。检查实际 `upy --help` 后再引用命令，不能凭空生成 `upy rollback` / `upy status` / `upy validate`。
+部署说明必须包含：服务器配置与 bundle 区别、运行依赖、shared 环境变量与持久化、精确资产名、认证、首次部署、升级与失败演练；启用 CI Webhook 时还要写明 `server.listen`/反向代理、`POST /api/v1/webhook/{project}`、HMAC 或 Bearer 鉴权、Actions Secret、`202` 异步语义及 `401`/`404`/`409` 的处理。检查实际 `upy --help` 后再引用命令，不能凭空生成 `upy rollback` / `upy status` / `upy validate`。
 
 交付时列出文件、选择依据、执行过的验证和待办。只有用户要求发布/部署时才向远端推送或运行服务；单纯接入生成不需要发布 Release。回滚与 clean 相关历史问题需用目标版本重测，不能承诺零停机或绝对安全回滚。

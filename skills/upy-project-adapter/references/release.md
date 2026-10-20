@@ -29,4 +29,42 @@ python3 scripts/upy/pack_bundle.py --stage .upy-stage --output "artifacts/bundle
 ```
 checkout 必须提供 git tag（例如 fetch-depth: 0）。发布动作权限不足时准确报告，不改成将 PAT 写进 workflow。私有仓库需要服务器额外的读取凭据。
 
+## CI 发布后触发 upy Webhook（upy v0.4.0+）
+
+如果要求 Release 创建成功后自动部署，在 `release` job 后增加独立的 `deploy` job，并通过仓库 `Settings -> Secrets and variables -> Actions` 配置：
+
+- `UPY_WEBHOOK_URL`：完整 URL，例如 `https://deploy.example.com/api/v1/webhook/demo-web`；路径项目名必须与服务器 `<root>/deploy.yaml` 的 `name` 和首次部署登记名完全一致。
+- `UPY_WEBHOOK_SECRET`：与服务器 `<root>/deploy.yaml` 的 `webhook.secret` 完全相同的随机密钥。
+
+服务器上先运行 `upy server`，通常只监听 `127.0.0.1:8999`，再由 HTTPS reverse proxy 转发 `/api/v1/webhook/`；不要把没有密钥的 server 监听器直接暴露到公网。项目必须先手动成功执行一次 `upy release <tag> --root <root>`，让 upy 登记本地项目，之后 CI Webhook 才不会收到 `404`。
+
+推荐的 deploy job 使用精确 Release tag，并按 upy 支持的 GitHub HMAC 格式签名请求正文：
+
+```yaml
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Trigger upy deployment
+        env:
+          UPY_WEBHOOK_URL: ${{ secrets.UPY_WEBHOOK_URL }}
+          UPY_WEBHOOK_SECRET: ${{ secrets.UPY_WEBHOOK_SECRET }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          test -n "$UPY_WEBHOOK_URL"
+          test -n "$UPY_WEBHOOK_SECRET"
+          payload="$(python3 -c 'import json, os; print(json.dumps({"target": os.environ["RELEASE_TAG"], "force": False}, separators=(",", ":")))')"
+          signature="$(printf %s "$payload" | openssl dgst -sha256 -hmac "$UPY_WEBHOOK_SECRET" | sed 's/^.*= //')"
+          curl --fail-with-body --silent --show-error --request POST "$UPY_WEBHOOK_URL" \
+            --header 'Content-Type: application/json' \
+            --header "X-Hub-Signature-256: sha256=$signature" \
+            --data "$payload"
+```
+
+`202 Accepted` 只表示 upy 已异步创建部署任务；它不是服务器已完成升级的证明。workflow 应将该 job 描述为触发部署，不要声称完成了服务器 E2E。`401` 通常是 secret/签名不匹配，`404` 通常是项目未登记或 URL 中项目名错误，`409` 表示同一项目已有部署任务。若需要 CI 等待最终结果，必须基于目标 upy 版本实际提供的 task API 设计轮询与超时，不要凭空添加 `upy status` 或 `upy validate`。
+
+如果不使用 HMAC，也可用 `Authorization: Bearer <token>` 或 `X-Upy-Token`；CI 里的 `github.token` 只用于创建 GitHub Release，不是服务器长期读取凭据或 Webhook secret。
+
 SHA256 文件用于人工/脚本校验，不代表 upy 自动校验。不要声称 CI 构建即完成了服务器 E2E；实际部署的基本流程：复制 server.deploy.yaml.example 为 <root>/deploy.yaml，准备 shared 环境和身份，再在授权测试服务器运行 `upy release <tag> --root <root>`；离线方式 `upy bundle <zip> --root <root>` 也会启动真实部署。

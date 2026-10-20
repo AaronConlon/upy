@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/term"
 )
@@ -18,7 +21,64 @@ var (
 
 	outMu     sync.RWMutex
 	outWriter io.Writer = os.Stderr
+
+	fileMu           sync.Mutex
+	fileLogger       *os.File
+	fileLogStartedAt time.Time
+	ansiRegex        = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 )
+
+// StripAnsi 移除字符串中的 ANSI 终端颜色转义字符
+func StripAnsi(s string) string {
+	return ansiRegex.ReplaceAllString(s, "")
+}
+
+// EnableFileLog 开启 CLI 运行日志落盘 (追加至 ~/.upy/logs/upy.log)
+// 返回清理/关闭函数，在 CLI 退出时自动调用
+func EnableFileLog(logDir string, argv []string) func() {
+	if len(argv) > 1 && (argv[1] == "log" || argv[1] == "logs") {
+		// upy log 命令自身不递归落盘
+		return func() {}
+	}
+	if strings.TrimSpace(logDir) == "" {
+		return func() {}
+	}
+
+	if err := os.MkdirAll(logDir, 0o755); err != nil {
+		return func() {}
+	}
+	logPath := filepath.Join(logDir, "upy.log")
+
+	// 自动轮转控制: 若超过 10MB，重命名备份为 upy.log.1
+	if fi, err := os.Stat(logPath); err == nil && fi.Size() > 10*1024*1024 {
+		_ = os.Rename(logPath, logPath+".1")
+	}
+
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return func() {}
+	}
+
+	fileMu.Lock()
+	fileLogger = f
+	fileLogStartedAt = time.Now()
+	ts := fileLogStartedAt.Format("2006-01-02 15:04:05")
+	cmdStr := strings.Join(argv, " ")
+	fmt.Fprintf(f, "[%s] [CLI] >>> 启动: %s (PID: %d)\n", ts, Redact(cmdStr), os.Getpid())
+	fileMu.Unlock()
+
+	return func() {
+		fileMu.Lock()
+		defer fileMu.Unlock()
+		if fileLogger != nil {
+			ts := time.Now().Format("2006-01-02 15:04:05")
+			duration := time.Since(fileLogStartedAt).Round(time.Millisecond)
+			fmt.Fprintf(fileLogger, "[%s] [CLI] <<< 退出 (耗时: %s)\n", ts, duration)
+			_ = fileLogger.Close()
+			fileLogger = nil
+		}
+	}
+}
 
 // SetOutput 设置日志输出目标 (默认为 os.Stderr)
 func SetOutput(w io.Writer) {
@@ -105,7 +165,17 @@ func emit(s string) {
 	outMu.RLock()
 	w := outWriter
 	outMu.RUnlock()
-	fmt.Fprintln(w, Redact(s))
+
+	redacted := Redact(s)
+	fmt.Fprintln(w, redacted)
+
+	fileMu.Lock()
+	if fileLogger != nil {
+		ts := time.Now().Format("2006-01-02 15:04:05")
+		plain := StripAnsi(redacted)
+		fmt.Fprintf(fileLogger, "[%s] %s\n", ts, plain)
+	}
+	fileMu.Unlock()
 }
 
 func Step(msg string)     { emit("  " + paint(dim, "->") + " " + msg) }

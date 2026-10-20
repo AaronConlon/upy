@@ -86,12 +86,13 @@ func (s *Server) Start() error {
 
 	s.httpServer = &http.Server{
 		Addr:              listenAddr,
-		Handler:           mux,
+		Handler:           s.loggingMiddleware(mux),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 	s.mu.Unlock()
 
+	s.logf("服务就绪，监听地址: %s", listenAddr)
 	return s.httpServer.Serve(ln)
 }
 
@@ -114,5 +115,50 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	if srv == nil {
 		return nil
 	}
-	return srv.Shutdown(ctx)
+	s.logf("接收到停止信号，正在优雅关闭 HTTP 服务...")
+	err := srv.Shutdown(ctx)
+	s.logf("HTTP 服务已安全关闭")
+	return err
+}
+
+func (s *Server) logf(format string, args ...any) {
+	if s.serverOut == nil {
+		return
+	}
+	ts := time.Now().Format("2006-01-02 15:04:05")
+	msg := fmt.Sprintf(format, args...)
+	fmt.Fprintf(s.serverOut, "[%s] [SERVER] %s\n", ts, msg)
+}
+
+type responseWriterRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriterRecorder) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *responseWriterRecorder) Write(b []byte) (int, error) {
+	if rw.statusCode == 0 {
+		rw.statusCode = http.StatusOK
+	}
+	return rw.ResponseWriter.Write(b)
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rec := &responseWriterRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(rec, r)
+		duration := time.Since(start).Round(time.Millisecond)
+
+		clientIP := r.RemoteAddr
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			clientIP = strings.TrimSpace(strings.Split(xff, ",")[0])
+		}
+
+		s.logf("%s - %s %s -> %d (%s)", clientIP, r.Method, r.URL.Path, rec.statusCode, duration)
+	})
 }

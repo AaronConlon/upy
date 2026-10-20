@@ -382,7 +382,9 @@ func RenderLogsPage(items []LogItemView, activeProjects []string) string {
 <body>
 	<header class="header">
 		<a href="/logs" class="brand">🚀 upy <span class="tag">Console</span></a>
-		<div style="display: flex; gap: 12px; align-items: center;">
+		<div style="display: flex; gap: 10px; align-items: center;">
+			<a href="/logs/server" class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;">🖥️ Server 日志</a>
+			<a href="/logs/upy" class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;">⚙️ upy 运行日志</a>
 			<form method="POST" action="/logout">
 				<button type="submit" class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;">退出登录</button>
 			</form>
