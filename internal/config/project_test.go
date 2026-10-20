@@ -141,3 +141,30 @@ func searchSubstr(s, sub string) bool {
 	}
 	return false
 }
+
+func TestReadProjectConfigWebhook(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "deploy.yaml")
+	raw := []byte(`name: my-app
+release:
+  provider: github
+  repository: acme/my-app
+webhook:
+  secret: "secret-xyz-888"
+`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := ReadProjectConfig(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.InboundSecret() != "secret-xyz-888" {
+		t.Fatalf("InboundSecret() 不匹配: 期望 secret-xyz-888, 得到 %q", cfg.InboundSecret())
+	}
+
+	var nilCfg *ProjectConfig
+	if nilCfg.InboundSecret() != "" {
+		t.Fatalf("nilCfg.InboundSecret() 应该为空")
+	}
+}

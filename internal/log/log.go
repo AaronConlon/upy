@@ -3,14 +3,38 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/term"
 )
 
-var secrets []string
+var (
+	secretsMu sync.RWMutex
+	secrets   []string
+
+	outMu     sync.RWMutex
+	outWriter io.Writer = os.Stderr
+)
+
+// SetOutput 设置日志输出目标 (默认为 os.Stderr)
+func SetOutput(w io.Writer) {
+	outMu.Lock()
+	defer outMu.Unlock()
+	if w == nil {
+		outWriter = os.Stderr
+		return
+	}
+	outWriter = w
+}
+
+// ResetOutput 恢复默认输出目标为 os.Stderr
+func ResetOutput() {
+	SetOutput(os.Stderr)
+}
 
 // RegisterSecret 注册需要脱敏的敏感值（GitHub token）
 func RegisterSecret(v string) {
@@ -18,6 +42,8 @@ func RegisterSecret(v string) {
 	if v == "" {
 		return
 	}
+	secretsMu.Lock()
+	defer secretsMu.Unlock()
 	for _, s := range secrets {
 		if s == v {
 			return
@@ -28,6 +54,8 @@ func RegisterSecret(v string) {
 
 // Redact 将已知敏感值替换为 ***
 func Redact(s string) string {
+	secretsMu.RLock()
+	defer secretsMu.RUnlock()
 	out := s
 	for _, sec := range secrets {
 		if sec == "" {
@@ -74,7 +102,10 @@ func Magenta(s string) string { return paint(magenta, s) }
 func Path(s string) string { return paint(bright+bold, s) }
 
 func emit(s string) {
-	fmt.Fprintln(os.Stderr, Redact(s))
+	outMu.RLock()
+	w := outWriter
+	outMu.RUnlock()
+	fmt.Fprintln(w, Redact(s))
 }
 
 func Step(msg string)     { emit("  " + paint(dim, "->") + " " + msg) }

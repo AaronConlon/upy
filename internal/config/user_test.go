@@ -424,3 +424,47 @@ func TestBarkUrlParsing(t *testing.T) {
 		t.Fatalf("b3 key=%s", b3.Key())
 	}
 }
+
+func TestLoadUserConfigServer(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte(`server:
+  listen: "0.0.0.0:9000"
+  token: "sec_token_123"
+  public_url: "https://ci.example.com"
+  max_log_history: 50
+`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("UPY_CONFIG", path)
+	cfg, err := LoadUserConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Server.EffectiveListen() != "0.0.0.0:9000" {
+		t.Fatalf("listen 不对: %s", cfg.Server.EffectiveListen())
+	}
+	if cfg.Server.Token != "sec_token_123" {
+		t.Fatalf("token 不对: %s", cfg.Server.Token)
+	}
+	if cfg.Server.PublicURL != "https://ci.example.com" {
+		t.Fatalf("public_url 不对: %s", cfg.Server.PublicURL)
+	}
+	if cfg.Server.EffectiveMaxLogHistory() != 50 {
+		t.Fatalf("max_log_history 不对: %d", cfg.Server.EffectiveMaxLogHistory())
+	}
+
+	// 验证缺省值
+	emptyCfg := ServerConfig{}
+	if emptyCfg.EffectiveListen() != "127.0.0.1:8999" {
+		t.Fatalf("默认 listen 不对: %s", emptyCfg.EffectiveListen())
+	}
+	if emptyCfg.EffectiveMaxLogHistory() != 30 {
+		t.Fatalf("默认 max_log_history 不对: %d", emptyCfg.EffectiveMaxLogHistory())
+	}
+
+	if UserDataDir() != dir {
+		t.Fatalf("UserDataDir 不对: %s, 期望 %s", UserDataDir(), dir)
+	}
+}

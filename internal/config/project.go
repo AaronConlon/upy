@@ -59,16 +59,30 @@ type ProjectBackup struct {
 	Timeout   string `yaml:"timeout"`   // 备份超时时间 (默认 15m)
 }
 
+// ProjectInboundWebhook 项目部署 Webhook 接收端配置
+type ProjectInboundWebhook struct {
+	Secret string `yaml:"secret,omitempty"` // 用于 HMAC-SHA256 签名校验或项目专属 Token
+}
+
 // ProjectConfig 服务器端项目配置
 type ProjectConfig struct {
-	Name     string          `yaml:"name"`
-	Release  *ProjectRelease `yaml:"release"`
-	Releases ProjectReleases `yaml:"releases"`
-	Bundles  *ProjectBundles `yaml:"bundles"` // 可选: bundle 压缩包保留策略 (默认最多保留 3 个，范围 0~100)
-	Bundle   *ProjectBundles `yaml:"bundle"`  // 兼容单数别名 bundle
-	Service  *ProjectService `yaml:"service"` // 可选: 允许在服务器端显式配置运行账号与 unit
-	Backup   *ProjectBackup  `yaml:"backup"`  // 可选: 备份脚本与轮转配置
-	Notify   *ProjectNotify  `yaml:"notify"`  // 可选: 项目级部署/备份通知配置
+	Name     string                 `yaml:"name"`
+	Release  *ProjectRelease        `yaml:"release"`
+	Releases ProjectReleases        `yaml:"releases"`
+	Bundles  *ProjectBundles        `yaml:"bundles"` // 可选: bundle 压缩包保留策略 (默认最多保留 3 个，范围 0~100)
+	Bundle   *ProjectBundles        `yaml:"bundle"`  // 兼容单数别名 bundle
+	Service  *ProjectService        `yaml:"service"` // 可选: 允许在服务器端显式配置运行账号与 unit
+	Backup   *ProjectBackup         `yaml:"backup"`  // 可选: 备份脚本与轮转配置
+	Notify   *ProjectNotify         `yaml:"notify"`  // 可选: 项目级部署/备份通知配置
+	Webhook  *ProjectInboundWebhook `yaml:"webhook,omitempty"`
+}
+
+// InboundSecret 返回当前项目的入站 Webhook 密钥
+func (c *ProjectConfig) InboundSecret() string {
+	if c == nil || c.Webhook == nil {
+		return ""
+	}
+	return strings.TrimSpace(c.Webhook.Secret)
 }
 
 // ActiveBarks 返回当前项目生效的 Bark 渠道

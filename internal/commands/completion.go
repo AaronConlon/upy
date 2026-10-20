@@ -28,6 +28,7 @@ var completionCommands = []completionCommand{
 	{Name: "version", Description: "查看当前版本"},
 	{Name: "update", Description: "更新 upy"},
 	{Name: "init", Description: "初始化 GitHub token"},
+	{Name: "server", Description: "启动 Webhook 服务与 Web 控制台"},
 }
 
 type completionCommand struct {

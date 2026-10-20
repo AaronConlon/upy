@@ -190,6 +190,41 @@ type UserConfig struct {
 	GitHub   UserGitHub     `yaml:"github"`
 	Notify   UserNotify     `yaml:"notify,omitempty"`
 	Projects []LocalProject `yaml:"projects,omitempty"`
+	Server   ServerConfig   `yaml:"server,omitempty"`
+}
+
+// ServerConfig ~/.upy/config.yaml 中的 server 模块全局配置
+type ServerConfig struct {
+	Listen        string `yaml:"listen,omitempty"`          // 监听地址，如 :8999 或 127.0.0.1:8999
+	Token         string `yaml:"token,omitempty"`           // 全局 API Bearer Token
+	PublicURL     string `yaml:"public_url,omitempty"`      // 对外生成日志访问链接的 Base URL
+	MaxLogHistory int    `yaml:"max_log_history,omitempty"` // 每个项目保留的最大日志文件数，默认 30
+	TOTPMaxViews  int    `yaml:"totp_max_views,omitempty"`  // /auth 页面最大展示/绑定次数，默认 5
+	TOTPSecret    string `yaml:"totp_secret,omitempty"`     // 可选显式固定 TOTP Secret (Base32)
+}
+
+// EffectiveListen 返回生效的监听地址，缺省为 127.0.0.1:8999
+func (s ServerConfig) EffectiveListen() string {
+	if strings.TrimSpace(s.Listen) != "" {
+		return strings.TrimSpace(s.Listen)
+	}
+	return "127.0.0.1:8999"
+}
+
+// EffectiveMaxLogHistory 返回生效的最大历史日志保留数，缺省为 30
+func (s ServerConfig) EffectiveMaxLogHistory() int {
+	if s.MaxLogHistory > 0 {
+		return s.MaxLogHistory
+	}
+	return 30
+}
+
+// EffectiveTOTPMaxViews 返回生效的 /auth 页面最大展示次数，默认 5
+func (s ServerConfig) EffectiveTOTPMaxViews() int {
+	if s.TOTPMaxViews > 0 {
+		return s.TOTPMaxViews
+	}
+	return 5
 }
 
 // ActiveBarks 返回全局用户配置中生效的 Bark 渠道
@@ -261,6 +296,21 @@ func (b UserBark) Label() string {
 		return n
 	}
 	return "bark"
+}
+
+// UserDataDir 返回数据与运行时文件目录 (~/.upy 或根据 UPY_CONFIG 的父目录)
+func UserDataDir() string {
+	if p := strings.TrimSpace(os.Getenv("UPY_CONFIG")); p != "" {
+		return filepath.Dir(p)
+	}
+	if p := strings.TrimSpace(os.Getenv("UPLY_CONFIG")); p != "" {
+		return filepath.Dir(p)
+	}
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return ".upy"
+	}
+	return filepath.Join(home, ".upy")
 }
 
 // DefaultUserConfigPath 默认用户配置保存路径: ~/.upy/config.yaml

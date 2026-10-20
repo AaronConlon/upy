@@ -33,10 +33,14 @@ func printHelp() {
 		"  version                        查看当前版本并检查更新",
 		"  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)",
 		"  init [owner] <token>           初始化或添加 GitHub 访问 token (支持按组织/用户归属)",
+		"  server [start|stop|status]     启动 Webhook 服务或管理后台守护进程",
 		"",
 		"选项:",
 		"  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载",
 		"  --root <目录>                  项目目录 (默认当前目录)",
+		"  -d, --daemon                   server 专用: 以后台静默守护进程形式启动",
+		"  --listen <地址>                server 专用: 指定监听地址 (如 :8999 或 127.0.0.1:8999)",
+		"  --token <密钥>                 server 专用: 指定 API 鉴权 Token",
 		"  --detail                       analysis 专用: 展开子目录 (releases/bundles/backups) 空间明细",
 		"  --json                         analysis 专用: 输出 JSON 结构化分析数据",
 		"  --sort <size|time|name>        analysis 专用: 指定排序规则 (默认按磁盘占用 size 降序)",
@@ -103,6 +107,10 @@ type parsedArgs struct {
 	detail      bool
 	json        bool
 	sort        string
+	daemon      bool
+	foreground  bool
+	listen      string
+	token       string
 	showVersion bool
 	showHelp    bool
 }
@@ -112,6 +120,7 @@ func parseArgs(argv []string) parsedArgs {
 	known := map[string]bool{
 		"release": true, "deploy": true, "clean": true, "backup": true,
 		"analysis": true, "bundle": true, "version": true, "update": true, "init": true,
+		"server": true,
 	}
 	for i := 0; i < len(argv); i++ {
 		a := argv[i]
@@ -120,6 +129,26 @@ func parseArgs(argv []string) parsedArgs {
 			p.showHelp = true
 		case a == "-V" || a == "--version":
 			p.showVersion = true
+		case a == "-d" || a == "--daemon":
+			p.daemon = true
+		case a == "--foreground":
+			p.foreground = true
+		case a == "--listen" || a == "--port":
+			if i+1 < len(argv) {
+				i++
+				p.listen = argv[i]
+			}
+		case strings.HasPrefix(a, "--listen="):
+			p.listen = strings.TrimPrefix(a, "--listen=")
+		case strings.HasPrefix(a, "--port="):
+			p.listen = strings.TrimPrefix(a, "--port=")
+		case a == "--token":
+			if i+1 < len(argv) {
+				i++
+				p.token = argv[i]
+			}
+		case strings.HasPrefix(a, "--token="):
+			p.token = strings.TrimPrefix(a, "--token=")
 		case a == "--force":
 			p.force = true
 		case a == "--detail":
@@ -298,6 +327,18 @@ func main() {
 		err = commands.UpdateCmd(target, p.force)
 	case "init":
 		err = commands.Init(commands.InitArgs{Args: p.positional})
+	case "server":
+		action := ""
+		if len(p.positional) > 0 {
+			action = p.positional[0]
+		}
+		err = commands.Server(commands.ServerArgs{
+			Action:     action,
+			Daemon:     p.daemon,
+			Foreground: p.foreground,
+			Listen:     p.listen,
+			Token:      p.token,
+		})
 	}
 
 	if err != nil {
