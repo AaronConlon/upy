@@ -37,6 +37,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func (s *Server) registerRoutes(mux *http.ServeMux) {
+ s.registerPWARoutes(mux)
 	// API 接口
 	mux.HandleFunc("GET /api/v1/health", s.handleHealth)
 	mux.HandleFunc("POST /api/v1/webhook/{project}", s.handleWebhook)
@@ -45,7 +46,6 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects", s.handleListProjects)
 
 	// Web 认证与两步验证 (TOTP 2FA) 路由
-	mux.HandleFunc("GET /auth", s.handleAuthPage)
 	mux.HandleFunc("GET /{$}", s.handleRootGet)
 	mux.HandleFunc("POST /{$}", s.handleRootPost)
 	mux.HandleFunc("POST /logout", s.handleLogout)
@@ -301,36 +301,6 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next(w, r)
 	}
-}
-
-func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
-	if s.totpMgr == nil {
-		http.Error(w, "TOTP 未初始化", http.StatusInternalServerError)
-		return
-	}
-
-	maxViews := s.cfg.EffectiveTOTPMaxViews()
-	views, allowed, err := s.totpMgr.RecordView(maxViews)
-	if err != nil {
-		http.Error(w, "处理两步验证配额失败: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if !allowed {
-		http.NotFound(w, r)
-		return
-	}
-
-	uri := s.totpMgr.ProvisioningURI("admin", "upy")
-	qrPNG, err := s.totpMgr.GenerateQRCodePNG(uri)
-	if err != nil {
-		http.Error(w, "生成两步验证二维码失败: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, RenderAuthPage(qrPNG, s.totpMgr.Secret(), views, maxViews))
 }
 
 func (s *Server) handleRootGet(w http.ResponseWriter, r *http.Request) {

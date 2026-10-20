@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"embed"
-	"encoding/base64"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -12,7 +11,7 @@ import (
 
 // 所有资源编译进二进制，不依赖外部字体、CDN 或运行目录。
 //
-//go:embed web/* web/icons/*
+//go:embed web/* web/icons/* web/pwa/*
 var consoleAssets embed.FS
 
 var consoleTemplate = template.Must(template.New("console").Funcs(template.FuncMap{
@@ -64,8 +63,7 @@ type ConsolePage struct {
 	PrevURL, NextURL                              string
 	Detail                                        *LogDetailView
 	Auth                                          bool
-	Error, Secret, QR                             string
-	Remaining, MaxViews                           int
+	Error                                         string
 }
 
 type LogDetailView struct {
@@ -142,13 +140,6 @@ func modeLabel(s string) string {
 	}
 }
 
-func RenderAuthPage(qrPNG []byte, secret string, views, maxViews int) string {
-	remaining := maxViews - views
-	if remaining < 0 {
-		remaining = 0
-	}
-	return renderConsole(ConsolePage{Title: "两步验证 (2FA) 绑定", Screen: "auth", Secret: secret, QR: base64.StdEncoding.EncodeToString(qrPNG), Remaining: remaining, MaxViews: maxViews})
-}
 func RenderLoginPage(errMsg string) string {
 	return renderConsole(ConsolePage{Title: "安全登录", Screen: "login", Error: errMsg})
 }

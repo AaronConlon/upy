@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="/pwa/icon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f8fafc" />
+    <title>连接中断 — upy</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #eef0f3;
+        color: #22272e;
+        font:
+          14px/1.8 -apple-system,
+          BlinkMacSystemFont,
+          "PingFang SC",
+          sans-serif;
+      }
+      .shell {
+        width: 100%;
+        max-width: 440px;
+        min-height: 100vh;
+        margin: auto;
+        background: #f8fafc;
+        border-inline: 1px solid #dadee3;
+      }
+      header {
+        height: calc(65px + env(safe-area-inset-top));
+        padding-top: calc(12px + env(safe-area-inset-top));
+        padding: calc(12px + env(safe-area-inset-top)) 24px 12px;
+        border-bottom: 1px solid #dadee3;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      strong {
+        font-size: 28px;
+        letter-spacing: -2px;
+      }
+      small {
+        color: #606873;
+        font: 9px monospace;
+        letter-spacing: 1px;
+      }
+      main {
+        padding: 64px 24px;
+      }
+      svg {
+        width: 32px;
+        height: 32px;
+        stroke-width: 1.5;
+      }
+      h1 {
+        font-size: 26px;
+        font-weight: 500;
+        letter-spacing: -1px;
+        margin: 24px 0 12px;
+      }
+      p {
+        font-size: 13px;
+        color: #606873;
+      }
+      button {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 24px;
+        background: #22272e;
+        border: 0;
+        color: #f8fafc;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid #3159be;
+        outline-offset: 3px;
+      }
+      .note {
+        font-size: 11px;
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header><strong>upy.</strong><small>SERVER CONSOLE</small></header>
+      <main>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="2" y="2" width="20" height="8" rx="2" />
+          <rect x="2" y="14" width="20" height="8" rx="2" />
+          <path d="M6 6h.01M6 18h.01" />
+        </svg>
+        <h1>暂时无法连接服务器</h1>
+        <p>
+          请检查网络，或稍后重新连接。恢复连接后，控制台会重新验证登录状态并读取最新数据。
+        </p>
+        <button type="button" onclick="location.reload()">重新连接</button>
+        <p class="note">此页面不展示离线项目数据或历史日志。</p>
+      </main>
+    </div>
+  </body>
+</html>

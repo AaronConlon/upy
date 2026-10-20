@@ -96,3 +96,82 @@ if (output && refresh) {
   refresh.addEventListener("click", () => refreshLog(true));
   setInterval(() => refreshLog(false), 3000);
 }
+
+// 安装入口按浏览器能力显示；Safari 的安装路径使用原生分享菜单。
+const installPanel = document.getElementById("pwa-install");
+const installButton = document.getElementById("install-app");
+const standalone =
+  matchMedia("(display-mode: standalone)").matches ||
+  navigator.standalone === true;
+let installPrompt;
+if (!standalone && window.isSecureContext) {
+  const ios =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (ios) {
+    installPanel.hidden = false;
+    installButton.addEventListener("click", () => {
+      document.getElementById("ios-install-help").hidden = false;
+    });
+  } else {
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      installPrompt = event;
+      installPanel.hidden = false;
+    });
+    installButton.addEventListener("click", async () => {
+      if (!installPrompt) return;
+      installButton.disabled = true;
+      try {
+        await installPrompt.prompt();
+        await installPrompt.userChoice;
+      } finally {
+        installPrompt = null;
+        installPanel.hidden = true;
+        installButton.disabled = false;
+      }
+    });
+  }
+}
+window.addEventListener("appinstalled", () => {
+  installPanel.hidden = true;
+  installPrompt = null;
+});
+
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  let applyingUpdate = false;
+  let waitingWorker;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (applyingUpdate) location.reload();
+  });
+  navigator.serviceWorker
+    .register("/sw.js", { scope: "/", updateViaCache: "none" })
+    .then((registration) => {
+      const offerUpdate = () => {
+        if (!registration.waiting || !navigator.serviceWorker.controller)
+          return;
+        waitingWorker = registration.waiting;
+        document.getElementById("pwa-update").hidden = false;
+      };
+      offerUpdate();
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        worker?.addEventListener("statechange", () => {
+          if (worker.state === "installed") offerUpdate();
+        });
+      });
+      document.getElementById("update-app").addEventListener("click", () => {
+        if (!waitingWorker) return;
+        applyingUpdate = true;
+        document.getElementById("update-app").disabled = true;
+        waitingWorker.postMessage({ type: "ACTIVATE_UPDATE" });
+      });
+      // 从后台回来时检查 worker 版本，不强制刷新正在阅读的日志。
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) registration.update().catch(() => {});
+      });
+    })
+    .catch(() => {
+      // 普通在线控制台不依赖 PWA 注册成功。
+    });
+}

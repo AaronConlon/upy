@@ -770,9 +770,19 @@ webhook:
 
 `upy server` 内置极简 Web 控制台，保护日志与服务状态不被未经授权的恶意扫描窥探：
 
-- **绑定 2FA 二维码 (`/auth`)**：初次启动自动生成专属 TOTP 密钥并在 `/auth` 展示二维码，支持 Google Authenticator、1Password 等 APP 扫码绑定。为杜绝公网泄露，**该路由被访问满 5 次后将永久返回 404 自毁**。
+- **终端绑定 2FA（`upy server auth`）**：管理员在 VPS 的交互终端执行命令，用 Google Authenticator、1Password 等扫描终端中的二维码。Web `/auth` 路由已移除，始终返回 404；不再通过浏览器分发绑定密钥。
 - **动态码验证登录 (`/`)**：访问根路由输入 6 位 TOTP 动态码，校验成功后签发有效期为 30 分钟的 `HttpOnly` + `SameSite` 安全 Cookie。
 - **全量日志浏览 (`/logs`)**：已鉴权用户可按项目查阅历史部署记录，并直接在线查看高保真终端 ANSI 原色渲染日志。
+
+首次绑定或给管理员添加认证器时，请以运行 server 的同一系统用户、相同 `UPY_CONFIG` 执行：
+
+```bash
+upy server auth
+# 使用自定义配置时：
+UPY_CONFIG=/path/to/config.yaml upy server auth
+```
+
+该命令复用已有 `totp.json` 密钥，不会重置现有绑定，不受旧版本扫码次数限制。二维码仅写入交互终端，不写入 upy 日志，也不支持管道重定向；不需要停止 server。升级前已绑定的认证器继续有效。密钥文件损坏时会报错，不会静默生成新密钥。
 
 控制台采用浅色移动端布局，桌面端使用居中的 440px 容器，Lucide SVG 与样式全部内嵌在二进制中：
 
@@ -782,6 +792,8 @@ webhook:
 - **日志详情（`/logs/{id}`）**：支持复制与完整文件下载。执行中的任务与运行日志每 3 秒刷新；会话过期时提示重新登录。
 
 页面、日志刷新与下载均受同一 TOTP Session 保护。控制台只读，不提供部署操作。“部署成功”表示部署结果，不代表应用实时健康；历史日志缺少明确结束标记时显示“结果未知”。大日志仅预览末尾 256 KiB，导出仍获取完整原始文件。
+
+控制台支持 PWA：通过 HTTPS 访问后，可在支持的浏览器中安装至桌面，以独立窗口打开；iPhone / iPad 使用分享菜单“添加到主屏幕”。启动入口为 `/overview`，未登录时仍需 TOTP 验证，Cookie 有效期保持 30 分钟。Service Worker 仅缓存公开图标与无业务数据的离线提示页，不缓存登录内容、项目、日志、下载或 API；断网时提示重新连接。新版本就绪后由用户点击刷新，不会自动打断正在阅读的日志。
 
 ---
 
@@ -858,7 +870,7 @@ upy version
 | `upy clean [项目名]` | 可视化分析并清理项目数据 (Bundle 缓存、旧版本、临时目录或注销) |
 | `upy backup [项目名]` | 执行项目约定备份 (`backup.sh`)，管理归档轮转并推送通知 |
 | `upy analysis [项目名]` | 分析全机已部署项目，以最大占用为 100% 基准展示磁盘分布与最近部署 |
-| `upy server [start\|stop\|status]` | 启动 Webhook 服务与 Web 控制台，支持 `-d` 静默守护进程 |
+| `upy server [start\|stop\|restart\|status\|auth]` | 启动 Webhook 服务与 Web 控制台，支持 `-d` 静默守护进程 |
 | `upy log [server\|upy\|<项目>]` | 交互式或指定查看运行日志，支持 `-f` 实时追踪与 `-n` 行数截取 |
 | `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
 | `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |

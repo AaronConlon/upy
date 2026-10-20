@@ -41,35 +41,6 @@ func TestTOTPValidation(t *testing.T) {
 	}
 }
 
-func TestTOTPQuotaAndLimit(t *testing.T) {
-	tmpDir := t.TempDir()
-	totpPath := filepath.Join(tmpDir, "totp.json")
-	tm, err := NewTOTPManager(totpPath, "")
-	if err != nil {
-		t.Fatalf("创建 TOTPManager 失败: %v", err)
-	}
-
-	maxViews := 5
-	for i := 1; i <= maxViews; i++ {
-		views, allowed, err := tm.RecordView(maxViews)
-		if err != nil {
-			t.Fatalf("第 %d 次记录失败: %v", i, err)
-		}
-		if !allowed || views != i {
-			t.Fatalf("第 %d 次访问应该允许，得到 allowed=%v, views=%d", i, allowed, views)
-		}
-	}
-
-	// 第 6 次应被拒绝
-	views, allowed, err := tm.RecordView(maxViews)
-	if err != nil {
-		t.Fatalf("超限记录失败: %v", err)
-	}
-	if allowed {
-		t.Fatalf("第 6 次访问应该被拒绝，实际 allowed=%v, views=%d", allowed, views)
-	}
-}
-
 func TestSessionStore(t *testing.T) {
 	store := NewSessionStore()
 
@@ -108,7 +79,6 @@ func TestWebRoutesFlow(t *testing.T) {
 
 	srv := NewServer(config.ServerConfig{
 		Listen:        "127.0.0.1:0",
-		TOTPMaxViews:  5,
 		MaxLogHistory: 10,
 	}, nil)
 	srv.SetTOTPManager(tm)
@@ -116,28 +86,16 @@ func TestWebRoutesFlow(t *testing.T) {
 	mux := http.NewServeMux()
 	srv.registerRoutes(mux)
 
-	// 1. 访问 /auth 页面 (最多 5 次)
-	for i := 1; i <= 5; i++ {
-		req, _ := http.NewRequest("GET", "/auth", nil)
+	// /auth 已移除，任何次数、任何认证状态都不能返回绑定材料。
+	for i := 0; i < 6; i++ {
 		rr := httptest.NewRecorder()
-		mux.ServeHTTP(rr, req)
-		if rr.Code != http.StatusOK {
-			t.Fatalf("第 %d 次访问 /auth 期望 200, 得到 %d", i, rr.Code)
+		mux.ServeHTTP(rr, httptest.NewRequest("GET", "/auth", nil))
+		if rr.Code != http.StatusNotFound {
+			t.Fatalf("/auth must return 404, got %d", rr.Code)
 		}
-		if !strings.Contains(rr.Body.String(), "两步验证 (2FA) 绑定") {
-			t.Fatalf("页面内容缺失关键词")
+		if strings.Contains(rr.Body.String(), fixedSecret) || strings.Contains(rr.Body.String(), "otpauth://") {
+			t.Fatal("HTTP enrollment secret leaked")
 		}
-		if !strings.Contains(rr.Body.String(), "data:image/png;base64,") {
-			t.Fatalf("页面应包含二维码数据")
-		}
-	}
-
-	// 第 6 次访问 /auth 必须返回 404
-	req6, _ := http.NewRequest("GET", "/auth", nil)
-	rr6 := httptest.NewRecorder()
-	mux.ServeHTTP(rr6, req6)
-	if rr6.Code != http.StatusNotFound {
-		t.Fatalf("超过 5 次后访问 /auth 必须返回 404, 得到 %d", rr6.Code)
 	}
 
 	// 2. 未登录访问 /logs，应 302 重定向到 /

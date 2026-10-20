@@ -771,9 +771,19 @@ In your GitHub Actions workflow, trigger `POST /api/v1/webhook/{project}` after 
 
 `upy server` includes a lightweight, secure Web log console:
 
-- **2FA QR Code Enrollment (`/auth`)**: On first startup, a unique TOTP secret is generated and rendered as a QR code at `/auth` (scannable via Google Authenticator or 1Password). **The `/auth` route permanently returns 404 after 5 visits**, ensuring it cannot be crawled or exposed.
+- **Terminal-only 2FA enrollment (`upy server auth`)**: Run the command in an interactive VPS terminal and scan its QR code with Google Authenticator or 1Password. The Web `/auth` route has been removed and always returns 404. Enrollment secrets are never served over HTTP.
 - **Dynamic 6-Digit Code Login (`/`)**: Visiting root prompts for the 6-digit TOTP verification code. Successful authentication issues a 30-minute `HttpOnly` + `SameSite` secure session cookie.
 - **Full Trace Browsing (`/logs`)**: Authenticated sessions can view deployment history across all registered projects, along with high-fidelity terminal ANSI color rendering.
+
+To enroll an authenticator, use the same system user and `UPY_CONFIG` as the running server:
+
+```bash
+upy server auth
+# With a custom configuration:
+UPY_CONFIG=/path/to/config.yaml upy server auth
+```
+
+This reuses the existing `totp.json` secret without rotating it or invalidating enrolled authenticators. The old view quota no longer applies. QR output goes directly to an interactive terminal, never to upy logs or redirected stdout. The server can keep running. Invalid secret files produce an error instead of silently replacing the key.
 
 The console uses a light mobile layout, with a centered 440px container on desktop. Lucide SVG icons and styles are embedded in the binary:
 
@@ -783,6 +793,8 @@ The console uses a light mobile layout, with a centered 440px container on deskt
 - **Log details (`/logs/{id}`)**: copy output or download the complete original file. Active tasks and runtime logs refresh every 3 seconds; expired sessions prompt sign-in.
 
 All console pages, refreshes, and downloads share TOTP session protection. The console is read-only. A successful deployment is not a live application health check; archived logs without an explicit completion marker show an unknown result. Large logs preview only the last 256 KiB, while downloads include the entire original file.
+
+The console supports PWA installation over HTTPS. Supporting browsers can install it as a standalone window; on iPhone / iPad, use the Share menu's Add to Home Screen action. It launches `/overview`, retaining TOTP login and the 30-minute cookie. The service worker caches only public icons and a data-free offline page, never authentication content, project data, logs, downloads, or APIs. Offline navigation shows a reconnect screen. Updates prompt for a user-initiated refresh instead of interrupting log reading.
 
 ---
 
@@ -859,7 +871,7 @@ upy version
 | `upy clean [project]` | Visually analyze and clean project data (bundles, old releases, or purge) |
 | `upy backup [project]` | Run convention project backup (`backup.sh`), prune archives, and push alerts |
 | `upy analysis [project]` | Analyze host projects, plot disk usage with 100% benchmark, and spotlight recent release |
-| `upy server [start\|stop\|status]` | Start webhook server daemon and web console (`-d` for background mode) |
+| `upy server [start\|stop\|restart\|status\|auth]` | Start webhook server daemon and web console (`-d` for background mode) |
 | `upy log [server\|upy\|<project>]` | View logs interactively or directly, with `-f` live stream and `-n` tail rows |
 | `upy bundle <file>` | Deploy a local `.zip` bundle directly (offline mode, no GitHub connection) |
 | `upy init [owner] <token>` | Initialize or configure GitHub personal/organization access tokens |

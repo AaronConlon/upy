@@ -8,7 +8,6 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -21,20 +20,15 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
-var (
-	ErrTOTPLimitExceeded = errors.New("TOTP 绑定查看次数已达上限")
-)
-
 type TOTPData struct {
 	Secret    string    `json:"secret"`
-	Views     int       `json:"views"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type TOTPManager struct {
-	mu         sync.Mutex
-	filePath   string
-	data       TOTPData
+	mu          sync.Mutex
+	filePath    string
+	data        TOTPData
 	fixedSecret string
 }
 
@@ -54,70 +48,78 @@ func NewTOTPManager(filePath string, fixedSecret string) (*TOTPManager, error) {
 	return tm, nil
 }
 
+// 已有密钥只读复用；损坏文件报错，不能静默生成新密钥使已有绑定失效。
 func (tm *TOTPManager) loadOrInit() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
-
-	if err := os.MkdirAll(filepath.Dir(tm.filePath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(tm.filePath), 0700); err != nil {
 		return err
 	}
-
-	content, err := os.ReadFile(tm.filePath)
-	if err == nil {
-		var d TOTPData
-		if jerr := json.Unmarshal(content, &d); jerr == nil && d.Secret != "" {
-			tm.data = d
-			if tm.fixedSecret != "" {
-				tm.data.Secret = tm.fixedSecret
-			}
-			return nil
+	load := func() error {
+		content, err := os.ReadFile(tm.filePath)
+		if err != nil {
+			return err
 		}
+		var d TOTPData
+		if err := json.Unmarshal(content, &d); err != nil || strings.TrimSpace(d.Secret) == "" {
+			return fmt.Errorf("TOTP 密钥文件无效，请检查 %s", tm.filePath)
+		}
+		if tm.fixedSecret != "" {
+			d.Secret = tm.fixedSecret
+		}
+		if _, err := generateTOTP(d.Secret, time.Now()); err != nil {
+			return fmt.Errorf("TOTP 密钥无效，请检查服务器配置和 %s", tm.filePath)
+		}
+		tm.data = d
+		return nil
 	}
-
-	// 初始化新 secret
+	if err := load(); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
 	secret := tm.fixedSecret
 	if secret == "" {
-		secret = generateBase32Secret(20)
+		var err error
+		secret, err = generateBase32Secret(20)
+		if err != nil {
+			return err
+		}
 	}
-
-	tm.data = TOTPData{
-		Secret:    secret,
-		Views:     0,
-		CreatedAt: time.Now(),
+	if _, err := generateTOTP(secret, time.Now()); err != nil {
+		return fmt.Errorf("server.totp_secret 不是有效的 Base32 密钥")
 	}
-
-	return tm.saveLocked()
-}
-
-func (tm *TOTPManager) saveLocked() error {
-	data, err := json.MarshalIndent(tm.data, "", "  ")
+	d := TOTPData{Secret: secret, CreatedAt: time.Now()}
+	data, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(tm.filePath, data, 0o600)
-}
-
-// CanView 检查是否仍有查看 /auth 的配额
-func (tm *TOTPManager) CanView(maxViews int) bool {
-	tm.mu.Lock()
-	defer tm.mu.Unlock()
-	return tm.data.Views < maxViews
-}
-
-// RecordView 记录一次 /auth 页面访问，若超出配额则返回 false
-func (tm *TOTPManager) RecordView(maxViews int) (currentViews int, allowed bool, err error) {
-	tm.mu.Lock()
-	defer tm.mu.Unlock()
-
-	if tm.data.Views >= maxViews {
-		return tm.data.Views, false, nil
+	// 完整写入后排他发布，避免 CLI 与 server 并发初始化覆盖彼此的密钥。
+	f, err := os.CreateTemp(filepath.Dir(tm.filePath), ".totp-*")
+	if err != nil {
+		return err
 	}
-
-	tm.data.Views++
-	if err := tm.saveLocked(); err != nil {
-		return tm.data.Views, false, err
+	tmp := f.Name()
+	defer os.Remove(tmp)
+	if _, err = f.Write(data); err != nil {
+		f.Close()
+		return err
 	}
-	return tm.data.Views, true, nil
+	if err = f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	if err = os.Link(tmp, tm.filePath); err != nil {
+		if os.IsExist(err) {
+			return load()
+		}
+		return err
+	}
+	tm.data = d
+	return nil
 }
 
 // Secret 获取当前的 TOTP Secret
@@ -129,7 +131,7 @@ func (tm *TOTPManager) Secret() string {
 
 // ProvisioningURI 生成可供 Authenticator 扫码的 URI
 func (tm *TOTPManager) ProvisioningURI(account, issuer string) string {
-	secret := tm.Secret()
+	secret := strings.ToUpper(strings.ReplaceAll(tm.Secret(), " ", ""))
 	if issuer == "" {
 		issuer = "upy"
 	}
@@ -137,12 +139,16 @@ func (tm *TOTPManager) ProvisioningURI(account, issuer string) string {
 		account = "admin"
 	}
 	return fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
-		url.PathEscape(issuer), url.PathEscape(account), secret, url.QueryEscape(issuer))
+		url.PathEscape(issuer), url.PathEscape(account), url.QueryEscape(secret), url.QueryEscape(issuer))
 }
 
-// GenerateQRCodePNG 生成二维码 PNG 图片字节
-func (tm *TOTPManager) GenerateQRCodePNG(uri string) ([]byte, error) {
-	return qrcode.Encode(uri, qrcode.Medium, 256)
+// TerminalQRCode 生成终端黑白二维码，不经过 CLI 日志记录器。
+func (tm *TOTPManager) TerminalQRCode(account string) (string, error) {
+	qr, err := qrcode.New(tm.ProvisioningURI(account, "upy"), qrcode.Medium)
+	if err != nil {
+		return "", err
+	}
+	return "\x1b[30;47m" + qr.ToSmallString(true) + "\x1b[0m\n", nil
 }
 
 // Validate 校验 6 位动态验证码
@@ -169,10 +175,12 @@ func (tm *TOTPManager) Validate(code string) bool {
 }
 
 // generateBase32Secret 生成随机 Base32 密钥
-func generateBase32Secret(byteLen int) string {
+func generateBase32Secret(byteLen int) (string, error) {
 	b := make([]byte, byteLen)
-	_, _ = rand.Read(b)
-	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b), nil
 }
 
 // generateTOTP 根据 RFC 6238 标准生成 6 位数字验证码

@@ -1084,7 +1084,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
             <div class="step-copy-desc">
               <p>
                 <code>upy server</code> runs as an ultra-lightweight background daemon. When CI/CD (GitHub Actions / GitLab CI) finishes a Release, it triggers an instant deployment via POST <code>/api/v1/webhook/{project}</code>—eliminating the need to expose VPS SSH private keys inside CI runners.
-                Built-in TOTP two-factor authentication (Google Authenticator) with 30-minute session cookies; the <code>/auth</code> setup route self-destructs with a permanent 404 after 5 visits to keep the web console secure against crawlers.
+                Built-in TOTP two-factor authentication with 30-minute session cookies. Run <code>upy server auth</code> on the VPS to scan the enrollment QR code in the terminal; enrollment secrets are never served over HTTP.
               </p>
               <a
                 href="https://github.com/AaronConlon/upy#server-daemon--inbound-webhook"
@@ -1120,14 +1120,14 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <!-- Card 2: TOTP 2FA Security -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">02 / TOTP 2FA Security <span>Self-Destructs After 5 Visits</span></span>
-                  <span class="step-card-file">/auth &amp; / Security Route</span>
+                  <span class="step-card-title">02 / TOTP 2FA Security <span>Terminal-only Enrollment</span></span>
+                  <span class="step-card-file">upy server auth</span>
                 </div>
-                <pre><code><span class="comment"># 1. Visit /auth to bind 2FA (QR code destroyed permanently after 5 visits)</span>
-https://deploy.example.com/auth  → Scan with Google Authenticator
+                <pre><code><span class="comment"># 1. Run on the VPS and scan the QR code in the terminal</span>
+upy server auth                → Scan with Google Authenticator
 
 <span class="comment"># 2. Visit / and enter 6-digit code for 30-minute secure session cookie</span>
-https://deploy.example.com/      → Enter [ 8 4 9 2 0 1 ] → Redirect to /logs
+https://deploy.example.com/      → Enter [ 8 4 9 2 0 1 ] → Redirect to /overview
 
 <span class="comment"># 3. View /logs web console with terminal ANSI color fidelity</span>
 https://deploy.example.com/logs  → Browse deployments and live server logs</code></pre>
@@ -1151,7 +1151,7 @@ https://deploy.example.com/logs  → Browse deployments and live server logs</co
 <span class="t-step">-&gt; Starting upy server daemon in background...</span>
 <span class="t-ok">✓ Daemon process started successfully (PID: 4892)</span>
 <span class="t-info">🌐 Listening on: http://127.0.0.1:8999</span>
-<span class="t-info">🔑 TOTP 2FA setup route: http://127.0.0.1:8999/auth (max 5 visits)</span>
+<span class="t-info">TOTP 2FA enrollment: run upy server auth in the VPS terminal</span>
 <span class="t-highlight">📋 Web Log Console: http://127.0.0.1:8999/logs</span>
 
 <span class="t-prompt">$</span> <span class="t-cmd">upy server status</span>
@@ -1170,10 +1170,10 @@ https://deploy.example.com/logs  → Browse deployments and live server logs</co
               </div>
               <div class="flow-card">
                 <div class="flow-card-header">
-                  <span class="flow-card-title">🛡️ 2FA &amp; Scanner Self-Destruction</span>
-                  <span class="flow-card-badge">TOTP &amp; 404 Destruction</span>
+                  <span class="flow-card-title">🛡️ TOTP &amp; Terminal Enrollment</span>
+                  <span class="flow-card-badge">No Web Enrollment</span>
                 </div>
-                <p class="flow-card-desc">The QR enrollment page turns into a permanent 404 after 5 visits. Logged-in sessions issue 30-minute HttpOnly cookies.</p>
+                <p class="flow-card-desc">Enrollment QR codes are shown only by upy server auth in the VPS terminal. The Web enrollment route is removed. Logged-in sessions retain 30-minute HttpOnly cookies.</p>
               </div>
               <div class="flow-card">
                 <div class="flow-card-header">

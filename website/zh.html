@@ -1082,7 +1082,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
             <div class="step-copy-desc">
               <p>
                 <code>upy server</code> 提供轻量后台守护进程。CI/CD 流水线（GitHub Actions / GitLab CI）发布 Release 后，直接通过 POST <code>/api/v1/webhook/{project}</code> 触发服务器自动化拉取升级，彻底告别在 CI 仓库暴露服务器敏感 SSH 密钥。
-                内置 TOTP 双因素认证（Google Authenticator 扫码）与 30 分钟安全会话；<code>/auth</code> 绑定路由支持最多 5 次访问自毁保护（超限永久 404），安全守护 Web 日志控制台。
+                内置 TOTP 双因素认证与 30 分钟安全会话；在 VPS 上执行 <code>upy server auth</code>，扫描终端中的二维码完成绑定，不通过 Web 分发绑定密钥。
               </p>
               <a
                 href="https://github.com/AaronConlon/upy#server-服务与-webhook-自动化"
@@ -1118,14 +1118,14 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <!-- Card 2: TOTP 2FA 双因素安全登录 -->
               <div class="showcase-step-card">
                 <div class="step-card-header">
-                  <span class="step-card-title">02 / TOTP 2FA 双因素安全 <span>5 次访问自毁</span></span>
-                  <span class="step-card-file">/auth &amp; / 路由安全</span>
+                  <span class="step-card-title">02 / TOTP 2FA 双因素安全 <span>仅限终端绑定</span></span>
+                  <span class="step-card-file">upy server auth</span>
                 </div>
-                <pre><code><span class="comment"># 1. 访问 /auth 绑定 2FA (限前 5 次展示二维码，随后永久 404 销毁)</span>
-https://deploy.example.com/auth  → Google Authenticator 扫码
+                <pre><code><span class="comment"># 1. 在 VPS 终端执行命令，用认证器扫描终端二维码</span>
+upy server auth                → Google Authenticator 扫码
 
 <span class="comment"># 2. 访问 / 输入 6 位动态验证码，验证签发 30 分钟安全 Cookie</span>
-https://deploy.example.com/      → 输入 [ 8 4 9 2 0 1 ] → 自动跳转 /logs
+https://deploy.example.com/      → 输入 [ 8 4 9 2 0 1 ] → 自动跳转 /overview
 
 <span class="comment"># 3. 访问 /logs 浏览全量日志控制台 (支持各项目部署历史与原色渲染)</span>
 https://deploy.example.com/logs  → 浏览所有项目部署历史及终端原色详情</code></pre>
@@ -1149,7 +1149,7 @@ https://deploy.example.com/logs  → 浏览所有项目部署历史及终端原�
 <span class="t-step">-&gt; 正在启动 upy server 守护进程...</span>
 <span class="t-ok">✓ 守护进程已成功启动 (PID: 4892)</span>
 <span class="t-info">🌐 监听地址: http://127.0.0.1:8999</span>
-<span class="t-info">🔑 TOTP 2FA 绑定入口: http://127.0.0.1:8999/auth (仅限前 5 次访问)</span>
+<span class="t-info">TOTP 2FA 绑定: 在 VPS 终端执行 upy server auth</span>
 <span class="t-highlight">📋 Web 日志控制台: http://127.0.0.1:8999/logs</span>
 
 <span class="t-prompt">$</span> <span class="t-cmd">upy server status</span>
@@ -1168,10 +1168,10 @@ https://deploy.example.com/logs  → 浏览所有项目部署历史及终端原�
               </div>
               <div class="flow-card">
                 <div class="flow-card-header">
-                  <span class="flow-card-title">🛡️ 2FA 与防扫描自毁</span>
-                  <span class="flow-card-badge">TOTP &amp; 404 Destruction</span>
+                  <span class="flow-card-title">🛡️ 2FA 与终端绑定</span>
+                  <span class="flow-card-badge">TOTP Terminal Enrollment</span>
                 </div>
-                <p class="flow-card-desc">绑定二维码在最多访问 5 次后永久 404 自毁，彻底隔绝公网扫描；登录颁发 30 分钟 HttpOnly 安全 Cookie，过期自动重定向回首页。</p>
+                <p class="flow-card-desc">绑定二维码仅由 VPS 终端中的 upy server auth 展示，Web 绑定路由已移除；登录仍颁发 30 分钟 HttpOnly Cookie，过期后重新验证。</p>
               </div>
               <div class="flow-card">
                 <div class="flow-card-header">

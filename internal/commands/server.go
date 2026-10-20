@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/term"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,7 +20,7 @@ import (
 )
 
 type ServerArgs struct {
-	Action     string // "start", "stop", "restart", "status"
+	Action     string // "start", "stop", "restart", "status", "auth"
 	Daemon     bool   // -d, --daemon
 	Foreground bool   // --foreground
 	Listen     string // --listen, --port
@@ -62,11 +64,16 @@ func Server(args ServerArgs) error {
 		}
 		return runForegroundServer(serverCfg)
 
+	case "auth":
+		if !term.IsTerminal(int(os.Stdout.Fd())) {
+			return fmt.Errorf("请在交互终端执行 upy server auth；二维码不会写入管道或日志")
+		}
+		return renderServerAuth(serverCfg, os.Stdout)
 	case "status":
 		return runDaemonStatus(serverCfg.EffectiveListen())
 
 	default:
-		return fmt.Errorf("未知操作 %q，支持的操作为: start, stop, restart, status", action)
+		return fmt.Errorf("未知操作 %q，支持的操作为: start, stop, restart, status, auth", action)
 	}
 }
 
@@ -84,6 +91,7 @@ func runDaemonStart(cfg config.ServerConfig) error {
 	log.Info("监听地址: " + log.Sky(cfg.EffectiveListen()))
 	log.Info("运行日志: " + log.Path(server.ServerLogPath()))
 	log.Info("查看状态: " + log.Cyan("upy server status"))
+	log.Info("绑定认证器: " + log.Cyan("upy server auth") + "（在终端显示二维码）")
 	log.Info("停止命令: " + log.Cyan("upy server stop"))
 	return nil
 }
@@ -113,6 +121,7 @@ func runForegroundServer(cfg config.ServerConfig) error {
 	}()
 
 	log.Ok("upy server 就绪，按 Ctrl+C 可停止")
+	log.Info("绑定认证器: 请在另一个终端运行 " + log.Cyan("upy server auth"))
 
 	select {
 	case err := <-errChan:
@@ -161,4 +170,23 @@ func runDaemonStatus(configuredListen string) error {
 	}
 	log.Info("日志文件: " + log.Path(server.ServerLogPath()))
 	return nil
+}
+
+// 认证器绑定材料直接写终端，不能经过 log.Info 等会落盘的函数。
+func renderServerAuth(cfg config.ServerConfig, out io.Writer) error {
+	tm, err := server.NewTOTPManager("", cfg.TOTPSecret)
+	if err != nil {
+		return err
+	}
+	host, _ := os.Hostname()
+	account := "admin"
+	if host != "" {
+		account += "@" + host
+	}
+	qr, err := tm.TerminalQRCode(account)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(out, "upy · 认证器绑定\n\n请用 Google Authenticator、1Password 等扫描下方二维码：\n\n%s\n绑定后访问控制台首页，输入 6 位动态验证码登录。\n此命令复用现有密钥，已有认证器绑定继续有效。\n", qr)
+	return err
 }

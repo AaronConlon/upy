@@ -26,6 +26,7 @@ type Server struct {
 	serverOut  io.Writer
 	totpMgr    *TOTPManager
 	sessions   *SessionStore
+	totpErr    error
 }
 
 func NewServer(cfg config.ServerConfig, serverOut io.Writer) *Server {
@@ -35,7 +36,7 @@ func NewServer(cfg config.ServerConfig, serverOut io.Writer) *Server {
 	taskMgr := NewTaskManager()
 	worker := NewWorker(taskMgr, serverOut, cfg.EffectiveMaxLogHistory())
 
-	totpMgr, _ := NewTOTPManager("", cfg.TOTPSecret)
+	totpMgr, totpErr := NewTOTPManager("", cfg.TOTPSecret)
 	sessions := NewSessionStore()
 
 	s := &Server{
@@ -45,6 +46,7 @@ func NewServer(cfg config.ServerConfig, serverOut io.Writer) *Server {
 		startedAt: time.Now(),
 		serverOut: serverOut,
 		totpMgr:   totpMgr,
+		totpErr:   totpErr,
 		sessions:  sessions,
 	}
 	return s
@@ -60,10 +62,14 @@ func (s *Server) SetTOTPManager(tm *TOTPManager) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.totpMgr = tm
+	s.totpErr = nil
 }
 
 // Start 启动 HTTP 服务 (阻塞直到收到 Shutdown 或错误)
 func (s *Server) Start() error {
+	if s.totpErr != nil {
+		return fmt.Errorf("初始化 TOTP 失败: %w", s.totpErr)
+	}
 	listenAddr := s.cfg.EffectiveListen()
 
 	// 安全告警: 如果监听公网 (0.0.0.0 或非 127.0.0.1) 且没有配置 token，必须给出安全警告

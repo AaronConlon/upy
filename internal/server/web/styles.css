@@ -931,24 +931,6 @@ select:focus-visible {
 .login-form .primary {
   justify-content: space-between;
 }
-.qr {
-  text-align: center;
-  padding: 24px 0;
-}
-.qr img {
-  display: inline-block;
-  max-width: 100%;
-  height: auto;
-}
-.secret {
-  padding: 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-rule);
-  overflow-wrap: anywhere;
-  margin: 12px 0 24px;
-  user-select: all;
-  text-align: center;
-}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1061,4 +1043,41 @@ select:disabled {
 
 [hidden] {
   display: none !important;
+}
+.enrollment-help {
+  margin-top: 20px;
+  line-height: 1.9;
+}
+.enrollment-help code {
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+}
+.pwa-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--color-rule);
+  padding-top: 16px;
+  margin-top: 24px;
+}
+.pwa-panel strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.pwa-panel .sub {
+  margin-top: 4px;
+  font-size: 10px;
+}
+.pwa-panel .button {
+  flex-shrink: 0;
+}
+#ios-install-help {
+  margin-top: 16px;
+}
+
+/* 独立窗口铺满屏幕时，为刘海区域保留顶部安全区。 */
+.apphead {
+  height: calc(65px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
 }
