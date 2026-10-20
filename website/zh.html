@@ -155,7 +155,11 @@
           ><b aria-hidden="true">/</b
           ><span><i aria-hidden="true">04</i> 项目分析</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">05</i> Bark / Webhook</span>
+          ><span><i aria-hidden="true">05</i> 出站通知</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">06</i> Server / Webhook</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">07</i> 日志排障</span>
         </div>
       </div>
       <section
@@ -197,8 +201,8 @@
       >
         <div class="section-heading">
           <p class="eyebrow">核心功能</p>
-          <h2 id="workflow-title">部署、清理、备份与告警。</h2>
-          <p>覆盖应用发布、磁盘空间维护、关键数据备份与多人移动端告警，构建单机运维闭环。</p>
+          <h2 id="workflow-title">部署、服务、Webhook 与日志。</h2>
+          <p>覆盖应用发布、CI/CD 自动化入站、常驻 Server 服务、双因素 Web 控制台与全链路日志排障，构建单机运维闭环。</p>
         </div>
         <div class="workflow-track" aria-hidden="true">
           <span class="workflow-progress"></span>
@@ -859,7 +863,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
             </div>
           </div>
         </article>
-        <article class="step step-wide last" data-step>
+        <article class="step step-wide" data-step>
           <div class="step-copy">
             <span class="step-number">05 / 通知</span>
             <h3>多接收人 Bark 移动端推送与项目专属 Webhook。</h3>
@@ -1066,6 +1070,277 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
                 <div><strong>压缩包保留与 Shell 补全同步：</strong>支持在 <code>deploy.yaml</code> 中通过 <code>bundles.keep</code> 控制保留 0~100 个历史压缩包（默认最多 3 个）；<code>upy update</code> 升级时全自动同步 <code>zsh</code>、<code>bash</code> 与 <code>fish</code> 补全规则，新命令即刻生效。</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="step step-wide" data-step>
+          <div class="step-copy">
+            <span class="step-number">06 / 服务与 Webhook</span>
+            <h3>常驻守护进程、CI/CD 入站 Webhook 与 2FA Web 控制台。</h3>
+            <div class="step-copy-desc">
+              <p>
+                <code>upy server</code> 提供轻量后台守护进程。CI/CD 流水线（GitHub Actions / GitLab CI）发布 Release 后，直接通过 POST <code>/api/v1/webhook/{project}</code> 触发服务器自动化拉取升级，彻底告别在 CI 仓库暴露服务器敏感 SSH 密钥。
+                内置 TOTP 双因素认证（Google Authenticator 扫码）与 30 分钟安全会话；<code>/auth</code> 绑定路由支持最多 5 次访问自毁保护（超限永久 404），安全守护 Web 日志控制台。
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#server-服务与-webhook-自动化"
+                class="text-link"
+                >查阅 Server 与 Webhook 文档 ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="server-showcase">
+            <div class="showcase-cards">
+              <!-- Card 1: CI/CD Webhook 自动触发部署 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / CI 入站触发部署 <span>HMAC 防伪验签</span></span>
+                  <span class="step-card-file">.github/workflows/deploy.yml</span>
+                </div>
+                <pre><code><span class="comment"># GitHub Actions: Release 成功后计算 HMAC-SHA256 签名并调用 upy server</span>
+- <span class="keyword">name</span>: Trigger upy deployment
+  <span class="keyword">env</span>:
+    UPY_WEBHOOK_URL: <span class="string">"https://deploy.example.com/api/v1/webhook/my-api"</span>
+    UPY_WEBHOOK_SECRET: <span class="string">"${{ secrets.UPY_WEBHOOK_SECRET }}"</span>
+    TAG: <span class="string">"${{ github.ref_name }}"</span>
+  <span class="keyword">run</span>: |
+    payload='{"target":"'${TAG}'","force":false}'
+    sig=$(printf %s "$payload" | openssl dgst -sha256 -hmac "$UPY_WEBHOOK_SECRET" | sed 's/^.*= //')
+    curl -fsS -X POST "$UPY_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -H "X-Hub-Signature-256: sha256=$sig" \
+      -d "$payload"</code></pre>
+              </div>
+
+              <!-- Card 2: TOTP 2FA 双因素安全登录 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / TOTP 2FA 双因素安全 <span>5 次访问自毁</span></span>
+                  <span class="step-card-file">/auth &amp; / 路由安全</span>
+                </div>
+                <pre><code><span class="comment"># 1. 访问 /auth 绑定 2FA (限前 5 次展示二维码，随后永久 404 销毁)</span>
+https://deploy.example.com/auth  → Google Authenticator 扫码
+
+<span class="comment"># 2. 访问 / 输入 6 位动态验证码，验证签发 30 分钟安全 Cookie</span>
+https://deploy.example.com/      → 输入 [ 8 4 9 2 0 1 ] → 自动跳转 /logs
+
+<span class="comment"># 3. 访问 /logs 浏览全量日志控制台 (支持各项目部署历史与原色渲染)</span>
+https://deploy.example.com/logs  → 浏览所有项目部署历史及终端原色详情</code></pre>
+              </div>
+            </div>
+
+            <!-- Terminal Window: Server 启动与管理 -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
+                </div>
+                <span class="terminal-title">终端执行 — 启动并管理 Server 守护进程</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-server-code-zh">复制启动命令</button>
+              </div>
+              <pre id="term-server-code-zh" class="sr-only">upy server start -d --listen 127.0.0.1:8999</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy server start -d --listen 127.0.0.1:8999</span>
+<span class="t-step">-&gt; 正在启动 upy server 守护进程...</span>
+<span class="t-ok">✓ 守护进程已成功启动 (PID: 4892)</span>
+<span class="t-info">🌐 监听地址: http://127.0.0.1:8999</span>
+<span class="t-info">🔑 TOTP 2FA 绑定入口: http://127.0.0.1:8999/auth (仅限前 5 次访问)</span>
+<span class="t-highlight">📋 Web 日志控制台: http://127.0.0.1:8999/logs</span>
+
+<span class="t-prompt">$</span> <span class="t-cmd">upy server status</span>
+<span class="t-ok">🟢 upy server 正在运行 (PID: 4892, 监听: 127.0.0.1:8999)</span></pre>
+              </div>
+            </div>
+
+            <!-- 架构与流向卡片 -->
+            <div class="server-flow-grid">
+              <div class="flow-card">
+                <div class="flow-card-header">
+                  <span class="flow-card-title">🔐 免 SSH 私钥自动化</span>
+                  <span class="flow-card-badge">Zero Secret Exposure</span>
+                </div>
+                <p class="flow-card-desc">CI/CD 只需持项目专属 Webhook Secret 签名请求，无需在 GitHub/GitLab 存入任何主机 SSH 私钥，避免私钥外泄风险。</p>
+              </div>
+              <div class="flow-card">
+                <div class="flow-card-header">
+                  <span class="flow-card-title">🛡️ 2FA 与防扫描自毁</span>
+                  <span class="flow-card-badge">TOTP &amp; 404 Destruction</span>
+                </div>
+                <p class="flow-card-desc">绑定二维码在最多访问 5 次后永久 404 自毁，彻底隔绝公网扫描；登录颁发 30 分钟 HttpOnly 安全 Cookie，过期自动重定向回首页。</p>
+              </div>
+              <div class="flow-card">
+                <div class="flow-card-header">
+                  <span class="flow-card-title">⚡ 异步响应与并发互斥</span>
+                  <span class="flow-card-badge">202 Accepted &amp; 409 Lock</span>
+                </div>
+                <p class="flow-card-desc">Webhook 接收后立即响应 202 异步调度部署，不阻塞 CI 超时；同项目部署自动施加跨进程互斥锁，冲突请求返回 409。</p>
+              </div>
+            </div>
+
+            <!-- 常用 Server 命令列表 -->
+            <div class="server-cmd-grid">
+              <div class="server-cmd-item">
+                <code>upy server start -d</code>
+                <span>以后台守护进程模式启动 Webhook 服务与控制台</span>
+              </div>
+              <div class="server-cmd-item">
+                <code>upy server status</code>
+                <span>查看当前 Server 运行状态、PID 与监听端口</span>
+              </div>
+              <div class="server-cmd-item">
+                <code>upy server stop</code>
+                <span>安全平滑停止运行中的 Server 守护进程</span>
+              </div>
+              <div class="server-cmd-item">
+                <code>POST /api/v1/webhook/:proj</code>
+                <span>入站 Webhook 触发部署接口（支持 HMAC 与 Bearer Token）</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>单二进制零外部依赖：</strong>内置完整 HTTP 路由、TOTP 算法与 ANSI 渲染引擎，无需安装 Node.js、Python 或 Nginx 额外扩展。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>项目专属配置与验签：</strong>Webhook Secret 配置在各项目的 <code>deploy.yaml</code> 中，支持多项目独立密钥隔离，互不干扰。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>极低常驻资源开销：</strong>守护进程常驻内存仅 ~10MB RSS，空闲 CPU 占用趋近于 0%，适合各类低配轻量 VPS。</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="step step-wide last" data-step>
+          <div class="step-copy">
+            <span class="step-number">07 / 日志排障</span>
+            <h3>统一日志体系，终端与 Web 双模彩色还原。</h3>
+            <div class="step-copy-desc">
+              <p>
+                全链路记录 CLI 命令流水、Server 访问以及项目部署过程，敏感 Token 与密钥在写入前全自动正则脱敏。
+                新增 <code>upy log</code> 命令行，支持终端交互选择、实时跟踪（<code>-f</code>）、末尾截取（<code>-n</code>）与一键清空（<code>-c</code>）；Web 控制台 1:1 还原终端 ANSI 原色。
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#日志系统与-upy-log-命令"
+                class="text-link"
+                >查阅日志审计文档 ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="log-showcase">
+            <div class="showcase-cards">
+              <!-- Card 1: 结构化分流与自动脱敏 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / 三路日志分流 <span>敏感密钥自动脱敏</span></span>
+                  <span class="step-card-file">~/.upy/logs/ 存储规范</span>
+                </div>
+                <pre><code><span class="comment"># 1. CLI 命令流水 (~/.upy/logs/upy.log)</span>
+[2026-10-20 22:30:00] [PID:4120] CMD: upy release latest --root /opt/app | EXIT:0 | 3.2s
+
+<span class="comment"># 2. Server 运行与访问日志 (~/.upy/logs/server.log)</span>
+[2026-10-20 22:31:05] [INFO] [http] POST /api/v1/webhook/my-api 202 1.2ms [client: 140.82.112.4]
+
+<span class="comment"># 3. 项目独立部署日志 (~/.upy/logs/&lt;project&gt;/&lt;timestamp&gt;.log)</span>
+记录部署过程的每一步输出、备份操作与健康检查状态</code></pre>
+              </div>
+
+              <!-- Card 2: 交互式选择与终端流式追踪 -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / 交互选择与实时跟踪 <span>防死循环 Tail</span></span>
+                  <span class="step-card-file">upy log 命令行</span>
+                </div>
+                <pre><code><span class="comment"># 1. 交互式选择菜单（未传参数时自动唤起光标选择）</span>
+$ upy log
+? 请选择要查看的日志:
+  ❯ 🖥️  Server 服务运行日志 (server.log)
+    ⌨️  upy 命令行执行流水 (upy.log)
+    📦 my-api-service (最近部署)
+    📦 portal-frontend (最近部署)
+
+<span class="comment"># 2. 实时追踪与行数控制</span>
+$ upy log server -f          <span class="comment"># 实时跟踪 server 访问流</span>
+$ upy log upy -n 100         <span class="comment"># 查看 CLI 最近 100 行执行流水</span>
+$ upy log --list             <span class="comment"># 列出所有日志文件及体积</span></code></pre>
+              </div>
+            </div>
+
+            <!-- Terminal Window: upy log server -f 演示 -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
+                </div>
+                <span class="terminal-title">终端执行 — upy log server -f 实时跟踪</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-log-code-zh">复制追踪命令</button>
+              </div>
+              <pre id="term-log-code-zh" class="sr-only">upy log server -f</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy log server -f</span>
+<span class="t-step">-&gt; 查看日志 Server 运行日志 (末尾 50 行): ~/.upy/logs/server.log</span>
+<span class="t-info">[2026-10-20 22:30:12] [INFO] [server] upy server daemon started (pid: 4892, listen: 127.0.0.1:8999)</span>
+<span class="t-info">[2026-10-20 22:31:05] [INFO] [http] POST /api/v1/webhook/my-api-service 202 1.4ms [client: 140.82.112.4]</span>
+<span class="t-ok">✓ [2026-10-20 22:31:05] [webhook] HMAC SHA-256 signature verified for my-api-service</span>
+<span class="t-highlight">[2026-10-20 22:31:05] [deploy] triggering background deploy for my-api-service (target: v1.2.0)</span>
+<span class="t-ok">✓ [2026-10-20 22:31:08] [deploy] my-api-service deployed successfully in 3.2s</span>
+<span class="t-info">[2026-10-20 22:35:10] [INFO] [http] GET /logs/my-api-service 200 0.8ms [client: 127.0.0.1]</span></pre>
+              </div>
+            </div>
+
+            <!-- 常用 Log 命令卡片列表 -->
+            <div class="log-cmd-grid">
+              <div class="log-cmd-item">
+                <code>upy log</code>
+                <span>未指定目标时交互式选择 Server、CLI 或项目日志</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log server -f</code>
+                <span>实时流式追踪 Server 守护进程与 HTTP 访问日志</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log upy -n 100</code>
+                <span>查看 upy 命令行自身最近 100 行执行流水与耗时</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log &lt;项目名&gt;</code>
+                <span>查看目标项目最近一次部署的完整输出记录</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log --list</code>
+                <span>列出所有日志文件位置、更新时间与磁盘占用</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log &lt;目标&gt; -c</code>
+                <span>清空指定日志文件（如 upy log server -c）</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: 平铺网格，无多余灰底嵌套 -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>防死循环 Tail 机制：</strong><code>upy log</code> 查询自身日志时自动豁免写入，杜绝 <code>-f</code> 追踪时产生自写入死循环。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>全链路敏感信息脱敏：</strong>写入文件前自动剥离控制符并对 Token、Secret、Password 正则掩码，避免关键凭据外泄。</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Web 与终端彩色原貌重现：</strong>Web 控制台内置 ANSI 转 HTML 渲染器，1:1 重现终端高亮，告别单调纯黑白日志。</div>
               </div>
             </div>
           </div>

@@ -155,7 +155,11 @@
           ><b aria-hidden="true">/</b
           ><span><i aria-hidden="true">04</i> Project Analysis</span
           ><b aria-hidden="true">/</b
-          ><span><i aria-hidden="true">05</i> Bark / Webhook</span>
+          ><span><i aria-hidden="true">05</i> Outbound Alerts</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">06</i> Server &amp; Webhook</span
+          ><b aria-hidden="true">/</b
+          ><span><i aria-hidden="true">07</i> Logs &amp; Trace</span>
         </div>
       </div>
       <section
@@ -197,8 +201,8 @@
       >
         <div class="section-heading">
           <p class="eyebrow">Core Features</p>
-          <h2 id="workflow-title">Deploy, clean, backup, and alert.</h2>
-          <p>Covering application delivery, disk space maintenance, baseline data backups, and multi-recipient mobile alerts in a unified binary.</p>
+          <h2 id="workflow-title">Deploy, Server, Webhooks &amp; Logs.</h2>
+          <p>End-to-end server operations: automated CI/CD webhooks, background daemon, 2FA web console, and unified trace logs.</p>
         </div>
         <div class="workflow-track" aria-hidden="true">
           <span class="workflow-progress"></span>
@@ -861,7 +865,7 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
             </div>
           </div>
         </article>
-        <article class="step step-wide last" data-step>
+        <article class="step step-wide" data-step>
           <div class="step-copy">
             <span class="step-number">05 / Notify</span>
             <h3>Multi-recipient Bark mobile push &amp; project-specific Webhooks.</h3>
@@ -1068,6 +1072,277 @@ docker compose exec -T db mysqldump -u root -p<span class="string">"${DB_PASSWOR
               <div class="guarantee-item">
                 <span class="guarantee-icon" aria-hidden="true">✓</span>
                 <div><strong>Bundle Retention &amp; Shell Completion Sync:</strong> Configurable <code>bundles.keep</code> (0~100, default 3) in <code>deploy.yaml</code>; <code>upy update</code> automatically synchronizes completion rules for <code>zsh</code>, <code>bash</code>, and <code>fish</code> so new commands are instantly available.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="step step-wide" data-step>
+          <div class="step-copy">
+            <span class="step-number">06 / Server &amp; Webhook</span>
+            <h3>Background daemon, CI/CD inbound webhooks, and 2FA web console.</h3>
+            <div class="step-copy-desc">
+              <p>
+                <code>upy server</code> runs as an ultra-lightweight background daemon. When CI/CD (GitHub Actions / GitLab CI) finishes a Release, it triggers an instant deployment via POST <code>/api/v1/webhook/{project}</code>—eliminating the need to expose VPS SSH private keys inside CI runners.
+                Built-in TOTP two-factor authentication (Google Authenticator) with 30-minute session cookies; the <code>/auth</code> setup route self-destructs with a permanent 404 after 5 visits to keep the web console secure against crawlers.
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#server-daemon--inbound-webhook"
+                class="text-link"
+                >View Server &amp; Webhook docs ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="server-showcase">
+            <div class="showcase-cards">
+              <!-- Card 1: CI Inbound Webhook -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / Inbound CI Trigger <span>HMAC SHA-256 Verified</span></span>
+                  <span class="step-card-file">.github/workflows/deploy.yml</span>
+                </div>
+                <pre><code><span class="comment"># GitHub Actions: Compute HMAC SHA-256 and trigger upy server on release</span>
+- <span class="keyword">name</span>: Trigger upy deployment
+  <span class="keyword">env</span>:
+    UPY_WEBHOOK_URL: <span class="string">"https://deploy.example.com/api/v1/webhook/my-api"</span>
+    UPY_WEBHOOK_SECRET: <span class="string">"${{ secrets.UPY_WEBHOOK_SECRET }}"</span>
+    TAG: <span class="string">"${{ github.ref_name }}"</span>
+  <span class="keyword">run</span>: |
+    payload='{"target":"'${TAG}'","force":false}'
+    sig=$(printf %s "$payload" | openssl dgst -sha256 -hmac "$UPY_WEBHOOK_SECRET" | sed 's/^.*= //')
+    curl -fsS -X POST "$UPY_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -H "X-Hub-Signature-256: sha256=$sig" \
+      -d "$payload"</code></pre>
+              </div>
+
+              <!-- Card 2: TOTP 2FA Security -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / TOTP 2FA Security <span>Self-Destructs After 5 Visits</span></span>
+                  <span class="step-card-file">/auth &amp; / Security Route</span>
+                </div>
+                <pre><code><span class="comment"># 1. Visit /auth to bind 2FA (QR code destroyed permanently after 5 visits)</span>
+https://deploy.example.com/auth  → Scan with Google Authenticator
+
+<span class="comment"># 2. Visit / and enter 6-digit code for 30-minute secure session cookie</span>
+https://deploy.example.com/      → Enter [ 8 4 9 2 0 1 ] → Redirect to /logs
+
+<span class="comment"># 3. View /logs web console with terminal ANSI color fidelity</span>
+https://deploy.example.com/logs  → Browse deployments and live server logs</code></pre>
+              </div>
+            </div>
+
+            <!-- Terminal Window: Server Daemon Management -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
+                </div>
+                <span class="terminal-title">Terminal Execution — Starting and Managing the Server Daemon</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-server-code-en">Copy Start Command</button>
+              </div>
+              <pre id="term-server-code-en" class="sr-only">upy server start -d --listen 127.0.0.1:8999</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy server start -d --listen 127.0.0.1:8999</span>
+<span class="t-step">-&gt; Starting upy server daemon in background...</span>
+<span class="t-ok">✓ Daemon process started successfully (PID: 4892)</span>
+<span class="t-info">🌐 Listening on: http://127.0.0.1:8999</span>
+<span class="t-info">🔑 TOTP 2FA setup route: http://127.0.0.1:8999/auth (max 5 visits)</span>
+<span class="t-highlight">📋 Web Log Console: http://127.0.0.1:8999/logs</span>
+
+<span class="t-prompt">$</span> <span class="t-cmd">upy server status</span>
+<span class="t-ok">🟢 upy server is running (PID: 4892, listen: 127.0.0.1:8999)</span></pre>
+              </div>
+            </div>
+
+            <!-- Architecture & Flow Cards -->
+            <div class="server-flow-grid">
+              <div class="flow-card">
+                <div class="flow-card-header">
+                  <span class="flow-card-title">🔐 Zero SSH Key Exposure</span>
+                  <span class="flow-card-badge">Zero Secret Exposure</span>
+                </div>
+                <p class="flow-card-desc">CI/CD triggers deployments using HMAC signed payloads; zero server SSH private keys need to be saved inside CI runners.</p>
+              </div>
+              <div class="flow-card">
+                <div class="flow-card-header">
+                  <span class="flow-card-title">🛡️ 2FA &amp; Scanner Self-Destruction</span>
+                  <span class="flow-card-badge">TOTP &amp; 404 Destruction</span>
+                </div>
+                <p class="flow-card-desc">The QR enrollment page turns into a permanent 404 after 5 visits. Logged-in sessions issue 30-minute HttpOnly cookies.</p>
+              </div>
+              <div class="flow-card">
+                <div class="flow-card-header">
+                  <span class="flow-card-title">⚡ Async Dispatch &amp; Mutex Locks</span>
+                  <span class="flow-card-badge">202 Accepted &amp; 409 Lock</span>
+                </div>
+                <p class="flow-card-desc">Inbound webhooks return 202 Accepted immediately to avoid CI timeouts. Concurrent deployments for the same project return 409 Conflict.</p>
+              </div>
+            </div>
+
+            <!-- Common Server Commands Grid -->
+            <div class="server-cmd-grid">
+              <div class="server-cmd-item">
+                <code>upy server start -d</code>
+                <span>Start background daemon for webhooks and web console</span>
+              </div>
+              <div class="server-cmd-item">
+                <code>upy server status</code>
+                <span>Inspect running status, PID, and listening address</span>
+              </div>
+              <div class="server-cmd-item">
+                <code>upy server stop</code>
+                <span>Gracefully shut down running server daemon process</span>
+              </div>
+              <div class="server-cmd-item">
+                <code>POST /api/v1/webhook/:proj</code>
+                <span>Inbound webhook endpoint with HMAC and Bearer token auth</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: Flat Grid -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Zero External Dependencies:</strong> Built-in HTTP router, TOTP engine, and ANSI renderer in a single ~9.5MB pure Go binary.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Project-Isolated Secrets:</strong> Webhook secrets are configured individually in each project's <code>deploy.yaml</code> for strict separation.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Ultra-Low Memory Footprint:</strong> Idle server daemon uses ~10MB RSS and 0% CPU, running smoothly on budget cloud VPS instances.</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="step step-wide last" data-step>
+          <div class="step-copy">
+            <span class="step-number">07 / Logs &amp; Trace</span>
+            <h3>Unified trace logging with terminal and Web ANSI color parity.</h3>
+            <div class="step-copy-desc">
+              <p>
+                Full-lifecycle logging across CLI executions, server requests, and project deployments with automatic secret token redaction.
+                The unified <code>upy log</code> CLI provides interactive target selection, live stream tailing (<code>-f</code>), tail truncation (<code>-n</code>), and log clearing (<code>-c</code>); the Web console renders terminal ANSI colors with pixel-perfect fidelity.
+              </p>
+              <a
+                href="https://github.com/AaronConlon/upy#unified-logging--the-upy-log-command"
+                class="text-link"
+                >View logging &amp; audit docs ↗</a
+              >
+            </div>
+          </div>
+
+          <div class="log-showcase">
+            <div class="showcase-cards">
+              <!-- Card 1: Three Dedicated Streams -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">01 / Three Dedicated Streams <span>Token Redacted</span></span>
+                  <span class="step-card-file">~/.upy/logs/ Layout</span>
+                </div>
+                <pre><code><span class="comment"># 1. CLI Execution History (~/.upy/logs/upy.log)</span>
+[2026-10-20 22:30:00] [PID:4120] CMD: upy release latest --root /opt/app | EXIT:0 | 3.2s
+
+<span class="comment"># 2. Server Access &amp; Daemon Logs (~/.upy/logs/server.log)</span>
+[2026-10-20 22:31:05] [INFO] [http] POST /api/v1/webhook/my-api 202 1.2ms [client: 140.82.112.4]
+
+<span class="comment"># 3. Project Deployment Logs (~/.upy/logs/&lt;project&gt;/&lt;timestamp&gt;.log)</span>
+Step-by-step terminal outputs, backups, and health checks per project</code></pre>
+              </div>
+
+              <!-- Card 2: Interactive Picker & Live Stream -->
+              <div class="showcase-step-card">
+                <div class="step-card-header">
+                  <span class="step-card-title">02 / Interactive Picker &amp; Live Stream <span>Anti-Loop Tail</span></span>
+                  <span class="step-card-file">upy log Command</span>
+                </div>
+                <pre><code><span class="comment"># 1. Interactive terminal picker (triggered when target omitted)</span>
+$ upy log
+? Select log target:
+  ❯ 🖥️  Server daemon log (server.log)
+    ⌨️  upy CLI execution history (upy.log)
+    📦 my-api-service (latest deployment)
+    📦 portal-frontend (latest deployment)
+
+<span class="comment"># 2. Real-time tailing and row limits</span>
+$ upy log server -f          <span class="comment"># Stream live server access logs</span>
+$ upy log upy -n 100         <span class="comment"># Inspect last 100 CLI executions</span>
+$ upy log --list             <span class="comment"># List all log files and sizes</span></code></pre>
+              </div>
+            </div>
+
+            <!-- Terminal Window: Live Stream -->
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <div class="terminal-dots" aria-hidden="true">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
+                </div>
+                <span class="terminal-title">Terminal Execution — Live Stream with upy log server -f</span>
+                <button type="button" class="btn-terminal-copy" data-copy="term-log-code-en">Copy Log Command</button>
+              </div>
+              <pre id="term-log-code-en" class="sr-only">upy log server -f</pre>
+              <div class="terminal-body">
+                <pre><span class="t-prompt">$</span> <span class="t-cmd">upy log server -f</span>
+<span class="t-step">-&gt; Streaming log Server daemon log (last 50 lines): ~/.upy/logs/server.log</span>
+<span class="t-info">[2026-10-20 22:30:12] [INFO] [server] upy server daemon started (pid: 4892, listen: 127.0.0.1:8999)</span>
+<span class="t-info">[2026-10-20 22:31:05] [INFO] [http] POST /api/v1/webhook/my-api-service 202 1.4ms [client: 140.82.112.4]</span>
+<span class="t-ok">✓ [2026-10-20 22:31:05] [webhook] HMAC SHA-256 signature verified for my-api-service</span>
+<span class="t-highlight">[2026-10-20 22:31:05] [deploy] triggering background deploy for my-api-service (target: v1.2.0)</span>
+<span class="t-ok">✓ [2026-10-20 22:31:08] [deploy] my-api-service deployed successfully in 3.2s</span>
+<span class="t-info">[2026-10-20 22:35:10] [INFO] [http] GET /logs/my-api-service 200 0.8ms [client: 127.0.0.1]</span></pre>
+              </div>
+            </div>
+
+            <!-- Common Log Commands Grid -->
+            <div class="log-cmd-grid">
+              <div class="log-cmd-item">
+                <code>upy log</code>
+                <span>Interactive picker for Server, CLI, or project deployment logs</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log server -f</code>
+                <span>Live stream tailing of server access requests and operations</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log upy -n 100</code>
+                <span>View last 100 CLI execution invocations with exact durations</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log &lt;project&gt;</code>
+                <span>Inspect latest full terminal output for a specific project</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log --list</code>
+                <span>Inventory of all on-disk log files and storage footprint</span>
+              </div>
+              <div class="log-cmd-item">
+                <code>upy log &lt;target&gt; -c</code>
+                <span>Truncate/clear a target log file (e.g. upy log server -c)</span>
+              </div>
+            </div>
+
+            <!-- Guarantees: Flat Grid -->
+            <div class="showcase-guarantees">
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Anti-Loop Tail Protection:</strong> The <code>upy log</code> command automatically skips self-logging to prevent infinite tail loops.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Strict Credential Redaction:</strong> Sensitive tokens, secrets, and passwords are automatically masked before writing to disk.</div>
+              </div>
+              <div class="guarantee-item">
+                <span class="guarantee-icon" aria-hidden="true">✓</span>
+                <div><strong>Web &amp; Terminal Color Parity:</strong> Web console includes a built-in ANSI to HTML renderer for 1:1 colored terminal viewing.</div>
               </div>
             </div>
           </div>

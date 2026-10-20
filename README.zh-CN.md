@@ -38,9 +38,13 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
     - [C. 原生系统服务 (system / Go 二进制 Web 服务)](#c-原生系统服务-system--go-二进制-web-服务)
 - [如何清理与维护](#如何清理与维护)
 - [如何备份与归档](#如何备份与归档)
-- [多接收人 Bark 实时通知](#多接收人-bark-实时通知)
+- [客户端项目与磁盘分析 (upy analysis)](#客户端项目与磁盘分析-upy-analysis)
+- [通知服务 (Bark 移动端推送 & 项目专属 Webhook)](#-通知服务-bark-移动端推送--项目专属-webhook)
+- [Server 服务与 Webhook 自动化](#server-服务与-webhook-自动化)
+- [日志系统与 upy log 命令](#日志系统与-upy-log-命令)
 - [如何升级](#如何升级)
 - [常用命令速查](#常用命令速查)
+- [Agent Skill](#agent-skill)
 - [开源协议](#开源协议)
 
 ---
@@ -704,6 +708,113 @@ notify:
 
 ---
 
+## Server 服务与 Webhook 自动化
+
+`upy server` 提供了轻量级的后台常驻守护进程，为 CI/CD 流水线（如 GitHub Actions、GitLab CI）提供免 SSH 密钥的安全入站部署端点，并内置基于 TOTP 的 2FA 双因素安全 Web 控制台。
+
+### 1. 快速启动与管理
+
+```bash
+# 后台常驻模式启动 (默认监听 127.0.0.1:8999)
+upy server start -d
+
+# 自定义监听端口与地址
+upy server start -d --listen 127.0.0.1:8999
+
+# 查看运行状态与 PID
+upy server status
+
+# 安全停止守护进程
+upy server stop
+```
+
+### 2. CI/CD 入站 Webhook 自动部署
+
+在项目的 `deploy.yaml` 中配置 `webhook.secret`：
+
+```yaml
+name: my-api-service
+type: system
+target:
+  os: linux
+  arch: amd64
+
+# 入站 CI 触发配置
+webhook:
+  secret: "whsec_your_strong_random_secret"
+```
+
+在 GitHub Actions 流水线中，发布 Release 成功后直接调用 `POST /api/v1/webhook/{project}`：
+
+```yaml
+- name: Trigger upy deployment
+  env:
+    UPY_WEBHOOK_URL: "https://deploy.example.com/api/v1/webhook/my-api-service"
+    UPY_WEBHOOK_SECRET: "${{ secrets.UPY_WEBHOOK_SECRET }}"
+    TAG: "${{ github.ref_name }}"
+  run: |
+    payload='{"target":"'${TAG}'","force":false}'
+    sig=$(printf %s "$payload" | openssl dgst -sha256 -hmac "$UPY_WEBHOOK_SECRET" | sed 's/^.*= //')
+    curl -fsS -X POST "$UPY_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -H "X-Hub-Signature-256: sha256=$sig" \
+      -d "$payload"
+```
+
+> 💡 **免 SSH 私钥与异步调度**：  
+> - 彻底告别在 CI 仓库 Secrets 存入服务器私钥（`SSH_PRIVATE_KEY`）的历史隐患。  
+> - Webhook 接口校验签名后立即返回 `202 Accepted` 并异步执行部署，避免 CI 流程因长任务超时。  
+> - 相同项目并发请求自动通过互斥锁排队/拒绝（返回 `409 Conflict`），保障部署一致性。
+
+### 3. TOTP 2FA 双因素 Web 控制台
+
+`upy server` 内置极简 Web 控制台，保护日志与服务状态不被未经授权的恶意扫描窥探：
+
+- **绑定 2FA 二维码 (`/auth`)**：初次启动自动生成专属 TOTP 密钥并在 `/auth` 展示二维码，支持 Google Authenticator、1Password 等 APP 扫码绑定。为杜绝公网泄露，**该路由被访问满 5 次后将永久返回 404 自毁**。
+- **动态码验证登录 (`/`)**：访问根路由输入 6 位 TOTP 动态码，校验成功后签发有效期为 30 分钟的 `HttpOnly` + `SameSite` 安全 Cookie。
+- **全量日志浏览 (`/logs`)**：已鉴权用户可按项目查阅历史部署记录，并直接在线查看高保真终端 ANSI 原色渲染日志。
+
+---
+
+## 日志系统与 upy log 命令
+
+`upy` 建立了一套分工明确的系统化日志体系，覆盖 CLI 执行、Server 运行与各项目部署过程，并保证所有敏感信息自动脱敏。
+
+### 1. 三路存储与自动脱敏规范
+
+- `~/.upy/logs/upy.log`：记录每一次终端 CLI 调用流水（时间戳、PID、执行命令、耗时、退出码），自动剥离 ANSI 方便 grep/awk，所有 Token 与密钥自动正则掩码。
+- `~/.upy/logs/server.log`：记录 Server 守护进程的启动、关闭与 HTTP 请求访问（含来源 IP、方法、路径、状态码、响应耗时）。
+- `~/.upy/logs/<project>/<timestamp>.log`：保留每个项目历次部署的完整过程日志（支持 Web 终端高亮展示）。
+
+### 2. upy log 命令速查
+
+```bash
+# 交互式选择菜单（光标直接选择 Server、CLI 或具体项目）
+upy log
+
+# 实时追踪 Server 运行与访问日志 (类似 tail -f)
+upy log server -f
+upy log -s -f
+
+# 查看 upy 命令行自身最近 100 行执行记录
+upy log upy -n 100
+
+# 查看指定项目最近一次部署的完整输出
+upy log my-api-service
+
+# 列出本机所有日志文件及体积占用
+upy log --list
+
+# 清空指定的日志文件
+upy log server -c
+upy log upy -c
+```
+
+> 💡 **防死循环机制**：  
+> 当执行 `upy log` 系列命令时，系统会自动跳过向 `upy.log` 写入，彻底消除 `upy log -f` 追踪自身时产生无限循环自 tail 的问题。
+
+---
+
 ## 如何升级
 
 `upy` 拥有完善的跨分区自更新与在运行进程替换机制，随时保持工具最新：
@@ -738,6 +849,8 @@ upy version
 | `upy clean [项目名]` | 可视化分析并清理项目数据 (Bundle 缓存、旧版本、临时目录或注销) |
 | `upy backup [项目名]` | 执行项目约定备份 (`backup.sh`)，管理归档轮转并推送通知 |
 | `upy analysis [项目名]` | 分析全机已部署项目，以最大占用为 100% 基准展示磁盘分布与最近部署 |
+| `upy server [start\|stop\|status]` | 启动 Webhook 服务与 Web 控制台，支持 `-d` 静默守护进程 |
+| `upy log [server\|upy\|<项目>]` | 交互式或指定查看运行日志，支持 `-f` 实时追踪与 `-n` 行数截取 |
 | `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
 | `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |
 | `upy update [版本]` | 自更新到最新版本或切换至指定版本 |

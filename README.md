@@ -39,9 +39,13 @@ Paired with intelligent **disk space pruning and active version protection** (`u
     - [C. Native Systemd Services (Go Binary Web Services)](#c-native-systemd-services-go-binary-web-services)
 - [Disk Maintenance & Pruning](#disk-maintenance--pruning)
 - [Convention Backups](#convention-backups)
-- [Multi-Recipient Bark Notifications](#multi-recipient-bark-notifications)
+- [Project & Disk Analysis (upy analysis)](#project--disk-analysis-upy-analysis)
+- [Multi-Recipient Bark Notifications & Project Webhook](#multi-recipient-bark-notifications--project-webhook)
+- [Server Daemon & Inbound Webhook](#server-daemon--inbound-webhook)
+- [Unified Logging & the upy log Command](#unified-logging--the-upy-log-command)
 - [Self-Update](#self-update)
 - [Command Cheat Sheet](#command-cheat-sheet)
+- [Agent Skill](#agent-skill)
 - [License](#license)
 
 ---
@@ -705,6 +709,113 @@ When `secret` is provided, `upy` calculates an HMAC-SHA256 signature of the JSON
 
 ---
 
+## Server Daemon & Inbound Webhook
+
+`upy server` provides a lightweight background daemon that serves as a secure, SSH-key-free inbound deployment endpoint for CI/CD pipelines (such as GitHub Actions or GitLab CI) alongside a TOTP 2FA protected Web console.
+
+### 1. Starting & Managing the Daemon
+
+```bash
+# Start background daemon (default listens on 127.0.0.1:8999)
+upy server start -d
+
+# Custom port or listening address
+upy server start -d --listen 127.0.0.1:8999
+
+# Inspect daemon status and PID
+upy server status
+
+# Gracefully terminate daemon process
+upy server stop
+```
+
+### 2. CI/CD Inbound Webhook Automation
+
+Configure `webhook.secret` inside the project's `deploy.yaml`:
+
+```yaml
+name: my-api-service
+type: system
+target:
+  os: linux
+  arch: amd64
+
+# Inbound webhook trigger configuration
+webhook:
+  secret: "whsec_your_strong_random_secret"
+```
+
+In your GitHub Actions workflow, trigger `POST /api/v1/webhook/{project}` after creating a release:
+
+```yaml
+- name: Trigger upy deployment
+  env:
+    UPY_WEBHOOK_URL: "https://deploy.example.com/api/v1/webhook/my-api-service"
+    UPY_WEBHOOK_SECRET: "${{ secrets.UPY_WEBHOOK_SECRET }}"
+    TAG: "${{ github.ref_name }}"
+  run: |
+    payload='{"target":"'${TAG}'","force":false}'
+    sig=$(printf %s "$payload" | openssl dgst -sha256 -hmac "$UPY_WEBHOOK_SECRET" | sed 's/^.*= //')
+    curl -fsS -X POST "$UPY_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -H "X-Hub-Signature-256: sha256=$sig" \
+      -d "$payload"
+```
+
+> 💡 **Zero SSH Keys & Non-Blocking Async Dispatch**:  
+> - Eliminates the security hazard of saving host SSH private keys inside CI repository secrets.  
+> - Inbound webhook verifies signature and immediately responds with `202 Accepted`, running the deployment job asynchronously in the background.  
+> - Concurrent deployments for the same project are protected by inter-process mutex locks (returning `409 Conflict`) to prevent corrupt states.
+
+### 3. TOTP 2FA Protected Web Console
+
+`upy server` includes a lightweight, secure Web log console:
+
+- **2FA QR Code Enrollment (`/auth`)**: On first startup, a unique TOTP secret is generated and rendered as a QR code at `/auth` (scannable via Google Authenticator or 1Password). **The `/auth` route permanently returns 404 after 5 visits**, ensuring it cannot be crawled or exposed.
+- **Dynamic 6-Digit Code Login (`/`)**: Visiting root prompts for the 6-digit TOTP verification code. Successful authentication issues a 30-minute `HttpOnly` + `SameSite` secure session cookie.
+- **Full Trace Browsing (`/logs`)**: Authenticated sessions can view deployment history across all registered projects, along with high-fidelity terminal ANSI color rendering.
+
+---
+
+## Unified Logging & the upy log Command
+
+`upy` features a comprehensive structured logging system that records CLI invocations, server access, and deployment history with automated sensitive token redaction.
+
+### 1. Storage Streams & Security Redaction
+
+- `~/.upy/logs/upy.log`: Records every CLI command execution (timestamp, PID, command line, duration, exit code) with stripped ANSI codes for easy grep/awk parsing, and tokens/passwords automatically masked.
+- `~/.upy/logs/server.log`: Records daemon lifecycle and HTTP access logs (client IP, HTTP method, path, response status code, elapsed time).
+- `~/.upy/logs/<project>/<timestamp>.log`: Preserves the complete step-by-step terminal log for every deployment.
+
+### 2. upy log Command Reference
+
+```bash
+# Interactive target picker (select Server, CLI, or project logs)
+upy log
+
+# Live stream server daemon and access logs (like tail -f)
+upy log server -f
+upy log -s -f
+
+# View last 100 CLI execution history records
+upy log upy -n 100
+
+# View latest deployment log for a specific project
+upy log my-api-service
+
+# List all log files and disk consumption
+upy log --list
+
+# Truncate / clear a specific log file
+upy log server -c
+upy log upy -c
+```
+
+> 💡 **Anti-Loop Tail Safeguard**:  
+> Running `upy log` commands automatically bypasses recording into `upy.log`, completely eliminating infinite self-tail loops when tracking with `upy log -f`.
+
+---
+
 ## Self-Update
 
 `upy` includes built-in cross-partition self-updates with in-place execution replacement:
@@ -739,6 +850,8 @@ upy version
 | `upy clean [project]` | Visually analyze and clean project data (bundles, old releases, or purge) |
 | `upy backup [project]` | Run convention project backup (`backup.sh`), prune archives, and push alerts |
 | `upy analysis [project]` | Analyze host projects, plot disk usage with 100% benchmark, and spotlight recent release |
+| `upy server [start\|stop\|status]` | Start webhook server daemon and web console (`-d` for background mode) |
+| `upy log [server\|upy\|<project>]` | View logs interactively or directly, with `-f` live stream and `-n` tail rows |
 | `upy bundle <file>` | Deploy a local `.zip` bundle directly (offline mode, no GitHub connection) |
 | `upy init [owner] <token>` | Initialize or configure GitHub personal/organization access tokens |
 | `upy update [version]` | Self-update to latest release or switch to a target version |

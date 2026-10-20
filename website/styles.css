@@ -1221,7 +1221,9 @@ figcaption > span:last-child {
    ============================================================ */
 .backup-showcase,
 .notify-showcase,
-.analysis-showcase {
+.analysis-showcase,
+.server-showcase,
+.log-showcase {
   margin-top: 32px;
   display: flex;
   flex-direction: column;
@@ -1284,7 +1286,9 @@ figcaption > span:last-child {
   opacity: 0.75;
 }
 .backup-cmd-grid,
-.analysis-cmd-grid {
+.analysis-cmd-grid,
+.server-cmd-grid,
+.log-cmd-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
@@ -1294,7 +1298,9 @@ figcaption > span:last-child {
   width: 100%;
 }
 .backup-cmd-item,
-.analysis-cmd-item {
+.analysis-cmd-item,
+.server-cmd-item,
+.log-cmd-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1304,7 +1310,9 @@ figcaption > span:last-child {
   border-bottom: none;
 }
 .backup-cmd-item code,
-.analysis-cmd-item code {
+.analysis-cmd-item code,
+.server-cmd-item code,
+.log-cmd-item code {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--color-ink);
@@ -1314,10 +1322,56 @@ figcaption > span:last-child {
   white-space: nowrap;
 }
 .backup-cmd-item span,
-.analysis-cmd-item span {
+.analysis-cmd-item span,
+.server-cmd-item span,
+.log-cmd-item span {
   color: var(--color-muted);
   font-size: 12px;
   text-align: left;
+}
+
+/* Server & Webhook 架构与流向卡片 */
+.server-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+.flow-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.flow-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.flow-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.flow-card-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-muted);
+  background: var(--color-paper);
+  padding: 2px 7px;
+  border: 1px solid var(--color-rule);
+}
+.flow-card-desc {
+  font-size: 12px;
+  color: var(--color-muted);
+  line-height: 1.55;
+  margin: 0;
 }
 
 /* Bark 移动端推送卡片预览 (Title & Body) */
