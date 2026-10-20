@@ -64,6 +64,7 @@ type ConsolePage struct {
 	Detail                                        *LogDetailView
 	Auth                                          bool
 	Error                                         string
+	Blocked                                       bool
 }
 
 type LogDetailView struct {
@@ -140,8 +141,9 @@ func modeLabel(s string) string {
 	}
 }
 
-func RenderLoginPage(errMsg string) string {
-	return renderConsole(ConsolePage{Title: "安全登录", Screen: "login", Error: errMsg})
+func RenderLoginPage(errMsg string, blocked ...bool) string {
+	isBlocked := len(blocked) > 0 && blocked[0]
+	return renderConsole(ConsolePage{Title: "安全登录", Screen: "login", Error: errMsg, Blocked: isBlocked})
 }
 func RenderLogsPage(items []LogItemView, activeProjects []string) string {
 	p := ConsolePage{Title: "部署执行日志", Screen: "logs", Active: "logs", Auth: true, Logs: items, Total: len(items), Page: 1, Pages: 1}

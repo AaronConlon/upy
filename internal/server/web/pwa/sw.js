@@ -1,11 +1,13 @@
 // 只缓存公开白名单。认证页、项目、日志、API 与下载不进入 Cache Storage。
 const CACHE = "__UPY_CACHE__";
 const PUBLIC = [
+  "/logo.webp",
   "/pwa/offline.html",
   "/pwa/icon.svg",
   "/pwa/icon-192.png",
   "/pwa/icon-512.png",
   "/pwa/apple-touch-icon.png",
+  "/pwa/logo.webp",
 ];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PUBLIC)));

@@ -21,10 +21,36 @@ func (s *Server) registerPWARoutes(mux *http.ServeMux) {
 		w.Header().Set("Service-Worker-Allowed", "/")
 		fmt.Fprint(w, strings.ReplaceAll(string(data), "__UPY_CACHE__", pwaCacheName()))
 	})
-	for name, contentType := range map[string]string{"offline.html": "text/html; charset=utf-8", "icon.svg": "image/svg+xml", "icon-192.png": "image/png", "icon-512.png": "image/png", "apple-touch-icon.png": "image/png"} {
+	mux.HandleFunc("GET /logo.webp", func(w http.ResponseWriter, r *http.Request) {
+		serveConsoleAsset(w, r, "logo.webp", "image/webp")
+	})
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		serveConsoleAsset(w, r, "logo.webp", "image/webp")
+	})
+	for name, contentType := range map[string]string{
+		"offline.html":         "text/html; charset=utf-8",
+		"icon.svg":             "image/svg+xml",
+		"icon-192.png":         "image/png",
+		"icon-512.png":         "image/png",
+		"apple-touch-icon.png": "image/png",
+		"logo.webp":            "image/webp",
+	} {
 		mux.HandleFunc("GET /pwa/"+name, func(w http.ResponseWriter, r *http.Request) { servePWAAsset(w, r, name, contentType) })
 	}
 }
+
+func serveConsoleAsset(w http.ResponseWriter, r *http.Request, name, contentType string) {
+	data, err := consoleAssets.ReadFile("web/" + name)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Write(data)
+}
+
 func servePWAAsset(w http.ResponseWriter, r *http.Request, name, contentType string) {
 	data, err := consoleAssets.ReadFile("web/pwa/" + name)
 	if err != nil {
@@ -39,11 +65,11 @@ func servePWAAsset(w http.ResponseWriter, r *http.Request, name, contentType str
 func pwaCacheName() string {
 	hash := sha256.New()
 	hash.Write([]byte(version.String()))
-	for _, name := range []string{"console.html", "styles.css", "tokens.css", "app.js"} {
+	for _, name := range []string{"console.html", "styles.css", "tokens.css", "app.js", "logo.webp"} {
 		data, _ := consoleAssets.ReadFile("web/" + name)
 		hash.Write(data)
 	}
-	for _, name := range []string{"sw.js", "offline.html", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"} {
+	for _, name := range []string{"sw.js", "offline.html", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.webp"} {
 		data, _ := consoleAssets.ReadFile("web/pwa/" + name)
 		hash.Write(data)
 	}

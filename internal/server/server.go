@@ -25,8 +25,9 @@ type Server struct {
 	startedAt  time.Time
 	serverOut  io.Writer
 	totpMgr    *TOTPManager
-	sessions   *SessionStore
-	totpErr    error
+	sessions     *SessionStore
+	totpErr      error
+	loginLimiter *LoginLimiter
 }
 
 func NewServer(cfg config.ServerConfig, serverOut io.Writer) *Server {
@@ -38,16 +39,18 @@ func NewServer(cfg config.ServerConfig, serverOut io.Writer) *Server {
 
 	totpMgr, totpErr := NewTOTPManager("", cfg.TOTPSecret)
 	sessions := NewSessionStore()
+	loginLimiter := NewLoginLimiter(10, time.Minute)
 
 	s := &Server{
-		cfg:       cfg,
-		taskMgr:   taskMgr,
-		worker:    worker,
-		startedAt: time.Now(),
-		serverOut: serverOut,
-		totpMgr:   totpMgr,
-		totpErr:   totpErr,
-		sessions:  sessions,
+		cfg:          cfg,
+		taskMgr:      taskMgr,
+		worker:       worker,
+		startedAt:    time.Now(),
+		serverOut:    serverOut,
+		totpMgr:      totpMgr,
+		totpErr:      totpErr,
+		sessions:     sessions,
+		loginLimiter: loginLimiter,
 	}
 	return s
 }
@@ -63,6 +66,13 @@ func (s *Server) SetTOTPManager(tm *TOTPManager) {
 	defer s.mu.Unlock()
 	s.totpMgr = tm
 	s.totpErr = nil
+}
+
+// SetLoginLimiter 允许在测试中注入自定义的 LoginLimiter
+func (s *Server) SetLoginLimiter(limiter *LoginLimiter) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.loginLimiter = limiter
 }
 
 // Start 启动 HTTP 服务 (阻塞直到收到 Shutdown 或错误)

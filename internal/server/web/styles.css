@@ -5,13 +5,19 @@
 html,
 body {
   margin: 0;
-  overflow-x: clip;
+  height: 100%;
+  overflow: hidden;
 }
 body {
   background: var(--color-board);
   color: var(--color-ink);
   font: 14px/1.5 var(--font-body);
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 a {
   color: inherit;
@@ -88,6 +94,20 @@ button:disabled {
   font: 600 29px var(--font-display);
   letter-spacing: -1.8px;
   display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--color-ink);
+}
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.brand-text {
+  display: inline-flex;
   align-items: baseline;
   gap: 3px;
 }
@@ -539,63 +559,59 @@ button:disabled {
   margin-left: var(--space-sm);
   font-size: 9px;
 }
-.log-output {
-  border-top: 1px solid var(--color-rule);
-  border-bottom: 1px solid var(--color-rule);
-  padding: var(--space-md) 0;
-  background: var(--color-surface);
-  font: 10px/1.7 var(--font-mono);
-  position: relative;
-}
-.log-result {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-  padding: var(--space-md) 0;
-  color: var(--color-success);
-  font-size: 10px;
-}
-.log-result .icon {
-  width: 15px;
-  height: 15px;
-}
-.log-result .mono {
-  margin-left: auto;
-  font-size: 9px;
-}
-
 .shell {
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100svh;
+  width: 402px;
+  height: 874px;
+  max-height: calc(100dvh - 32px);
+  max-width: 100%;
+  margin: auto;
   background: var(--color-paper);
-  border-inline: 1px solid var(--color-rule);
+  border: 1px solid var(--color-rule);
+  border-radius: 44px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 2px 10px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
 .shell main {
   padding: 24px 20px 32px;
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
-.shell:has(.bottom) main {
-  padding-bottom: 100px;
+.shell main::-webkit-scrollbar {
+  width: 5px;
+}
+.shell main::-webkit-scrollbar-thumb {
+  background: var(--color-rule);
+  border-radius: 3px;
+}
+.shell main::-webkit-scrollbar-track {
+  background: transparent;
 }
 .bottom {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 438px;
-  height: calc(68px + env(safe-area-inset-bottom));
+  height: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  z-index: 10;
+  border-top: 1px solid var(--color-rule);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex-shrink: 0;
+  width: 100%;
+  background: var(--color-paper);
+  z-index: 5;
 }
 .apphead {
   height: 65px;
+  width: 100%;
+  flex-shrink: 0;
+  background: var(--color-paper);
+  z-index: 5;
 }
 .logout {
   margin-left: auto;
@@ -870,8 +886,9 @@ select:focus-visible {
   gap: 4px;
 }
 .log-output {
-  margin: 0;
-  max-height: 60svh;
+  margin: 0 36px 0 0;
+  width: calc(100% - 36px);
+  max-height: 55svh;
   min-height: 180px;
   overflow: auto;
   white-space: pre-wrap;
@@ -881,9 +898,25 @@ select:focus-visible {
   line-height: 1.8;
   padding: 16px 12px;
   counter-reset: line;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: 4px;
+  position: relative;
 }
 .log-result {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
   justify-content: space-between;
+  padding: var(--space-md) 0;
+  color: var(--color-success);
+  font-size: 10px;
+  margin-right: 36px;
+  width: calc(100% - 36px);
+}
+.log-result .icon {
+  width: 15px;
+  height: 15px;
 }
 .log-result .mono {
   margin-left: 0;
@@ -979,11 +1012,18 @@ select:disabled {
   color: var(--color-accent) !important;
 }
 @media (max-width: 440px) {
-  .shell {
-    border-inline: 0;
+  body {
+    padding: 0;
+    background: var(--color-paper);
   }
-  .bottom {
-    max-width: 440px;
+  .shell {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
   }
 }
 @media (max-width: 360px) {

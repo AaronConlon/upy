@@ -113,6 +113,12 @@ func TestWebRoutesFlow(t *testing.T) {
 	if rrRoot.Code != http.StatusOK || !strings.Contains(rrRoot.Body.String(), "验证身份") {
 		t.Fatalf("首页应展示登录验证表单")
 	}
+	if !strings.Contains(rrRoot.Body.String(), "/logo.webp") {
+		t.Fatalf("首页应引用 /logo.webp")
+	}
+	if !strings.Contains(rrRoot.Body.String(), "brand-logo") {
+		t.Fatalf("首页应包含 brand-logo 图片")
+	}
 
 	// 4. 输入错误验证码登录 -> 401
 	formWrong := url.Values{"code": {"999999"}}
@@ -217,5 +223,94 @@ func TestRenderAnsiToHTML(t *testing.T) {
 	xssGot := RenderAnsiToHTML(xssInput)
 	if strings.Contains(xssGot, "<script>") {
 		t.Fatalf("HTML 标签未被正确转义")
+	}
+}
+
+func TestLoginRateLimiting(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("UPY_CONFIG", filepath.Join(tmpDir, "config.yaml"))
+
+	totpPath := filepath.Join(tmpDir, "totp.json")
+	fixedSecret := "JBSWY3DPEHPK3PXP"
+	tm, err := NewTOTPManager(totpPath, fixedSecret)
+	if err != nil {
+		t.Fatalf("创建 TOTPManager 失败: %v", err)
+	}
+
+	srv := NewServer(config.ServerConfig{
+		Listen: "127.0.0.1:0",
+	}, nil)
+	srv.SetTOTPManager(tm)
+
+	mux := http.NewServeMux()
+	srv.registerRoutes(mux)
+
+	clientIP := "10.0.0.1"
+
+	// 连续 9 次错误尝试 -> 401
+	for i := 1; i <= 9; i++ {
+		form := url.Values{"code": {"111111"}}
+		req, _ := http.NewRequest("POST", "/", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("X-Forwarded-For", clientIP)
+		rr := httptest.NewRecorder()
+		mux.ServeHTTP(rr, req)
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("attempt %d should return 401, got %d", i, rr.Code)
+		}
+	}
+
+	// 第 10 次错误尝试 -> 达到上限，直接 403 Forbidden
+	form10 := url.Values{"code": {"111111"}}
+	req10, _ := http.NewRequest("POST", "/", strings.NewReader(form10.Encode()))
+	req10.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req10.Header.Set("X-Forwarded-For", clientIP)
+	rr10 := httptest.NewRecorder()
+	mux.ServeHTTP(rr10, req10)
+	if rr10.Code != http.StatusForbidden {
+		t.Fatalf("10th attempt should return 403, got %d", rr10.Code)
+	}
+	if !strings.Contains(rr10.Body.String(), "已禁止访问") {
+		t.Fatalf("expected blocked error message, got: %s", rr10.Body.String())
+	}
+
+	// 被封禁后，GET / 也直接返回 403 且禁用表单
+	reqGetBlocked, _ := http.NewRequest("GET", "/", nil)
+	reqGetBlocked.Header.Set("X-Forwarded-For", clientIP)
+	rrGetBlocked := httptest.NewRecorder()
+	mux.ServeHTTP(rrGetBlocked, reqGetBlocked)
+	if rrGetBlocked.Code != http.StatusForbidden {
+		t.Fatalf("GET / when blocked should return 403, got %d", rrGetBlocked.Code)
+	}
+	if !strings.Contains(rrGetBlocked.Body.String(), "disabled") {
+		t.Fatalf("form should be disabled when blocked")
+	}
+
+	// 被封禁后，即使输入正确验证码也直接 403 禁止访问
+	validCode, _ := generateTOTP(fixedSecret, time.Now())
+	formValid := url.Values{"code": {validCode}}
+	reqBlockedValid, _ := http.NewRequest("POST", "/", strings.NewReader(formValid.Encode()))
+	reqBlockedValid.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	reqBlockedValid.Header.Set("X-Forwarded-For", clientIP)
+	rrBlockedValid := httptest.NewRecorder()
+	mux.ServeHTTP(rrBlockedValid, reqBlockedValid)
+	if rrBlockedValid.Code != http.StatusForbidden {
+		t.Fatalf("blocked client should be rejected even with valid code, got %d", rrBlockedValid.Code)
+	}
+
+	// 模拟重启：新建 server 实例（内存状态重置）
+	srvRestarted := NewServer(config.ServerConfig{Listen: "127.0.0.1:0"}, nil)
+	srvRestarted.SetTOTPManager(tm)
+	muxRestarted := http.NewServeMux()
+	srvRestarted.registerRoutes(muxRestarted)
+
+	// 重启后解封，正确验证码登录成功 -> 302
+	reqAfterRestart, _ := http.NewRequest("POST", "/", strings.NewReader(formValid.Encode()))
+	reqAfterRestart.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	reqAfterRestart.Header.Set("X-Forwarded-For", clientIP)
+	rrAfterRestart := httptest.NewRecorder()
+	muxRestarted.ServeHTTP(rrAfterRestart, reqAfterRestart)
+	if rrAfterRestart.Code != http.StatusFound {
+		t.Fatalf("after restart, client should be unblocked and able to login, got %d", rrAfterRestart.Code)
 	}
 }

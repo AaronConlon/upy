@@ -7,7 +7,7 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <meta name="color-scheme" content="light" />
-    <link rel="icon" href="/pwa/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/logo.webp" type="image/webp" />
     <meta name="theme-color" content="#f8fafc" />
     <title>连接中断 — upy</title>
     <style>
@@ -25,12 +25,25 @@
           sans-serif;
       }
       .shell {
-        width: 100%;
-        max-width: 440px;
-        min-height: 100vh;
+        width: 402px;
+        max-width: 100%;
+        height: 874px;
+        max-height: 100dvh;
         margin: auto;
         background: #f8fafc;
-        border-inline: 1px solid #dadee3;
+        border: 1px solid #dadee3;
+        border-radius: 44px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      @media (max-width: 440px) {
+        .shell {
+          width: 100%;
+          height: 100dvh;
+          border: none;
+          border-radius: 0;
+        }
       }
       header {
         height: calc(65px + env(safe-area-inset-top));
@@ -91,7 +104,13 @@
   </head>
   <body>
     <div class="shell">
-      <header><strong>upy.</strong><small>SERVER CONSOLE</small></header>
+      <header>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="/logo.webp" alt="upy" width="28" height="28" style="object-fit:contain;border-radius:6px;flex-shrink:0;">
+          <strong>upy.</strong>
+        </div>
+        <small>SERVER CONSOLE</small>
+      </header>
       <main>
         <svg
           aria-hidden="true"

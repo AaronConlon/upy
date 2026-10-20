@@ -311,20 +311,44 @@ func (s *Server) handleRootGet(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	ip := ClientIP(r)
+	if s.loginLimiter != nil && s.loginLimiter.IsBlocked(ip) {
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprint(w, RenderLoginPage("尝试次数过多，已禁止访问", true))
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, RenderLoginPage(""))
 }
 
 func (s *Server) handleRootPost(w http.ResponseWriter, r *http.Request) {
+	ip := ClientIP(r)
+	if s.loginLimiter != nil && s.loginLimiter.IsBlocked(ip) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprint(w, RenderLoginPage("尝试次数过多，已禁止访问", true))
+		return
+	}
+
 	_ = r.ParseForm()
 	code := strings.TrimSpace(r.FormValue("code"))
 
 	if s.totpMgr == nil || !s.totpMgr.Validate(code) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if s.loginLimiter != nil && !s.loginLimiter.RecordFailure(ip) {
+			w.WriteHeader(http.StatusForbidden)
+			fmt.Fprint(w, RenderLoginPage("尝试次数过多，已禁止访问", true))
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, RenderLoginPage("动态验证码错误或已失效，请重新输入"))
 		return
+	}
+
+	if s.loginLimiter != nil {
+		s.loginLimiter.RecordSuccess(ip)
 	}
 
 	token := s.sessions.CreateSession()

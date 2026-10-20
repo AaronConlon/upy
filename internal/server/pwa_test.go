@@ -19,7 +19,18 @@ func TestPWAResourcesAndRemovedEnrollment(t *testing.T) {
 			}
 		}
 	}
-	resources := map[string]string{"/manifest.webmanifest": "application/manifest+json", "/sw.js": "text/javascript", "/pwa/offline.html": "text/html", "/pwa/icon.svg": "image/svg+xml", "/pwa/icon-192.png": "image/png", "/pwa/icon-512.png": "image/png", "/pwa/apple-touch-icon.png": "image/png"}
+	resources := map[string]string{
+		"/manifest.webmanifest":    "application/manifest+json",
+		"/sw.js":                   "text/javascript",
+		"/pwa/offline.html":        "text/html",
+		"/pwa/icon.svg":            "image/svg+xml",
+		"/pwa/icon-192.png":        "image/png",
+		"/pwa/icon-512.png":        "image/png",
+		"/pwa/apple-touch-icon.png": "image/png",
+		"/pwa/logo.webp":           "image/webp",
+		"/logo.webp":               "image/webp",
+		"/favicon.ico":             "image/webp",
+	}
 	for path, typ := range resources {
 		r := consoleRequest(mux, path, nil)
 		if r.Code != 200 || !strings.HasPrefix(r.Header().Get("Content-Type"), typ) {
