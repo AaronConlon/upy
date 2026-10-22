@@ -70,6 +70,7 @@ Paired with intelligent **disk space pruning and active version protection** (`u
 - **Host-Wide Project & Disk Analysis**: `upy analysis` catalogs all managed projects on the machine, plots proportional horizontal benchmark bars using the largest project as the 100% baseline, spotlights the most recent deployment, and supports `--detail` breakdowns and `--json` exports.
 - **Cross-Project Global Dispatching**: Run `upy` in any directory to interactively list and deploy across all managed projects on the host.
 - **Convention Backups**: Zero-config project discovery (`backup.sh`), exclusive concurrency locks, automatic retention rotation, and multi-project batch runs.
+- **Pure-Go Native Decryption & Encrypted Distribution**: AES-256-GCM + PBKDF2 decryption built with Go standard library. Securely store encrypted bundles in public organization Releases (benefiting from ultra-fast mirror downloads without GitHub Tokens); configure `crypto.password` in server `deploy.yaml` for automatic authentication verification and transparent in-memory extraction.
 - **Multi-Recipient Bark Push Alerts & Project Webhooks**: Instant mobile alerts powered by [Bark](https://bark.day.app/) and project-isolated Webhooks (with HMAC-SHA256 signature verification for WeChat Work, Feishu/Lark, DingTalk, and custom endpoints). Features dual-level configuration, team fan-out, smart deduplication, and intelligent multi-scale duration formatting (seconds, minutes, hours).
 
 ---
@@ -194,6 +195,10 @@ service:
   user: my-app
   group: my-app
   unit: upy-my-app.service
+
+# Optional: bundle decryption password (if encrypted bundles are uploaded to public releases)
+crypto:
+  password: "your-strong-password"
 ```
 
 > **Nginx Tip for SPA Sites**:  
@@ -232,12 +237,16 @@ upy
 upy deploy my-app
 ```
 
-#### Offline Local Bundle Deployment
+#### Offline Local Bundle Deployment & Encryption
 
-If the server cannot access GitHub, deploy locally uploaded `.zip` archives directly:
+If the server cannot access GitHub, deploy locally uploaded `.zip` archives directly, or encrypt bundles before distribution:
 
 ```bash
+# Directly extract and deploy a local bundle archive
 upy bundle ./bundle.zip
+
+# Encrypt local bundle.zip to bundle.zip.enc (AES-256-GCM pure Go encryption)
+upy encrypt ./bundle.zip ./bundle.zip.enc --password "your-strong-password"
 ```
 
 ---
@@ -894,6 +903,7 @@ upy version
 | `upy server [start\|stop\|restart\|status\|auth]` | Start webhook server daemon and web console (`-d` for background mode) |
 | `upy log [server\|upy\|<project>]` | View logs interactively or directly, with `-f` live stream and `-n` tail rows |
 | `upy bundle <file>` | Deploy a local `.zip` bundle directly (offline mode, no GitHub connection) |
+| `upy encrypt <file> [output]` | Encrypt bundle to secure asset with AES-256-GCM |
 | `upy init [owner] <token>` | Initialize or configure GitHub personal/organization access tokens |
 | `upy update [version]` | Self-update to latest release or switch to a target version |
 | `upy version` | Print current version and check for newer releases |

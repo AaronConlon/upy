@@ -12,6 +12,7 @@ import (
 	"github.com/AaronConlon/upy/internal/bundle"
 	"github.com/AaronConlon/upy/internal/cleaner"
 	"github.com/AaronConlon/upy/internal/config"
+	"github.com/AaronConlon/upy/internal/crypto"
 	"github.com/AaronConlon/upy/internal/deployer"
 	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
@@ -88,8 +89,34 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		}
 	}()
 
+	// 检查 bundle 是否加密并根据 deploy.yaml 配置解密
+	targetZip := zipPath
+	projCfg, _ := config.ReadProjectConfig(root)
+	cryptoPassword := projCfg.CryptoPassword()
+
+	isEnc, err := crypto.IsEncryptedFile(zipPath)
+	if err != nil {
+		return nil, fmt.Errorf(i18n.T("检查 bundle 文件失败: %w"), err)
+	}
+
+	if cryptoPassword != "" {
+		if !isEnc {
+			return nil, i18n.Error("项目配置了解密密码 (crypto.password)，但 bundle 文件未加密")
+		}
+		log.Step(i18n.T("正在解密 bundle..."))
+		decryptedZip := filepath.Join(releasesDir, fmt.Sprintf(".decrypted-%d.zip", time.Now().UnixNano()))
+		defer os.Remove(decryptedZip)
+		if err := crypto.DecryptFile(zipPath, decryptedZip, cryptoPassword); err != nil {
+			return nil, err
+		}
+		log.Ok(i18n.T("bundle 解密完成"))
+		targetZip = decryptedZip
+	} else if isEnc {
+		return nil, i18n.Error("检测到 bundle 已加密，但 deploy.yaml 中未配置解密密码 (crypto.password)")
+	}
+
 	log.Step(i18n.T("正在解压 bundle..."))
-	if err := bundle.SafeExtract(zipPath, tmp); err != nil {
+	if err := bundle.SafeExtract(targetZip, tmp); err != nil {
 		return nil, err
 	}
 	log.Ok(i18n.T("bundle 解压完成"))

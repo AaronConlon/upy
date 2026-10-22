@@ -68,6 +68,7 @@ Go 单二进制 Web 部署与运维工具（~8.5MB，零外部依赖，极低内
 - **磁盘分析与安全清理**：`upy clean` 支持空间分析、Bundle 缓存清理与旧版本安全裁剪，双版本保护（当前活跃与最近回滚版本）与 live unit 引用保护。
 - **全机项目与磁盘分析**：`upy analysis` 实时盘点全机部署项目，以最大占用项目为 100% 基准绘制直观条形图，置顶聚焦最近一次部署动态，支持 `--detail` 深度展开与 `--json` 数据导出。
 - **约定式数据备份**：零配置项目自动探测（`backup.sh`）、跨进程互斥锁防护、智能多版本轮转与全量一键批处理。
+- **纯 Go 原生解密与加密分发**：支持 AES-256-GCM + PBKDF2 纯 Go 原生解密。可在 CI/CD 中通过 `upy encrypt` 加密 bundle 后放心地存放在组织公开 Release（借力国内高速镜像免 Token 跑满下载带宽）；服务器端在 `deploy.yaml` 中声明 `crypto.password` 即可自动完成防篡改校验与解密，旧项目 0 影响。
 - **本地项目快速调度**：在任意路径直接运行 `upy`，即可列出本机已纳管的项目并交互式选择部署。
 - **多接收人 Bark 移动端推送与项目专属 Webhook**：部署与备份结果即时推送至 iOS 设备与团队业务系统。底层基于 [Bark](https://bark.day.app/) 移动端即时推送与项目专属 Webhook（自带 HMAC-SHA256 签名校验，支持企微、飞书、钉钉机器人）。支持全局/项目双层配置、多人广播、智能去重与跨量级智能耗时展示（秒、分、时）。
 
@@ -195,6 +196,10 @@ service:
   user: my-app
   group: my-app
   unit: upy-my-app.service
+
+# 可选: bundle 解密配置 (若在公开 Release 存放了加密 bundle，配置解密密码即可自动纯 Go 原生解密)
+crypto:
+  password: "your-strong-password"
 ```
 
 > **Nginx 配置提示（SPA 静态站点）**：  
@@ -233,12 +238,16 @@ upy
 upy deploy my-app
 ```
 
-#### 本地离线包部署
+#### 本地离线包部署与加密
 
-如果服务器无法连通外网 GitHub，也可以直接部署本地传入的 zip 压缩包：
+如果服务器无法连通外网 GitHub，也可以直接部署本地传入的 zip 压缩包；若需要加密资产，也可以使用 `upy encrypt` 生成加密包：
 
 ```bash
+# 直接解压并部署本地的 bundle 产物
 upy bundle ./bundle.zip
+
+# 将本地 bundle.zip 加密为 bundle.zip.enc (AES-256-GCM 纯 Go 强加密)
+upy encrypt ./bundle.zip ./bundle.zip.enc --password "your-strong-password"
 ```
 
 ---
@@ -893,6 +902,7 @@ upy version
 | `upy server [start\|stop\|restart\|status\|auth]` | 启动 Webhook 服务与 Web 控制台，支持 `-d` 静默守护进程 |
 | `upy log [server\|upy\|<项目>]` | 交互式或指定查看运行日志，支持 `-f` 实时追踪与 `-n` 行数截取 |
 | `upy bundle <文件>` | 直接部署本地 zip 压缩包（离线模式，不访问 GitHub） |
+| `upy encrypt <文件> [目标]` | 加密本地 bundle 为强加密资产 (AES-256-GCM 纯 Go 实现) |
 | `upy init [owner] <token>` | 初始化或添加 GitHub 访问令牌（支持组织/个人专属） |
 | `upy update [版本]` | 自更新到最新版本或切换至指定版本 |
 | `upy version` | 打印当前版本并检查是否有新版本可用 |

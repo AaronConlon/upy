@@ -213,7 +213,7 @@
             <h3>Atomic switching from Release to production.</h3>
             <p>
               Interactively pick a GitHub Release asset in the terminal, or deploy latest with a single command.
-              Supports SHA-256 integrity verification, resumable downloads, and offline local bundles.
+              Supports SHA-256 integrity verification, resumable downloads, pure-Go AES-256-GCM bundle decryption (enabling fast, public release distributions), and offline local bundles.
             </p>
             <a
               href="https://github.com/AaronConlon/upy#how-to-deploy"
@@ -226,8 +226,11 @@
             <pre><code><span class="comment"># Interactively pick a Release asset</span>
 upy release
 
-<span class="comment"># Deploy latest official release</span>
+<span class="comment"># Deploy latest official release (auto-decrypted with crypto.password)</span>
 upy release latest
+
+<span class="comment"># Encrypt bundle to secure asset</span>
+upy encrypt ./bundle.zip --password "secret"
 
 <span class="comment"># Deploy local offline bundle</span>
 upy bundle ./bundle.zip</code></pre>

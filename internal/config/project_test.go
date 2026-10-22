@@ -168,3 +168,30 @@ webhook:
 		t.Fatalf("nilCfg.InboundSecret() 应该为空")
 	}
 }
+
+func TestReadProjectConfigCrypto(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "deploy.yaml")
+	raw := []byte(`name: my-app
+release:
+  provider: github
+  repository: acme/my-app
+crypto:
+  password: "  my-secret-pass-999  "
+`)
+	if err := os.WriteFile(path, raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := ReadProjectConfig(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.CryptoPassword() != "my-secret-pass-999" {
+		t.Fatalf("CryptoPassword() 未按预期去除首尾空格: 期望 %q, 得到 %q", "my-secret-pass-999", cfg.CryptoPassword())
+	}
+
+	var nilCfg *ProjectConfig
+	if nilCfg.CryptoPassword() != "" {
+		t.Fatalf("nilCfg.CryptoPassword() 应该为空")
+	}
+}

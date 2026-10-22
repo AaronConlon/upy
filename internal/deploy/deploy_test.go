@@ -4,10 +4,12 @@ import (
 	"archive/zip"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/AaronConlon/upy/internal/crypto"
 	"github.com/AaronConlon/upy/internal/projectlock"
 )
 
@@ -348,5 +350,97 @@ bundles:
 	}
 	if _, err := os.Stat(filepath.Join(bundlesDir, "b3.zip")); err != nil {
 		t.Errorf("期望 b3.zip 被保留")
+	}
+}
+
+func TestDeployEncryptedBundle(t *testing.T) {
+	root := t.TempDir()
+	password := "SecretKey-2026-SuperSecure"
+
+	// 1. 创建项目的 deploy.yaml 配置密码
+	deployYaml := `name: crypt-app
+release:
+  provider: github
+  repository: owner/crypt-app
+crypto:
+  password: ` + password + `
+`
+	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte(deployYaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// 2. 构造一个正常的 zip bundle
+	plainBundlePath := filepath.Join(t.TempDir(), "plain-bundle.zip")
+	f, err := os.Create(plainBundlePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(f)
+	w, _ := zw.Create("upy.yaml")
+	_, _ = w.Write([]byte("name: crypt-app\nversion: 1.0.0\ntype: static\n"))
+	wDist, _ := zw.Create("dist/index.html")
+	_, _ = wDist.Write([]byte("<h1>Encrypted Deploy Works!</h1>"))
+	_ = zw.Close()
+	_ = f.Close()
+
+	// 3. 加密 bundle
+	encBundlePath := filepath.Join(t.TempDir(), "bundle.zip.enc")
+	if err := crypto.EncryptFile(plainBundlePath, encBundlePath, password); err != nil {
+		t.Fatalf("加密 bundle 失败: %v", err)
+	}
+
+	// 测试 1: 正常部署加密 bundle
+	res, err := DeployBundle(encBundlePath, Options{Root: root, Force: true})
+	if err != nil {
+		t.Fatalf("使用正确密码部署加密 bundle 失败: %v", err)
+	}
+	if res.Version != "1.0.0" {
+		t.Fatalf("部署版本不匹配: %s", res.Version)
+	}
+
+	// 检查部署产物中的 dist/index.html 是否正常解密并解压
+	installedHTML := filepath.Join(root, "releases", "1.0.0", "dist", "index.html")
+	data, err := os.ReadFile(installedHTML)
+	if err != nil || !strings.Contains(string(data), "Encrypted Deploy Works!") {
+		t.Fatalf("安装目录中文件不正确: %v, 内容: %s", err, string(data))
+	}
+
+	// 测试 2: 密码错误时应当拒绝部署
+	wrongPassYaml := `name: crypt-app
+release:
+  provider: github
+  repository: owner/crypt-app
+crypto:
+  password: wrong-password-xyz
+`
+	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte(wrongPassYaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = DeployBundle(encBundlePath, Options{Root: root, Force: true})
+	if err == nil {
+		t.Fatal("使用错误密码应当部署失败，但成功了")
+	}
+
+	// 测试 3: 未配置密码时遇到加密 bundle 应当明确报错拦截
+	noPassYaml := `name: crypt-app
+release:
+  provider: github
+  repository: owner/crypt-app
+`
+	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte(noPassYaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = DeployBundle(encBundlePath, Options{Root: root, Force: true})
+	if err == nil || !strings.Contains(err.Error(), "crypto.password") {
+		t.Fatalf("未配置密码时应提示配置 crypto.password: %v", err)
+	}
+
+	// 测试 4: 配置了密码但上传的是未加密 bundle 应当明确报错拦截
+	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte(deployYaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err = DeployBundle(plainBundlePath, Options{Root: root, Force: true})
+	if err == nil || (!strings.Contains(err.Error(), "未加密") && !strings.Contains(err.Error(), "not encrypted")) {
+		t.Fatalf("配置了密码但 bundle 未加密时应报错拦截: %v", err)
 	}
 }

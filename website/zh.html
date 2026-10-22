@@ -213,7 +213,7 @@
             <h3>从 Release 到生产，原子秒级切换。</h3>
             <p>
               在终端交互选择 GitHub Releases 资产包，或一行命令直接部署最新版本。
-              支持断点续传与 SHA-256 完整性校验；离线环境下支持本地 bundle 文件。
+              支持断点续传、SHA-256 完整性校验与纯 Go AES-256-GCM 强解密（可放心地将加密资产存放在组织公开 Release 借力国内镜像免 Token 极速跑满带宽）；离线环境下支持本地 bundle 文件。
             </p>
             <a
               href="https://github.com/AaronConlon/upy#如何部署"
@@ -226,8 +226,11 @@
             <pre><code><span class="comment"># 交互选择 Release 资产</span>
 upy release
 
-<span class="comment"># 部署最新正式版</span>
+<span class="comment"># 部署最新正式版 (配有 crypto.password 时自动解密)</span>
 upy release latest
+
+<span class="comment"># 加密本地 bundle 为强加密资产</span>
+upy encrypt ./bundle.zip --password "secret"
 
 <span class="comment"># 部署本地 bundle 文件</span>
 upy bundle ./bundle.zip</code></pre>

@@ -31,6 +31,7 @@ var completionCommands = []completionCommand{
 	{Name: "init", Description: "初始化 GitHub token"},
 	{Name: "server", Description: "启动 Webhook 服务与 Web 控制台"},
 	{Name: "log", Description: "查看自身与 server 运行日志"},
+	{Name: "encrypt", Description: "加密 bundle 为加密资产"},
 }
 
 type completionCommand struct {

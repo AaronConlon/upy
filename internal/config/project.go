@@ -65,6 +65,11 @@ type ProjectInboundWebhook struct {
 	Secret string `yaml:"secret,omitempty"` // 用于 HMAC-SHA256 签名校验或项目专属 Token
 }
 
+// ProjectCrypto 服务器端 bundle 加密/解密配置 (可选)
+type ProjectCrypto struct {
+	Password string `yaml:"password,omitempty"` // 用于解密加密 bundle (纯 Go 原生解密)
+}
+
 // ProjectConfig 服务器端项目配置
 type ProjectConfig struct {
 	Name     string                 `yaml:"name"`
@@ -76,6 +81,15 @@ type ProjectConfig struct {
 	Backup   *ProjectBackup         `yaml:"backup"`  // 可选: 备份脚本与轮转配置
 	Notify   *ProjectNotify         `yaml:"notify"`  // 可选: 项目级部署/备份通知配置
 	Webhook  *ProjectInboundWebhook `yaml:"webhook,omitempty"`
+	Crypto   *ProjectCrypto         `yaml:"crypto,omitempty"` // 可选: bundle 解密配置
+}
+
+// CryptoPassword 返回当前项目配置的解密密码
+func (c *ProjectConfig) CryptoPassword() string {
+	if c == nil || c.Crypto == nil {
+		return ""
+	}
+	return strings.TrimSpace(c.Crypto.Password)
 }
 
 // InboundSecret 返回当前项目的入站 Webhook 密钥

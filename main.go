@@ -33,6 +33,7 @@ func printHelp() {
 		i18n.T("  backup [项目名称]              执行项目约定备份 (执行 backup.sh 并管理 backups/ 归档)"),
 		i18n.T("  analysis [项目名称]            分析客户端项目、磁盘空间占用与最近一次部署"),
 		i18n.T("  bundle <文件>                  直接部署本地 bundle.zip (不访问 GitHub)"),
+		i18n.T("  encrypt <文件> [目标]          加密 bundle 为强加密资产 (AES-256-GCM)"),
 		i18n.T("  version                        查看当前版本并检查更新"),
 		i18n.T("  update [版本]                  自更新到最新版本，或指定版本 (如: upy update v0.1.0)"),
 		i18n.T("  init [owner] <token>           初始化或添加 GitHub 访问 token (支持按组织/用户归属)"),
@@ -60,6 +61,7 @@ func printHelp() {
 		i18n.T("  --list                         backup 专用: 查看历史备份归档列表与体积"),
 		i18n.T("  --prune <数量>                 backup 专用: 轮转保留最近 N 份备份"),
 		i18n.T("  --script <路径>                backup 专用: 指定自定义备份脚本路径"),
+		i18n.T("  --password <密码>              encrypt 专用: 指定加密密码 (缺省时交互输入)"),
 		i18n.T("  -y, --yes                      clean / backup 专用: 跳过交互确认直接执行"),
 		i18n.T("  -V, --version                  打印版本后退出"),
 		i18n.T("  -h, --help                     打印帮助后退出"),
@@ -91,6 +93,7 @@ func printHelp() {
 		i18n.T("  upy analysis codia            查看指定项目的磁盘占用与子模块分布"),
 		i18n.T("  upy analysis --json           以 JSON 格式输出分析报表"),
 		i18n.T("  upy bundle ./bundle.zip       部署本地 bundle"),
+		i18n.T("  upy encrypt bundle.zip        加密本地 bundle 为 bundle.zip.enc"),
 		i18n.T("  upy init ghp_xxx              设置默认全局 GitHub token"),
 		i18n.T("  upy init WeiaiHealth ghp_xxx  为指定组织设置专属 GitHub token"),
 		i18n.T("  upy update                    自更新到最新版本"),
@@ -126,6 +129,7 @@ type parsedArgs struct {
 	foreground  bool
 	listen      string
 	token       string
+	password    string
 	follow      bool
 	tail        int
 	clear       bool
@@ -138,7 +142,7 @@ func parseArgs(argv []string) parsedArgs {
 	var p parsedArgs
 	known := map[string]bool{
 		"release": true, "deploy": true, "clean": true, "backup": true,
-		"analysis": true, "bundle": true, "version": true, "update": true, "init": true,
+		"analysis": true, "bundle": true, "encrypt": true, "version": true, "update": true, "init": true,
 		"server": true, "log": true, "logs": true,
 	}
 	for i := 0; i < len(argv); i++ {
@@ -189,6 +193,13 @@ func parseArgs(argv []string) parsedArgs {
 			}
 		case strings.HasPrefix(a, "--token="):
 			p.token = strings.TrimPrefix(a, "--token=")
+		case a == "--password":
+			if i+1 < len(argv) {
+				i++
+				p.password = argv[i]
+			}
+		case strings.HasPrefix(a, "--password="):
+			p.password = strings.TrimPrefix(a, "--password=")
 		case a == "--force":
 			p.force = true
 		case a == "--detail":
@@ -381,6 +392,20 @@ func main() {
 			file = p.positional[0]
 		}
 		err = commands.Bundle(commands.BundleArgs{File: file, Force: p.force, Root: root, StartedAt: cmdStartedAt})
+	case "encrypt":
+		input := ""
+		output := ""
+		if len(p.positional) > 0 {
+			input = p.positional[0]
+		}
+		if len(p.positional) > 1 {
+			output = p.positional[1]
+		}
+		err = commands.Encrypt(commands.EncryptArgs{
+			Input:    input,
+			Output:   output,
+			Password: p.password,
+		})
 	case "version":
 		err = commands.VersionCmd()
 	case "update":
