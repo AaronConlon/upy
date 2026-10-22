@@ -1,6 +1,6 @@
 # 配置契约
 
-依据：AaronConlon/upy v0.4.0，internal/config/{manifest,project,user}.go、internal/server 与 internal/deployer。升级后核对目标版本。
+依据：AaronConlon/upy v0.8.0，internal/config/{manifest,project,user}.go、internal/crypto、internal/server 与 internal/deployer。升级后核对目标版本。
 
 ## 服务器 <root>/deploy.yaml
 ```yaml
@@ -13,12 +13,18 @@ service: # 仅 system，预先创建用户/组，确认部署目录可读、数�
   user: example-app
   group: example-app
   unit: example-app.service
+# 可选: bundle 压缩包本地缓存保留数量 (默认最多保留 3 个，范围 0~100)
+bundles:
+  keep: 3
+# 可选: 纯 Go 原生 AES-256-GCM bundle 强解密 (若在公开 Release 发布了加密 bundle，配置解密密码)
+crypto:
+  password: "仅保存在服务器 deploy.yaml 中的解密密码"
 ```
-static/docker 删除 service。asset 必须与 Release 中文件名完全一致；多架构不能统一用模糊名字。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。
+static/docker 删除 service。asset 必须与 Release 中文件名完全一致；多架构不能统一用模糊名字。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。若配置了 `crypto.password`，upy 会自动在部署时对加密 bundle（UPYC 魔数格式）进行防篡改校验并解密；若上传了未加密 bundle 或密码错误，部署将安全拦截。
 
 私有仓库 token 保存在用户级 `~/.upy/config.yaml` 的 github.token / github.tokens，或使用 `DEPLOY_GITHUB_TOKEN` 环境变量；不要假定普通 GITHUB_TOKEN 是 upy 的读取入口。只按目标仓库授予读取 Release 所需权限。CI 发布使用 github.token 是另一条认证链，不能拿它当服务器长期 token。不要打印、提交或打包 token。
 
-## CI 入站 Webhook（upy v0.4.0）
+## CI 入站 Webhook（upy v0.4.0+）
 
 `upy server` 提供给 CI 触发部署的接口。它与项目配置中的 `notify.webhook`（部署结果的出站通知）是两条相反方向的链路，不要混用。
 

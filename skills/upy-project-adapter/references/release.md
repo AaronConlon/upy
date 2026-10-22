@@ -16,6 +16,9 @@ set -euo pipefail
 VERSION="${RELEASE_TAG#v}"
 # 项目构建后，将 JSON manifest 写入 staging/upy.yaml
 python3 scripts/upy/pack_bundle.py --stage .upy-stage --output "artifacts/bundle-linux-${GOARCH}.zip"
+
+# 可选：若项目要求加密分发（例如存放在组织公开 Release 供国内高速镜像免 Token 下载），可调用 upy 加密
+# upy encrypt "artifacts/bundle-linux-${GOARCH}.zip" "artifacts/bundle-linux-${GOARCH}.zip.enc" --password "$ENCRYPT_KEY"
 ```
 
 发布步骤（release job 下载产物到 artifacts 后）：
@@ -25,7 +28,7 @@ python3 scripts/upy/pack_bundle.py --stage .upy-stage --output "artifacts/bundle
     GH_TOKEN: ${{ github.token }}
     GH_REPO: ${{ github.repository }}
     RELEASE_TAG: ${{ github.ref_name }}
-  run: gh release create "$RELEASE_TAG" artifacts/*.zip artifacts/*.sha256 --verify-tag --generate-notes
+  run: gh release create "$RELEASE_TAG" artifacts/*.zip* artifacts/*.sha256 --verify-tag --generate-notes
 ```
 checkout 必须提供 git tag（例如 fetch-depth: 0）。发布动作权限不足时准确报告，不改成将 PAT 写进 workflow。私有仓库需要服务器额外的读取凭据。
 
