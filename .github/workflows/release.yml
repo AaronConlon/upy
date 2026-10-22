@@ -66,14 +66,20 @@ jobs:
             -trimpath \
             -ldflags "-s -w -X github.com/AaronConlon/upy/internal/version.Value=${VERSION}" \
             -o "upy-${{ matrix.suffix }}" .
-          ls -lh "upy-${{ matrix.suffix }}"
-          file "upy-${{ matrix.suffix }}"
+          CGO_ENABLED=0 go build \
+            -trimpath \
+            -ldflags "-s -w -X main.version=${VERSION}" \
+            -o "upy-crypt-${{ matrix.suffix }}" ./cmd/upy-crypt
+          ls -lh upy*
+          file upy*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: upy-${{ matrix.suffix }}
-          path: upy-${{ matrix.suffix }}
+          path: |
+            upy-${{ matrix.suffix }}
+            upy-crypt-${{ matrix.suffix }}
 
   release:
     needs: build
@@ -90,9 +96,9 @@ jobs:
       - name: Move binaries to one dir
         run: |
           mkdir -p out
-          find dist -type f -name 'upy-*' -exec cp {} out/ \;
+          find dist -type f \( -name 'upy-*' -o -name 'upy-crypt-*' \) -exec cp {} out/ \;
           chmod +x out/*
-          (cd out && sha256sum upy-* > SHA256SUMS)
+          (cd out && sha256sum * > SHA256SUMS)
           ls -lh out/
 
       - name: Publish release

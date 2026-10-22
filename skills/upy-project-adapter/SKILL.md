@@ -23,7 +23,7 @@ description: 为应用项目接入 upy 部署，生成服务器配置、bundle u
 
 upy 支持 `upy server` 的 CI 入站 Webhook。若用户要求 CI 发布后自动部署，确认服务器已运行 `upy server`、项目已经成功手动部署过一次并登记到本机项目列表；服务器项目配置中的 `webhook.secret` 用于验证 CI 请求。不要把项目配置里的入站 `webhook.secret` 与 `notify.webhook` 的出站通知端点混为一谈。
 
-upy v0.8.0 起支持纯 Go 原生 AES-256-GCM bundle 强解密（`crypto.password`）。若项目希望在组织公开 Release 分发以借力国内加速镜像免 Token 跑满带宽，同时保护业务代码私密性，可在 CI 中通过 `upy encrypt` 生成加密包，并在服务器 `deploy.yaml` 中配置 `crypto.password`，部署时由 upy 自动防篡改校验并透明解密。
+upy v0.8.0 起支持纯 Go 原生 AES-256-GCM bundle 强解密（`crypto.password`）。若项目希望在组织公开 Release 分发以借力国内加速镜像免 Token 跑满带宽，同时保护业务代码私密性，可在 CI 中通过专用的超轻量 CLI `upy-crypt`（仅 ~2MB，无 Web/控制台冗余代码，免下载全量 upy）生成加密包，并在服务器 `deploy.yaml` 中配置 `crypto.password`，部署时由 upy 自动防篡改校验并透明解密。
 
 
 ## 2. 生成接入文件
@@ -54,6 +54,6 @@ python3 scripts/upy/pack_bundle.py --stage .upy-stage --output artifacts/bundle.
 
 `upy bundle <zip> --root <dir>` 是**真实部署命令，不是打包或 dry-run**。只在授权的隔离目标上执行；system 要 Linux + systemd PID1，不能把 macOS 编译通过当作真实运行通过。没有服务器时交付步骤与未验证项。
 
-部署说明必须包含：服务器配置与 bundle 区别、运行依赖、shared 环境变量与持久化、精确资产名、认证、首次部署（或后续跨目录调度 `upy deploy <project>`）、升级与失败演练；若采用加密 bundle 分发，写明在 CI 中调用 `upy encrypt` 或脚本加密以及在服务器 `deploy.yaml` 中配置 `crypto.password`；启用 CI Webhook 时还要写明 `server.listen`/反向代理、`POST /api/v1/webhook/{project}`、HMAC 或 Bearer 鉴权、Actions Secret、`202` 异步语义及 `401`/`404`/`409` 的处理。检查实际 `upy --help` 后再引用命令，不能凭空生成 `upy rollback` / `upy status` / `upy validate`。
+部署说明必须包含：服务器配置与 bundle 区别、运行依赖、shared 环境变量与持久化、精确资产名、认证、首次部署（或后续跨目录调度 `upy deploy <project>`）、升级与失败演练；若采用加密 bundle 分发，写明在 CI 中调用专用的超轻量 CLI `upy-crypt`（或 `upy encrypt`）加密以及在服务器 `deploy.yaml` 中配置 `crypto.password`；启用 CI Webhook 时还要写明 `server.listen`/反向代理、`POST /api/v1/webhook/{project}`、HMAC 或 Bearer 鉴权、Actions Secret、`202` 异步语义及 `401`/`404`/`409` 的处理。检查实际 `upy --help` 后再引用命令，不能凭空生成 `upy rollback` / `upy status` / `upy validate`。
 
 交付时列出文件、选择依据、执行过的验证和待办。只有用户要求发布/部署时才向远端推送或运行服务；单纯接入生成不需要发布 Release。回滚与 clean 相关历史问题需用目标版本重测，不能承诺零停机或绝对安全回滚。

@@ -19,3 +19,9 @@ CGO_ENABLED=0 go build -trimpath \
   -ldflags "-s -w -X github.com/AaronConlon/upy/internal/version.Value=$VERSION" \
   -o "dist/upy-$SUFFIX" .
 ls -lh "dist/upy-$SUFFIX"
+
+echo "building upy-crypt $VERSION for $SUFFIX..."
+CGO_ENABLED=0 go build -trimpath \
+  -ldflags "-s -w -X main.version=$VERSION" \
+  -o "dist/upy-crypt-$SUFFIX" ./cmd/upy-crypt
+ls -lh "dist/upy-crypt-$SUFFIX"

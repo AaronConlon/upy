@@ -17,8 +17,13 @@ VERSION="${RELEASE_TAG#v}"
 # 项目构建后，将 JSON manifest 写入 staging/upy.yaml
 python3 scripts/upy/pack_bundle.py --stage .upy-stage --output "artifacts/bundle-linux-${GOARCH}.zip"
 
-# 可选：若项目要求加密分发（例如存放在组织公开 Release 供国内高速镜像免 Token 下载），可调用 upy 加密
-# upy encrypt "artifacts/bundle-linux-${GOARCH}.zip" "artifacts/bundle-linux-${GOARCH}.zip.enc" --password "$ENCRYPT_KEY"
+# 可选：若项目要求加密分发（例如存放在组织公开 Release 供国内高速镜像免 Token 下载）：
+# 推荐使用专用的超轻量 CLI upy-crypt (仅 ~2MB，无 Web/控制台等冗余依赖)，避免 CI 下载完整 upy 的额外网络与时间开销：
+# 方式 A (直接下载轻量 upy-crypt 资产):
+#   curl -fsSL https://github.com/AaronConlon/upy/releases/latest/download/upy-crypt-linux-x64 -o /tmp/upy-crypt && chmod +x /tmp/upy-crypt
+#   /tmp/upy-crypt artifacts/bundle-linux-${GOARCH}.zip artifacts/bundle-linux-${GOARCH}.zip.enc -p "$ENCRYPT_KEY"
+# 方式 B (若 CI 环境已有 Go):
+#   go run github.com/AaronConlon/upy/cmd/upy-crypt@latest artifacts/bundle-linux-${GOARCH}.zip -p "$ENCRYPT_KEY"
 ```
 
 发布步骤（release job 下载产物到 artifacts 后）：
