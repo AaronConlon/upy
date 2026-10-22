@@ -99,9 +99,9 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		return nil, fmt.Errorf(i18n.T("检查 bundle 文件失败: %w"), err)
 	}
 
-	if cryptoPassword != "" {
-		if !isEnc {
-			return nil, i18n.Error("项目配置了解密密码 (crypto.password)，但 bundle 文件未加密")
+	if isEnc {
+		if cryptoPassword == "" {
+			return nil, i18n.Error("检测到 bundle 已加密，但 deploy.yaml 中未配置解密密码 (crypto.password)")
 		}
 		log.Step(i18n.T("正在解密 bundle..."))
 		decryptedZip := filepath.Join(releasesDir, fmt.Sprintf(".decrypted-%d.zip", time.Now().UnixNano()))
@@ -111,8 +111,8 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		}
 		log.Ok(i18n.T("bundle 解密完成"))
 		targetZip = decryptedZip
-	} else if isEnc {
-		return nil, i18n.Error("检测到 bundle 已加密，但 deploy.yaml 中未配置解密密码 (crypto.password)")
+	} else if cryptoPassword != "" {
+		log.Info(i18n.T("bundle 未加密，直接解压部署"))
 	}
 
 	log.Step(i18n.T("正在解压 bundle..."))

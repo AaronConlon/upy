@@ -612,7 +612,7 @@
   "bundle 解密失败：密码错误或数据已损坏/被篡改": "Bundle decryption failed: incorrect password or corrupted/tampered data",
   "读取待解密文件失败: %w": "Failed to read file for decryption: %w",
   "检查 bundle 文件失败: %w": "Failed to inspect bundle file: %w",
-  "项目配置了解密密码 (crypto.password)，但 bundle 文件未加密": "Project configured with decryption password (crypto.password), but bundle file is not encrypted",
+  "bundle 未加密，直接解压部署": "Bundle is not encrypted, extracting directly",
   "正在解密 bundle...": "Decrypting bundle...",
   "bundle 解密完成": "Bundle decrypted",
   "检测到 bundle 已加密，但 deploy.yaml 中未配置解密密码 (crypto.password)": "Encrypted bundle detected, but decryption password (crypto.password) is not configured in deploy.yaml",

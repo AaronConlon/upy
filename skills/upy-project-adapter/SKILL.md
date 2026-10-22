@@ -23,7 +23,7 @@ description: 为应用项目接入 upy 部署，生成服务器配置、bundle u
 
 upy 支持 `upy server` 的 CI 入站 Webhook。若用户要求 CI 发布后自动部署，确认服务器已运行 `upy server`、项目已经成功手动部署过一次并登记到本机项目列表；服务器项目配置中的 `webhook.secret` 用于验证 CI 请求。不要把项目配置里的入站 `webhook.secret` 与 `notify.webhook` 的出站通知端点混为一谈。
 
-upy v0.8.0 起支持纯 Go 原生 AES-256-GCM bundle 强解密（`crypto.password`）。若项目希望在组织公开 Release 分发以借力国内加速镜像免 Token 跑满带宽，同时保护业务代码私密性，可在 CI 中通过专用的超轻量 CLI `upy-crypt`（仅 ~2MB，无 Web/控制台冗余代码，免下载全量 upy）生成加密包，并在服务器 `deploy.yaml` 中配置 `crypto.password`，部署时由 upy 自动防篡改校验并透明解密。
+upy v0.8.0 起支持纯 Go 原生 AES-256-GCM bundle 强解密（`crypto.password`）。若项目希望在组织公开 Release 分发以借力国内加速镜像免 Token 跑满带宽，同时保护业务代码私密性，可在 CI 中通过专用的超轻量 CLI `upy-crypt`（仅 ~2MB，无 Web/控制台冗余代码，免下载全量 upy）生成加密包，并在服务器 `deploy.yaml` 中配置 `crypto.password`，部署时由 upy 自动防篡改校验并透明解密；遇到未加密历史旧包时自动平滑降级解压，绝不影响版本回滚。
 
 
 ## 2. 生成接入文件

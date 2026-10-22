@@ -435,12 +435,15 @@ release:
 		t.Fatalf("未配置密码时应提示配置 crypto.password: %v", err)
 	}
 
-	// 测试 4: 配置了密码但上传的是未加密 bundle 应当明确报错拦截
+	// 测试 4: 配置了密码但上传的是未加密 bundle 时，应当平滑降级并成功部署（兼容旧版本与未加密包）
 	if err := os.WriteFile(filepath.Join(root, "deploy.yaml"), []byte(deployYaml), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, err = DeployBundle(plainBundlePath, Options{Root: root, Force: true})
-	if err == nil || (!strings.Contains(err.Error(), "未加密") && !strings.Contains(err.Error(), "not encrypted")) {
-		t.Fatalf("配置了密码但 bundle 未加密时应报错拦截: %v", err)
+	resPlain, err := DeployBundle(plainBundlePath, Options{Root: root, Force: true})
+	if err != nil {
+		t.Fatalf("配置了密码时部署未加密 bundle 应当成功平滑降级，但失败了: %v", err)
+	}
+	if resPlain.Version != "1.0.0" {
+		t.Fatalf("未加密 bundle 部署版本不匹配: %s", resPlain.Version)
 	}
 }
