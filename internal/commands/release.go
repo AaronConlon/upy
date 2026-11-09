@@ -14,6 +14,7 @@ import (
 	"github.com/AaronConlon/upy/internal/github"
 	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/state"
 	"github.com/AaronConlon/upy/internal/ui"
 )
 
@@ -54,9 +55,59 @@ func Release(args ReleaseArgs) error {
 		if len(rels) == 0 {
 			return fmt.Errorf(i18n.T("仓库 %s 没有任何已发布版本。"), cfg.Release.Repository)
 		}
+
+		st, _ := state.Read(args.Root)
+		bundlesDir := filepath.Join(args.Root, "bundles")
+		repoShort := ""
+		if parts := strings.Split(cfg.Release.Repository, "/"); len(parts) == 2 {
+			repoShort = parts[1]
+		}
+
 		opts := make([]ui.SelectOption, len(rels))
 		for i, r := range rels {
-			opts[i] = ui.SelectOption{Label: r.Tag, Hint: r.Name}
+			badge := ""
+			warn := ""
+			hint := r.Name
+
+			if st != nil && st.CurrentVersion != "" && st.CurrentVersion == r.Tag {
+				badge = i18n.T("(当前正在运行 / ACTIVE)")
+			} else if st != nil && st.PreviousVersion != "" && st.PreviousVersion == r.Tag {
+				badge = i18n.T("(上一稳定版本 / ROLLBACK)")
+			}
+
+			asset, findErr := github.FindAsset(&r, cfg.Release.Asset, cfg.Name, repoShort)
+			if findErr != nil {
+				warn = i18n.T("⚠️ 缺少 bundle 资产")
+			} else {
+				cacheName := asset.Name
+				if !assetNameHasTag(asset.Name, r.Tag) {
+					cacheName = r.Tag + "-" + asset.Name
+				}
+				localZip := filepath.Join(bundlesDir, cacheName)
+				if fi, err := os.Stat(localZip); err == nil && fi.Size() > 0 {
+					pkgVer := bundle.ReadPackageJSONVersionFromZip(localZip)
+					if pkgVer != "" {
+						normTag := strings.TrimPrefix(r.Tag, "v")
+						normPkg := strings.TrimPrefix(pkgVer, "v")
+						if normTag != normPkg {
+							warn = fmt.Sprintf("⚠️ (package: %s)", pkgVer)
+						}
+					}
+					hint = fmt.Sprintf(i18n.T("[已缓存 %s] %s"), humanSize(fi.Size()), r.Name)
+				} else {
+					hint = fmt.Sprintf("%s（%s）", asset.Name, humanSize(asset.Size))
+					if r.Name != "" && r.Name != r.Tag {
+						hint += " · " + r.Name
+					}
+				}
+			}
+
+			opts[i] = ui.SelectOption{
+				Label: r.Tag,
+				Hint:  strings.TrimSpace(hint),
+				Badge: badge,
+				Warn:  warn,
+			}
 		}
 		idx, err := ui.Select(i18n.T("请选择要部署的版本"), opts)
 		if err != nil {

@@ -3,12 +3,14 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/AaronConlon/upy/internal/config"
 	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
+	"github.com/AaronConlon/upy/internal/state"
 	"github.com/AaronConlon/upy/internal/ui"
 )
 
@@ -67,7 +69,31 @@ func selectLocalProject(projectName string) (config.LocalProject, bool, error) {
 
 	options := make([]ui.SelectOption, len(projects))
 	for i, project := range projects {
-		options[i] = ui.SelectOption{Label: project.Name, Hint: project.Root}
+		label := project.Name
+		badge := ""
+		warn := ""
+		hint := project.Root
+
+		if _, err := os.Stat(project.Root); err != nil {
+			warn = i18n.T("⚠️ 目录不可访问")
+		}
+
+		if st, err := state.Read(project.Root); err == nil && st != nil && st.CurrentVersion != "" {
+			label = fmt.Sprintf("%s [%s · %s]", project.Name, st.CurrentVersion, st.Type)
+			badge = i18n.T("(运行中 / ACTIVE)")
+			if st.DeployedAt != "" {
+				hint += " · " + i18n.T("最近部署: ") + st.DeployedAt
+			}
+		} else {
+			badge = i18n.T("(未部署)")
+		}
+
+		options[i] = ui.SelectOption{
+			Label: label,
+			Hint:  hint,
+			Badge: badge,
+			Warn:  warn,
+		}
 	}
 	idx, err := ui.Select(i18n.T("请选择本地项目"), options)
 	if err != nil {

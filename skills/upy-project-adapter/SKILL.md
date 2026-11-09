@@ -19,7 +19,7 @@ description: 为应用项目接入 upy 部署，生成服务器配置、bundle u
 - Linux 原生常驻服务，尤其 Go binary：`system`，由 systemd 托管。先核对目标 upy 与系统能力。
 - Java JAR、Python 可以通过 system 调用服务器已有 runtime，但必须明确 Java/Python 版本与依赖交付方式；venv 不跨机器打包。依赖复杂时建议 Docker 并说明取舍。
 
-读取 [配置契约](references/contracts.md)，再按需读取 [静态与容器](references/static-docker.md)、[system](references/system.md)、[Release 流程](references/release.md)。契约基于 upy v0.8.0 源码；目标版本的实现优先于本文。不要把工作区未发布功能写成已发布能力。
+读取 [配置契约](references/contracts.md)，再按需读取 [静态与容器](references/static-docker.md)、[system](references/system.md)、[Release 流程](references/release.md)。契约基于 upy v0.8.4 源码；目标版本的实现优先于本文。不要把工作区未发布功能写成已发布能力。
 
 upy 支持 `upy server` 的 CI 入站 Webhook。若用户要求 CI 发布后自动部署，确认服务器已运行 `upy server`、项目已经成功手动部署过一次并登记到本机项目列表；服务器项目配置中的 `webhook.secret` 用于验证 CI 请求。不要把项目配置里的入站 `webhook.secret` 与 `notify.webhook` 的出站通知端点混为一谈。
 

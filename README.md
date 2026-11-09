@@ -68,6 +68,7 @@ Paired with intelligent **disk space pruning and active version protection** (`u
 - **Robust Failure Safety**: Strict pre-flight checks during `Prepare` (permissions, target architecture, binary validity, service user existence). Prepare failures never touch existing running services.
 - **Disk Analysis & Safe Pruning**: `upy clean` analyzes disk footprint and frees Bundle archives while strictly protecting both the current active version, the previous rollback version, and live unit references.
 - **Host-Wide Project & Disk Analysis**: `upy analysis` catalogs all managed projects on the machine, plots proportional horizontal benchmark bars using the largest project as the 100% baseline, spotlights the most recent deployment, and supports `--detail` breakdowns and `--json` exports.
+- **Refined Single-Node CLI UX & Validation Visuality**: Optimized for manual operations and edge nodes, featuring smooth arrow and Vim navigation (`j` / `k`); automated cross-source business metadata inspection (`package.json` vs manifest versions) with prominent `[ACTIVE]`, `[ROLLBACK]`, and `⚠️ version mismatch` alerts; end-to-end ANSI stage effects (`🚀 [1/5]`) and pre-flight validation cards.
 - **Cross-Project Global Dispatching**: Run `upy` in any directory to interactively list and deploy across all managed projects on the host.
 - **Convention Backups**: Zero-config project discovery (`backup.sh`), exclusive concurrency locks, automatic retention rotation, and multi-project batch runs.
 - **Pure-Go Native Decryption & Encrypted Distribution**: AES-256-GCM + PBKDF2 decryption built with Go standard library. Features a dedicated lightweight CLI `upy-crypt` (~2MB, designed for CI/CD without downloading the full upy binary) and `upy encrypt` for local encryption. Securely store encrypted bundles in public organization Releases (benefiting from ultra-fast mirror downloads without GitHub Tokens); configure `crypto.password` in server `deploy.yaml` for automatic authentication verification and transparent in-memory extraction.
@@ -224,6 +225,10 @@ upy release list
 # 5. Force re-download and re-deploy (even if version is already active)
 upy release latest --force
 ```
+
+> 💡 **Interactive Visuals & Metadata Verification**:
+> - Running `upy release` provides an interactive menu with `↑/↓` or Vim `j/k` keys, clearly tagging `(ACTIVE / running)` and `(ROLLBACK / previous stable)` releases. It automatically cross-checks bundle tags against embedded `package.json` versions, surfacing `⚠️ (package: 1.0.3)` warnings if mismatched.
+> - The deployment lifecycle features five-stage ANSI rocket badges (`🚀 [1/5] Decrypt & Extract` $\rightarrow$ `🚀 [2/5] Business Pre-flight Validation` $\rightarrow$ `🚀 [3/5] Prepare` $\rightarrow$ `🚀 [4/5] Activate` $\rightarrow$ `🚀 [5/5] HealthCheck`) and structured pre-flight validation cards.
 
 #### Cross-Project Global Operations
 

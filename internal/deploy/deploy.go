@@ -91,6 +91,7 @@ func deployBundle(zipPath, root string, force, verbose bool, startedAt time.Time
 	}()
 
 	// 检查 bundle 是否加密并根据 deploy.yaml 配置解密
+	ui.PrintStep(1, 5, i18n.T("解密与解压 Bundle 产物..."))
 	targetZip := zipPath
 	projCfg, _ := config.ReadProjectConfig(root)
 	cryptoPassword := projCfg.CryptoPassword()
@@ -128,6 +129,13 @@ func deployBundle(zipPath, root string, force, verbose bool, startedAt time.Time
 	}
 	log.Info(fmt.Sprintf("bundle: %s v%s (%s)", manifest.Name, stripV(manifest.Version), manifest.Type))
 
+	ui.PrintStep(2, 5, i18n.T("业务预检与元数据一致性校验..."))
+	preflight := ui.CheckPreflight(tmp, root, manifest, projCfg)
+	ui.PrintPreflightCard(preflight)
+	if preflight.IsMismatch {
+		log.Warn(fmt.Sprintf(i18n.T("⚠️ 业务元数据核对提示: 清单版本为 [%s]，但内部 package.json 声明版本为 [%s]！"), manifest.Version, preflight.PackageVersion))
+	}
+
 	// 平台兼容性
 	to, ta := targetSpec(manifest)
 	if !platform.IsCompatible(to, ta) {
@@ -148,6 +156,7 @@ func deployBundle(zipPath, root string, force, verbose bool, startedAt time.Time
 		return &Result{Skipped: true, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
 	}
 
+	ui.PrintStep(3, 5, i18n.T("准备目标环境与构建依赖 (Prepare)..."))
 	releaseDir := filepath.Join(releasesDir, manifest.Version)
 	log.Step(i18n.T("版本目录: ") + log.Path(releaseDir))
 	var backupReleaseDir string
@@ -201,7 +210,11 @@ func deployBundle(zipPath, root string, force, verbose bool, startedAt time.Time
 	}
 
 	// 激活与健康检查阶段：停掉上一版本并启动新版本。若失败，执行回滚
+	ui.PrintStep(4, 5, i18n.T("平滑切换版本并启动服务 (Activate)..."))
 	if err := runActiveDeployer(d); err != nil {
+		if st.CurrentVersion != "" {
+			ui.PrintRollbackAlert(st.CurrentVersion, err.Error())
+		}
 		log.Warn(i18n.T("部署失败，正在尝试回滚..."))
 		if backupReleaseDir != "" {
 			// SYS-15: 必须在调用 Rollback() 重新拉起旧服务前，先将原版本的二进制和配置还原到 releaseDir！
@@ -250,6 +263,7 @@ func deployBundle(zipPath, root string, force, verbose bool, startedAt time.Time
 	ui.PrintProjectLayout(root)
 
 	elapsedStr := ui.FormatDuration(time.Since(startedAt))
+	ui.PrintSuccessBanner(manifest.Name, manifest.Version, elapsedStr)
 	log.Info(i18n.T("⏱ 部署耗时: ") + log.Green(log.Bold(elapsedStr)))
 
 	return &Result{Skipped: false, Version: manifest.Version, Project: manifest.Name, Type: manifest.Type, Mode: dockerMode(manifest)}, nil
@@ -263,6 +277,7 @@ func runActiveDeployer(d deployer.Deployer) error {
 	if err := d.Activate(); err != nil {
 		return err
 	}
+	ui.PrintStep(5, 5, i18n.T("执行健康检查探针与状态收官 (HealthCheck)..."))
 	return d.HealthCheck()
 }
 
