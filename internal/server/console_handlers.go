@@ -307,6 +307,9 @@ func (s *Server) consoleLogDetail(id string) (LogDetailView, string, error) {
 	if err != nil {
 		return d, path, err
 	}
+	if st, statErr := os.Stat(path); statErr == nil {
+		d.Offset = st.Size()
+	}
 	d.Raw = raw
 	d.Truncated = truncated
 	d.HTML = template.HTML(RenderAnsiToHTML(raw))
@@ -346,7 +349,7 @@ func (s *Server) handleConsoleLogDetail(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if r.URL.Query().Get("format") == "json" {
-		writeJSON(w, 200, map[string]any{"html": string(d.HTML), "status_class": statusClass(d.Status), "status_label": statusLabel(d.Status), "status_html": string(consoleIcon(statusIcon(d.Status))) + template.HTMLEscapeString(statusLabel(d.Status)), "duration": d.Duration, "exit_label": d.ExitLabel(), "live": d.Live, "truncated": d.Truncated})
+		writeJSON(w, 200, map[string]any{"html": string(d.HTML), "status_class": statusClass(d.Status), "status_label": statusLabel(d.Status), "status_html": string(consoleIcon(statusIcon(d.Status))) + template.HTMLEscapeString(statusLabel(d.Status)), "duration": d.Duration, "exit_label": d.ExitLabel(), "live": d.Live, "truncated": d.Truncated, "offset": d.Offset})
 		return
 	}
 	p := s.consolePage("detail", "部署日志", "logs")

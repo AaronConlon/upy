@@ -1,6 +1,6 @@
 # 配置契约
 
-依据：AaronConlon/upy v0.8.4，internal/config/{manifest,project,user}.go、internal/crypto、internal/server 与 internal/deployer。升级后核对目标版本。
+依据：AaronConlon/upy v0.8.5，internal/config/{manifest,project,user}.go、internal/crypto、internal/server 与 internal/deployer。升级后核对目标版本。
 
 ## 服务器 <root>/deploy.yaml
 ```yaml

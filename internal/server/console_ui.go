@@ -74,6 +74,7 @@ type LogDetailView struct {
 	HTML      template.HTML
 	Truncated bool
 	Live      bool
+	Offset    int64
 }
 
 func renderConsole(p ConsolePage) string {

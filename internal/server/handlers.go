@@ -56,6 +56,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /projects", s.requireAuth(s.handleProjectsPage))
 	mux.HandleFunc("GET /projects/{name}", s.requireAuth(s.handleProjectPage))
 	mux.HandleFunc("GET /logs", s.requireAuth(s.handleConsoleLogsPage))
+	mux.HandleFunc("GET /logs/{id}/stream", s.requireAuth(s.handleConsoleLogStream))
 	mux.HandleFunc("GET /logs/{id}", s.requireAuth(s.handleConsoleLogDetail))
 }
 
