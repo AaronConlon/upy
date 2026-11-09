@@ -14,8 +14,8 @@
   --color-error: oklch(48% 0.12 35);
   --color-error-bg: oklch(96.5% 0.02 35);
   --color-on-ink: oklch(99% 0.003 255);
-  --font-display: "Jost", "Avenir Next", "PingFang SC", sans-serif;
-  --font-body: "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: "Jost", -apple-system, BlinkMacSystemFont, "Avenir Next", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-body: "Jost", -apple-system, BlinkMacSystemFont, "Avenir Next", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Segoe UI", "Microsoft YaHei", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --space-xs: 4px;
   --space-sm: 8px;

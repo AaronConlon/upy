@@ -33,6 +33,7 @@ type Task struct {
 	Root       string     `json:"root"`
 	Target     string     `json:"target"`
 	Force      bool       `json:"force"`
+	Verbose    bool       `json:"verbose"`
 	Status     TaskStatus `json:"status"`
 	ExitCode   int        `json:"exit_code"`
 	LogFile    string     `json:"log_file"`
@@ -55,7 +56,7 @@ func NewTaskManager() *TaskManager {
 	}
 }
 
-func (tm *TaskManager) CreateTask(project, root, target string, force bool, logFile string) (*Task, error) {
+func (tm *TaskManager) CreateTask(project, root, target string, force bool, logFile string, verbose ...bool) (*Task, error) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -67,12 +68,17 @@ func (tm *TaskManager) CreateTask(project, root, target string, force bool, logF
 	if logFile == "" {
 		logFile = filepath.Join(config.UserDataDir(), "logs", project, taskID+".log")
 	}
+	isVerbose := false
+	if len(verbose) > 0 && verbose[0] {
+		isVerbose = true
+	}
 	t := &Task{
 		ID:        taskID,
 		Project:   project,
 		Root:      root,
 		Target:    target,
 		Force:     force,
+		Verbose:   isVerbose,
 		Status:    StatusRunning,
 		LogFile:   logFile,
 		StartedAt: time.Now(),

@@ -26,6 +26,7 @@ import (
 // Options 部署选项
 type Options struct {
 	Force     bool
+	Verbose   bool
 	Root      string
 	StartedAt time.Time
 }
@@ -49,12 +50,12 @@ func DeployBundle(zipPath string, opts Options) (*Result, error) {
 	if startedAt.IsZero() {
 		startedAt = time.Now()
 	}
-	res, err := deployBundle(zipPath, root, opts.Force, startedAt)
+	res, err := deployBundle(zipPath, root, opts.Force, opts.Verbose, startedAt)
 	notifyDeploy(res, err, root, startedAt)
 	return res, err
 }
 
-func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Result, error) {
+func deployBundle(zipPath, root string, force, verbose bool, startedAt time.Time) (*Result, error) {
 	lock, err := projectlock.Acquire(root, i18n.T("部署"))
 	if err != nil {
 		return nil, err
@@ -179,6 +180,7 @@ func deployBundle(zipPath, root string, force bool, startedAt time.Time) (*Resul
 		Manifest:        manifest,
 		ProjectName:     manifest.Name,
 		PreviousVersion: st.CurrentVersion,
+		Verbose:         verbose,
 	}
 	d, err := deployer.CreateDeployer(ctx)
 	if err != nil {

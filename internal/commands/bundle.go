@@ -14,6 +14,7 @@ import (
 type BundleArgs struct {
 	File      string
 	Force     bool
+	Verbose   bool
 	Root      string
 	StartedAt time.Time
 }
@@ -32,6 +33,7 @@ func Bundle(args BundleArgs) error {
 	log.Info(i18n.T("正在部署本地 bundle ") + log.Path(args.File) + forceSuffix(args.Force))
 	_, err := deploy.DeployBundle(args.File, deploy.Options{
 		Force:     args.Force,
+		Verbose:   args.Verbose,
 		Root:      args.Root,
 		StartedAt: startedAt,
 	})

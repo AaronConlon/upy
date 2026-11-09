@@ -19,8 +19,9 @@ import (
 )
 
 type WebhookRequest struct {
-	Target string `json:"target"`
-	Force  bool   `json:"force"`
+	Target  string `json:"target"`
+	Force   bool   `json:"force"`
+	Verbose bool   `json:"verbose"`
 }
 
 type JSONResponse struct {
@@ -125,6 +126,7 @@ func (s *Server) handleWebhook(w http.ResponseWriter, r *http.Request) {
 	// 4. 解析参数 (Query / JSON Body)
 	target := strings.TrimSpace(r.URL.Query().Get("target"))
 	force := r.URL.Query().Get("force") == "true"
+	verbose := r.URL.Query().Get("verbose") == "true"
 
 	if r.Header.Get("Content-Type") == "application/json" && r.Body != nil {
 		var reqBody WebhookRequest
@@ -135,6 +137,9 @@ func (s *Server) handleWebhook(w http.ResponseWriter, r *http.Request) {
 			if reqBody.Force {
 				force = true
 			}
+			if reqBody.Verbose {
+				verbose = true
+			}
 		}
 	}
 	if target == "" {
@@ -142,7 +147,7 @@ func (s *Server) handleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 5. 创建任务
-	task, err := s.taskMgr.CreateTask(projectName, targetProject.Root, target, force, "")
+	task, err := s.taskMgr.CreateTask(projectName, targetProject.Root, target, force, "", verbose)
 	if err != nil {
 		writeJSON(w, http.StatusConflict, JSONResponse{Code: 409, Error: err.Error()})
 		return
@@ -163,6 +168,7 @@ func (s *Server) handleWebhook(w http.ResponseWriter, r *http.Request) {
 		"project":    task.Project,
 		"target":     task.Target,
 		"force":      task.Force,
+		"verbose":    task.Verbose,
 		"status":     task.Status,
 		"created_at": task.StartedAt.Format(time.RFC3339),
 		"log_url":    s.taskLogURL(task.ID),

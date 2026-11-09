@@ -56,6 +56,9 @@ func (w *Worker) RunDeploy(ctx context.Context, task *Task) {
 	if task.Force {
 		args = append(args, "--force")
 	}
+	if task.Verbose {
+		args = append(args, "--verbose")
+	}
 
 	header := fmt.Sprintf("[%s] 开始执行部署任务 (TaskID: %s, 项目: %s, 目标: %s)\n",
 		time.Now().Format("2006-01-02 15:04:05"), task.ID, task.Project, task.Target)

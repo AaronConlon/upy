@@ -186,6 +186,7 @@ func Step(msg string)     { emit("  " + paint(dim, "->") + " " + msg) }
 func Progress(msg string) { emit("  " + paint(cyan, "...") + " " + msg) }
 func Ok(msg string)       { emit("  " + paint(green, "✓") + " " + msg) }
 func Info(msg string)     { emit("  " + paint(dim, "-") + " " + msg) }
+func Detail(msg string)   { emit("    " + paint(dim, "│ ") + msg) }
 func Warn(msg string)     { emit("  " + paint(yellow, "!") + " " + msg) }
 func Fail(msg string)     { emit("  " + paint(red, i18n.T("错误: ")) + msg) }
 

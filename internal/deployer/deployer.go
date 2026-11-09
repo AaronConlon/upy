@@ -24,6 +24,7 @@ type DeployContext struct {
 	Manifest        *config.Manifest
 	ProjectName     string
 	PreviousVersion string
+	Verbose         bool
 }
 
 // Deployer 部署器接口
@@ -126,4 +127,17 @@ func AtomicSymlink(target, linkPath string) error {
 		return fmt.Errorf(i18n.T("无法激活符号链接: %v"), log.Redact(err.Error()))
 	}
 	return nil
+}
+
+// CleanLogLines 分割并清理多行日志，去除空行与行尾空白
+func CleanLogLines(out string) []string {
+	raw := strings.Split(strings.ReplaceAll(out, "\r\n", "\n"), "\n")
+	var res []string
+	for _, l := range raw {
+		l = strings.TrimRight(l, " \t\r")
+		if strings.TrimSpace(l) != "" {
+			res = append(res, l)
+		}
+	}
+	return res
 }

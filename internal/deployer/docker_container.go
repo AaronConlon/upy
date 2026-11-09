@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/cmdrun"
 	"github.com/AaronConlon/upy/internal/i18n"
@@ -36,7 +38,11 @@ func (d *DockerContainerDeployer) Prepare() error {
 	log.Step(i18n.T("正在构建 Docker 镜像 ") + d.image + "...")
 	// -f 必须用绝对路径: docker CLI 的 dockerfile 路径相对当前工作目录解析
 	dfAbs := filepath.Join(d.ctx.ReleaseDir, df)
-	if err := cmdrun.Run("docker", []string{"build", "-f", dfAbs, "-t", d.image, d.ctx.ReleaseDir}, cmdrun.Options{Cwd: d.ctx.ReleaseDir}); err != nil {
+	var env []string
+	if d.ctx.Verbose {
+		env = append(env, "BUILDKIT_PROGRESS=plain")
+	}
+	if err := cmdrun.Run("docker", []string{"build", "-f", dfAbs, "-t", d.image, d.ctx.ReleaseDir}, cmdrun.Options{Cwd: d.ctx.ReleaseDir, Env: env}); err != nil {
 		return err
 	}
 	log.Ok(i18n.T("镜像构建完成"))
@@ -85,6 +91,7 @@ func (d *DockerContainerDeployer) Activate() error {
 	log.Step(i18n.T("正在启动容器 ") + d.container + "...")
 	d.stopAndRemove()
 	if err := cmdrun.Run("docker", d.runArgs(d.image), cmdrun.Options{}); err != nil {
+		d.printContainerLogs(50, true)
 		return err
 	}
 	log.Ok(i18n.T("容器已启动"))
@@ -94,16 +101,50 @@ func (d *DockerContainerDeployer) Activate() error {
 // HealthCheck 健康检查
 func (d *DockerContainerDeployer) HealthCheck() error {
 	hc := d.ctx.Manifest.Healthcheck
+	tail := 30
+	if d.ctx.Verbose {
+		tail = 100
+	}
 	if hc == nil {
 		log.Info(i18n.T("未配置健康检查，跳过"))
+		time.Sleep(time.Second)
+		d.printContainerLogs(tail, false)
 		return nil
 	}
 	log.Step(i18n.T("正在健康检查 ") + hc.URL + "...")
 	if err := PollHealth(hc.URL, HealthcheckTimeoutSec(d.ctx.Manifest)); err != nil {
+		d.printContainerLogs(100, true)
 		return err
 	}
 	log.Ok(i18n.T("健康检查通过"))
+	d.printContainerLogs(tail, false)
 	return nil
+}
+
+// printContainerLogs 获取并输出 Docker 容器最近运行日志
+func (d *DockerContainerDeployer) printContainerLogs(tail int, isError bool) {
+	if tail <= 0 {
+		tail = 30
+	}
+	out, err := cmdrun.CombinedOutput("docker", []string{"logs", "--tail", strconv.Itoa(tail), d.container}, cmdrun.Options{AllowNonZero: true})
+	if err != nil && strings.TrimSpace(out) == "" {
+		return
+	}
+	lines := CleanLogLines(out)
+	if len(lines) == 0 {
+		return
+	}
+	if len(lines) > tail {
+		lines = lines[len(lines)-tail:]
+	}
+	if isError {
+		log.Warn(fmt.Sprintf(i18n.T("Docker 容器运行日志 (最新 %d 行):"), len(lines)))
+	} else {
+		log.Step(fmt.Sprintf(i18n.T("Docker 容器运行日志 (最新 %d 行):"), len(lines)))
+	}
+	for _, l := range lines {
+		log.Detail(l)
+	}
 }
 
 // Rollback 停删失败容器, 有 previous 则用上一版镜像重启

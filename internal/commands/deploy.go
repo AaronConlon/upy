@@ -13,7 +13,7 @@ import (
 )
 
 // SelectProjectAndRelease 是无命令启动入口：选择项目后继续 release 的版本选择流程。
-func SelectProjectAndRelease(force bool, startedAt ...time.Time) error {
+func SelectProjectAndRelease(force, verbose bool, startedAt ...time.Time) error {
 	var start time.Time
 	if len(startedAt) > 0 && !startedAt[0].IsZero() {
 		start = startedAt[0]
@@ -25,11 +25,11 @@ func SelectProjectAndRelease(force bool, startedAt ...time.Time) error {
 		return err
 	}
 	log.Info(i18n.T("已选择项目 ") + project.Name + "（" + log.Path(project.Root) + "）")
-	return Release(ReleaseArgs{Force: force, Root: project.Root, StartedAt: start})
+	return Release(ReleaseArgs{Force: force, Verbose: verbose, Root: project.Root, StartedAt: start})
 }
 
 // Deploy 按项目名（或交互选择）定位根目录，直接部署最新正式版本。
-func Deploy(projectName string, force bool, startedAt ...time.Time) error {
+func Deploy(projectName string, force, verbose bool, startedAt ...time.Time) error {
 	var start time.Time
 	if len(startedAt) > 0 && !startedAt[0].IsZero() {
 		start = startedAt[0]
@@ -42,7 +42,7 @@ func Deploy(projectName string, force bool, startedAt ...time.Time) error {
 	}
 	log.Info(i18n.T("正在项目 ") + project.Name + "（" + log.Path(project.Root) + i18n.T("）部署最新版本。"))
 	// Root 贯穿下载、解压、部署与状态读写，效果等同于切入该目录执行 upy release latest。
-	return Release(ReleaseArgs{Target: "latest", Force: force, Root: project.Root, StartedAt: start})
+	return Release(ReleaseArgs{Target: "latest", Force: force, Verbose: verbose, Root: project.Root, StartedAt: start})
 }
 
 func selectLocalProject(projectName string) (config.LocalProject, bool, error) {

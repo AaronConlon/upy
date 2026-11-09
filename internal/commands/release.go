@@ -21,6 +21,7 @@ import (
 type ReleaseArgs struct {
 	Target    string
 	Force     bool
+	Verbose   bool
 	Root      string
 	StartedAt time.Time
 }
@@ -105,6 +106,7 @@ func Release(args ReleaseArgs) error {
 	if !reuseCache {
 		_ = os.Remove(localZip)
 		log.Step(i18n.T("⬇️  正在下载资产 ") + asset.Name + "（" + humanSize(asset.Size) + "）...")
+		dlStartedAt := time.Now()
 		if err := github.DownloadAsset(cfg.Release.Repository, asset, localZip); err != nil {
 			_ = os.Remove(localZip)
 			return err
@@ -113,12 +115,14 @@ func Release(args ReleaseArgs) error {
 			_ = os.Remove(localZip)
 			return i18n.Error("下载完成但 bundle 格式无效或缺少 upy.yaml 清单文件，已清理损坏文件")
 		}
-		log.Ok(i18n.T("已保存到 ") + log.Path(localZip))
+		dlElapsed := ui.FormatDuration(time.Since(dlStartedAt))
+		log.Ok(fmt.Sprintf(i18n.T("已保存到 %s（耗时 %s）"), log.Path(localZip), dlElapsed))
 	}
 
 	log.Info(fmt.Sprintf(i18n.T("开始部署 %s v%s%s"), cfg.Name, stripV(release.Tag), forceSuffix(args.Force)))
 	_, err = deploy.DeployBundle(zipPath, deploy.Options{
 		Force:     args.Force,
+		Verbose:   args.Verbose,
 		Root:      args.Root,
 		StartedAt: startedAt,
 	})

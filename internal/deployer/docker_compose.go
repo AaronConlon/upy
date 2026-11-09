@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AaronConlon/upy/internal/cmdrun"
 	"github.com/AaronConlon/upy/internal/i18n"
@@ -75,7 +77,11 @@ func (d *DockerComposeDeployer) prevReleaseDir() string {
 // Prepare 执行 docker compose build (构建失败不影响仍在运行的旧栈)
 func (d *DockerComposeDeployer) Prepare() error {
 	log.Step(i18n.T("正在执行 docker compose build (") + d.composeFile + ")...")
-	if err := cmdrun.Run("docker", append([]string{"compose"}, d.composeArgs("build")...), cmdrun.Options{}); err != nil {
+	var env []string
+	if d.ctx.Verbose {
+		env = append(env, "BUILDKIT_PROGRESS=plain")
+	}
+	if err := cmdrun.Run("docker", append([]string{"compose"}, d.composeArgs("build")...), cmdrun.Options{Env: env}); err != nil {
 		return err
 	}
 	log.Ok(i18n.T("compose 构建完成"))
@@ -218,6 +224,7 @@ func (d *DockerComposeDeployer) Activate() error {
 	log.Step(i18n.T("正在启动 compose 服务..."))
 	d.activationAttempted = true
 	if err := cmdrun.Run("docker", append([]string{"compose"}, d.composeArgs("up", "-d")...), cmdrun.Options{}); err != nil {
+		d.printContainerLogs(50, true)
 		return err
 	}
 	log.Ok(i18n.T("compose 服务已启动"))
@@ -227,16 +234,51 @@ func (d *DockerComposeDeployer) Activate() error {
 // HealthCheck 健康检查
 func (d *DockerComposeDeployer) HealthCheck() error {
 	hc := d.ctx.Manifest.Healthcheck
+	tail := 30
+	if d.ctx.Verbose {
+		tail = 100
+	}
 	if hc == nil {
 		log.Info(i18n.T("未配置健康检查，跳过"))
+		time.Sleep(time.Second)
+		d.printContainerLogs(tail, false)
 		return nil
 	}
 	log.Step(i18n.T("正在健康检查 ") + hc.URL + "...")
 	if err := PollHealth(hc.URL, HealthcheckTimeoutSec(d.ctx.Manifest)); err != nil {
+		d.printContainerLogs(100, true)
 		return err
 	}
 	log.Ok(i18n.T("健康检查通过"))
+	d.printContainerLogs(tail, false)
 	return nil
+}
+
+// printContainerLogs 获取并输出 Docker Compose 容器最近运行日志
+func (d *DockerComposeDeployer) printContainerLogs(tail int, isError bool) {
+	if tail <= 0 {
+		tail = 30
+	}
+	args := append([]string{"compose"}, d.composeArgs("logs", "--tail", strconv.Itoa(tail))...)
+	out, err := cmdrun.CombinedOutput("docker", args, cmdrun.Options{AllowNonZero: true})
+	if err != nil && strings.TrimSpace(out) == "" {
+		return
+	}
+	lines := CleanLogLines(out)
+	if len(lines) == 0 {
+		return
+	}
+	if len(lines) > tail {
+		lines = lines[len(lines)-tail:]
+	}
+	if isError {
+		log.Warn(fmt.Sprintf(i18n.T("Docker 容器运行日志 (最新 %d 行):"), len(lines)))
+	} else {
+		log.Step(fmt.Sprintf(i18n.T("Docker 容器运行日志 (最新 %d 行):"), len(lines)))
+	}
+	for _, l := range lines {
+		log.Detail(l)
+	}
 }
 
 // Rollback 健康检查失败后的回滚: 先 down 失败的新版本 (释放端口), 再 up -d 上一版本

@@ -33,6 +33,10 @@ var Run = RealRun
 // 保留为变量以便测试中替换为桩函数; 恢复时赋回 RealOutput。
 var Output = RealOutput
 
+// CombinedOutput 执行命令并捕获 stdout 与 stderr。用于提取容器运行与启动日志。
+// 保留为变量以便测试中替换为桩函数; 恢复时赋回 RealCombinedOutput。
+var CombinedOutput = RealCombinedOutput
+
 // RealRun Run 的真实实现
 func RealRun(cmd string, args []string, opts Options) error {
 	c := exec.Command(cmd, args...)
@@ -79,4 +83,27 @@ func RealOutput(cmd string, args []string, opts Options) (string, error) {
 	}
 	msg := fmt.Sprintf(i18n.T("命令执行失败（退出码 %d）: %s %s"), code, cmd, strings.Join(args, " "))
 	return "", fmt.Errorf("%s", log.Redact(msg))
+}
+
+// RealCombinedOutput 执行命令并捕获 stdout 与 stderr。
+func RealCombinedOutput(cmd string, args []string, opts Options) (string, error) {
+	c := exec.Command(cmd, args...)
+	if opts.Cwd != "" {
+		c.Dir = opts.Cwd
+	}
+	c.Env = append(os.Environ(), opts.Env...)
+	out, err := c.CombinedOutput()
+	if err == nil {
+		return string(out), nil
+	}
+	if opts.AllowNonZero {
+		return string(out), nil
+	}
+	code := 1
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		code = ee.ExitCode()
+	}
+	msg := fmt.Sprintf(i18n.T("命令执行失败（退出码 %d）: %s %s"), code, cmd, strings.Join(args, " "))
+	return string(out), fmt.Errorf("%s", log.Redact(msg))
 }

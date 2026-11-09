@@ -305,3 +305,60 @@ func TestComposeRollbackDoesNotTouchPreviousBeforeDeactivate(t *testing.T) {
 		t.Fatalf("新版本未启动时不应执行任何回滚命令，calls=%v", *calls)
 	}
 }
+
+func TestComposePrepareSetsBuildKitProgressWhenVerbose(t *testing.T) {
+	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
+	d.ctx.Verbose = true
+	var capturedOpts cmdrun.Options
+	cmdrun.Run = func(cmd string, args []string, opts cmdrun.Options) error {
+		capturedOpts = opts
+		return nil
+	}
+	defer func() {
+		cmdrun.Run = cmdrun.RealRun
+	}()
+
+	if err := d.Prepare(); err != nil {
+		t.Fatalf("Prepare 失败: %v", err)
+	}
+	found := false
+	for _, env := range capturedOpts.Env {
+		if env == "BUILDKIT_PROGRESS=plain" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Verbose 模式下应设置 BUILDKIT_PROGRESS=plain, got: %v", capturedOpts.Env)
+	}
+}
+
+func TestComposeHealthCheckPrintsContainerLogs(t *testing.T) {
+	d, _ := newComposeCtx(t, "0.3.16", "0.3.17")
+	var capturedArgs []string
+	cmdrun.CombinedOutput = func(cmd string, args []string, opts cmdrun.Options) (string, error) {
+		capturedArgs = args
+		return "app-1  | [INFO] Server started on port 8080\napp-1  | [INFO] Ready\n", nil
+	}
+	defer func() {
+		cmdrun.CombinedOutput = cmdrun.RealCombinedOutput
+	}()
+
+	// 无配置 healthcheck 时，跳过并拉取日志
+	if err := d.HealthCheck(); err != nil {
+		t.Fatalf("HealthCheck 失败: %v", err)
+	}
+	if len(capturedArgs) == 0 {
+		t.Fatal("HealthCheck 应调用 docker compose logs")
+	}
+	foundLogs := false
+	for _, a := range capturedArgs {
+		if a == "logs" {
+			foundLogs = true
+			break
+		}
+	}
+	if !foundLogs {
+		t.Errorf("期望包含 logs 参数，实际得到: %v", capturedArgs)
+	}
+}

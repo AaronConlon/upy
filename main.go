@@ -41,6 +41,7 @@ func printHelp() {
 		i18n.T("  log [server|upy|<项目>]        查看自身、server 或项目的运行与部署日志"),
 		"",
 		i18n.T("选项:"),
+		i18n.T("  -v, --verbose                  显示详细执行过程与更多容器日志"),
 		i18n.T("  --force                        跳过 '当前版本与目标一致' 的跳过逻辑，并强制重新下载"),
 		i18n.T("  --root <目录>                  项目目录 (默认当前目录)"),
 		i18n.T("  -f, --follow                   log 专用: 实时追踪后续新增日志输出"),
@@ -112,6 +113,7 @@ type parsedArgs struct {
 	cmd         string
 	positional  []string
 	force       bool
+	verbose     bool
 	root        string
 	bundles     bool
 	oldReleases bool
@@ -200,6 +202,8 @@ func parseArgs(argv []string) parsedArgs {
 			}
 		case strings.HasPrefix(a, "--password="):
 			p.password = strings.TrimPrefix(a, "--password=")
+		case a == "-v" || a == "--verbose":
+			p.verbose = true
 		case a == "--force":
 			p.force = true
 		case a == "--detail":
@@ -332,19 +336,19 @@ func main() {
 	var err error
 	switch p.cmd {
 	case "":
-		err = commands.SelectProjectAndRelease(p.force, cmdStartedAt)
+		err = commands.SelectProjectAndRelease(p.force, p.verbose, cmdStartedAt)
 	case "release":
 		target := ""
 		if len(p.positional) > 0 {
 			target = p.positional[0]
 		}
-		err = commands.Release(commands.ReleaseArgs{Target: target, Force: p.force, Root: root, StartedAt: cmdStartedAt})
+		err = commands.Release(commands.ReleaseArgs{Target: target, Force: p.force, Verbose: p.verbose, Root: root, StartedAt: cmdStartedAt})
 	case "deploy":
 		projectName := ""
 		if len(p.positional) > 0 {
 			projectName = p.positional[0]
 		}
-		err = commands.Deploy(projectName, p.force, cmdStartedAt)
+		err = commands.Deploy(projectName, p.force, p.verbose, cmdStartedAt)
 	case "clean":
 		projectName := ""
 		if len(p.positional) > 0 {
@@ -391,7 +395,7 @@ func main() {
 		if len(p.positional) > 0 {
 			file = p.positional[0]
 		}
-		err = commands.Bundle(commands.BundleArgs{File: file, Force: p.force, Root: root, StartedAt: cmdStartedAt})
+		err = commands.Bundle(commands.BundleArgs{File: file, Force: p.force, Verbose: p.verbose, Root: root, StartedAt: cmdStartedAt})
 	case "encrypt":
 		input := ""
 		output := ""
