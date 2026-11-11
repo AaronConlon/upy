@@ -458,7 +458,7 @@ upy backup --all -y
 ```
 
 > **Key Safeguards**:  
-> - **Mutual Exclusion Lock (`.deploy.lock`)**: `upy backup` acquires an exclusive project lock (`action: 备份中`), strictly preventing race conditions against concurrent deployments (`upy release`) or cleanup (`upy clean`).  
+> - **Mutual Exclusion Lock (`.deploy.lock`)**: `upy backup` acquires an exclusive project lock (`action: Backing up`), strictly preventing race conditions against concurrent deployments (`upy release`) or cleanup (`upy clean`).  
 > - **Automatic Retention Pruning**: Automatically rotates and cleans older snapshots beyond the retention threshold (default: 7), ensuring backup files never exhaust disk space.  
 > - **Alerting & Notifications**: Automatically reports elapsed time, archive file sizes, and failure reasons to Bark mobile notifications.
 
@@ -480,26 +480,26 @@ As servers accumulate more web applications, container stacks, and release histo
 ### Terminal Demonstration
 
 ```text
-upy analysis — 客户端项目与磁盘分析
+upy analysis — Projects and disk usage
 
-━ 最近一次部署动态 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  📦 项目: my-api-service (v1.2.0)
-  🧩 类型: Systemd 系统服务 (system) · upy-my-api-service.service
-  ⏱  时间: 22分钟前 (2026-10-19 19:40:02)
-  🟢 状态: 正常运行 (active)
+━ Latest deployment ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📦 Project: my-api-service (v1.2.0)
+  🧩 Type: Systemd service (system) · upy-my-api-service.service
+  ⏱  Time: 22 minutes ago (2026-10-19 19:40:02)
+  🟢 Status: Running (active)
 
-━ 项目分析 (状态 · 空间基准对比 · 类型 · 版本号) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#   项目名称            状态           类型     当前版本    磁盘占用    基准对比 (Max)
-1   my-compose-app      🟢 active      docker   v2.1.0      1.45 GB     ━━━━━━━━━━━━━━━━━━━━
-2   my-api-service      🟢 active      system   v1.2.0      482.3 MB    ━━━━━━━─────────────
-3   portal-frontend     🟢 active      static   v0.9.4       86.1 MB    ━───────────────────
-4   demo-spa            ⚪ undeployed  static   -            14.2 MB    ━───────────────────
+━ Project Analysis (status · disk usage · type · version) ━━━━━━━━━━━━━
+#   Project            Status         Type     Version    Disk usage  Comparison (max)
+1   my-compose-app     🟢 active      docker   v2.1.0     1.45 GB     ━━━━━━━━━━━━━━━━━━━━
+2   my-api-service     🟢 active      system   v1.2.0     482.3 MB    ━━━━━━━─────────────
+3   portal-frontend    🟢 active      static   v0.9.4     86.1 MB     ━───────────────────
+4   demo-spa           ⚪ undeployed  static   -          14.2 MB     ━───────────────────
 
-━ 存储汇总统计 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  📊 纳管项目: 4 个
-  💾 累计占用: 2.03 GB (平均每个项目 519.6 MB)
-  👑 空间首位: my-compose-app (1.45 GB, 占全机 upy 项目的 71.4%)
-  💡 提示: 可使用 upy analysis --detail 查看各子目录详细空间分布
+━ Storage summary ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📊 Managed projects: 4
+  💾 Total: 2.03 GB (average per project: 519.6 MB)
+  👑 Largest: my-compose-app (1.45 GB, 71.4% of managed storage)
+  💡 Tip: use upy analysis --detail to inspect storage by directory
 ```
 
 ### Common Usage
@@ -586,44 +586,44 @@ notify:
 Upon completing a deployment or backup, `upy` automatically extracts runtime context and generates standardized, diagnostic-rich **Title** and **Body** messages pushed directly to Bark with zero template configuration needed:
 
 ##### 1. Deployment Success Notification
-- **Title**: `upy 部署成功 · my-api-service`
+- **Title**: `upy deployment successful · my-api-service`
 - **Body**:
   ```text
-  项目: my-api-service
-  版本: v1.2.0
-  类型: Systemd 系统服务
-  目录: /opt/my-api-service
-  耗时: 3.2s
+  Project: my-api-service
+  Version: v1.2.0
+  Type: Systemd service
+  Directory: /opt/my-api-service
+  Duration: 3.2s
   ```
 
 ##### 2. Deployment Failure Alert (Automatic `timeSensitive` escalation)
-- **Title**: `upy 部署失败 · my-compose-stack`
+- **Title**: `upy deployment failed · my-compose-stack`
 - **Body**:
   ```text
-  项目: my-compose-stack
-  版本: v1.1.0
-  类型: Docker Compose 集成项目
-  目录: /opt/my-compose-stack
-  原因: healthcheck probe http://127.0.0.1:8080/health failed (timeout 30s)
+  Project: my-compose-stack
+  Version: v1.1.0
+  Type: Docker Compose stack
+  Directory: /opt/my-compose-stack
+  Reason: healthcheck probe http://127.0.0.1:8080/health failed (timeout 30s)
   ```
 
 ##### 3. Backup Success Notification
-- **Title**: `upy 备份成功 · my-api-service`
+- **Title**: `upy backup successful · my-api-service`
 - **Body**:
   ```text
-  项目: my-api-service
-  归档: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
-  目录: /opt/my-api-service
-  耗时: 2.4s
+  Project: my-api-service
+  Archive: dump-my-api-service-20261019-120000.sql.gz (42.5 MB)
+  Directory: /opt/my-api-service
+  Duration: 2.4s
   ```
 
 ##### 4. Backup Failure Alert
-- **Title**: `upy 备份失败 · my-api-service`
+- **Title**: `upy backup failed · my-api-service`
 - **Body**:
   ```text
-  项目: my-api-service
-  目录: /opt/my-api-service
-  原因: exit status 1: mysqldump: Got error: 2003: Can't connect to MySQL server
+  Project: my-api-service
+  Directory: /opt/my-api-service
+  Reason: exit status 1: mysqldump: Got error: 2003: Can't connect to MySQL server
   ```
 
 #### Configuration Scopes
