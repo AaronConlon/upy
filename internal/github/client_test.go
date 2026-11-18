@@ -63,6 +63,63 @@ func TestFindAssetExactOnly(t *testing.T) {
 	}
 }
 
+func multiAssetRelease() *GHRelease {
+	return &GHRelease{
+		Tag: "v1.2.0",
+		Assets: []GHAsset{
+			{ID: 10, Name: "bundle-prod-linux-arm64.zip"},
+			{ID: 11, Name: "bundle-test-linux-arm64.zip"},
+			{ID: 12, Name: "bundle-prod-linux-x64.zip"},
+			{ID: 13, Name: "checksums.txt"},
+		},
+	}
+}
+
+// Glob 单一命中：asset: bundle-test-*.zip 精确锁定 test 包
+func TestFindAssetGlobSingleMatch(t *testing.T) {
+	a, err := FindAsset(multiAssetRelease(), "bundle-test-*.zip", "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID != 11 {
+		t.Fatalf("期望 glob 命中 bundle-test-linux-arm64.zip, 得到 %s", a.Name)
+	}
+}
+
+// Glob 多命中：asset: bundle-prod-*.zip → 多个命中取第一个（稳定顺序）
+func TestFindAssetGlobMultiMatch(t *testing.T) {
+	a, err := FindAsset(multiAssetRelease(), "bundle-prod-*.zip", "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 两个 prod zip 均匹配，应返回第一个 (ID=10)
+	if a.ID != 10 {
+		t.Fatalf("期望取第一个 glob 命中项, 得到 %s", a.Name)
+	}
+}
+
+// Glob 无命中：直接报错，不再继续模糊匹配
+func TestFindAssetGlobNoMatch(t *testing.T) {
+	_, err := FindAsset(multiAssetRelease(), "bundle-staging-*.zip", "", "")
+	if err == nil {
+		t.Fatal("期望 glob 无命中时报错")
+	}
+	if !strings.Contains(err.Error(), "glob") {
+		t.Fatalf("期望错误信息含 'glob', 实际: %s", err.Error())
+	}
+}
+
+// Glob 不影响精确匹配：asset 无通配符时走原有精确+模糊逻辑
+func TestFindAssetGlobFallbackToExact(t *testing.T) {
+	a, err := FindAsset(sampleRelease(), "bundle.zip", "test-deploy-website", "test-deploy-website")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID != 1 {
+		t.Fatalf("精确匹配仍应优先, 得到 %s", a.Name)
+	}
+}
+
 func TestDownloadAssetSuccess(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DEPLOY_GITHUB_TOKEN", "")

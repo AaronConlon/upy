@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -261,19 +262,48 @@ func GetByTag(repo, tag string) (*GHRelease, error) {
 	return &r, nil
 }
 
-// FindAsset 定位 bundle 资产:
+// FindAsset 定位 bundle 资产，三步降级匹配:
 //  1. 精确匹配配置名 (如 bundle.zip) → 直接返回
-//  2. 未命中且提供了项目名线索时, 模糊匹配: 资产名含项目名 + 含版本号,
+//  2. Glob 匹配配置名 (如 bundle-prod-*.zip) → 多命中时优先含完整 tag 的
+//  3. 未命中且提供了项目名线索时, 模糊匹配: 资产名含项目名 + 含版本号,
 //     支持 "项目名-版本tag-日期.zip" 这类动态命名
 //
 // projectName 与 repoShort 可传空, 传空则跳过模糊匹配 (如自更新资产名固定)
 func FindAsset(release *GHRelease, name, projectName, repoShort string) (*GHAsset, error) {
+	// 步骤 1: 精确匹配
 	for i := range release.Assets {
 		if release.Assets[i].Name == name {
 			return &release.Assets[i], nil
 		}
 	}
 
+	// 步骤 2: Glob 匹配 (asset 配置中含通配符 * 或 ? 时生效)
+	if strings.ContainsAny(name, "*?[") {
+		var globMatches []*GHAsset
+		for i := range release.Assets {
+			a := &release.Assets[i]
+			matched, err := path.Match(name, a.Name)
+			if err == nil && matched {
+				globMatches = append(globMatches, a)
+			}
+		}
+		if len(globMatches) == 1 {
+			return globMatches[0], nil
+		}
+		if len(globMatches) > 1 {
+			// 多个命中：优先含完整 tag（如 v0.5.1）的
+			for _, c := range globMatches {
+				if strings.Contains(strings.ToLower(c.Name), strings.ToLower(release.Tag)) {
+					return c, nil
+				}
+			}
+			return globMatches[0], nil
+		}
+		// glob 无命中 → 报错（用户明确写了 pattern 却找不到，属配置问题，不再继续模糊匹配）
+		return nil, fmt.Errorf(i18n.T("版本 %s 中没有资产名匹配 glob \"%s\"（可用资产: %s）"), release.Tag, name, listAssets(release))
+	}
+
+	// 步骤 3: 项目名 + 版本号模糊匹配
 	names := make([]string, 0, 2)
 	if pn := strings.ToLower(strings.TrimSpace(projectName)); pn != "" {
 		names = append(names, pn)

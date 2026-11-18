@@ -1,6 +1,6 @@
 # 配置契约
 
-依据：AaronConlon/upy v0.8.5，internal/config/{manifest,project,user}.go、internal/crypto、internal/server 与 internal/deployer。升级后核对目标版本。
+依据：AaronConlon/upy v0.8.6，internal/config/{manifest,project,user}.go、internal/crypto、internal/server 与 internal/deployer。升级后核对目标版本。
 
 ## 服务器 <root>/deploy.yaml
 ```yaml
@@ -20,7 +20,7 @@ bundles:
 crypto:
   password: "仅保存在服务器 deploy.yaml 中的解密密码"
 ```
-static/docker 删除 service。asset 必须与 Release 中文件名完全一致；多架构不能统一用模糊名字。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。若配置了 `crypto.password`，upy 会在部署时自动识别加密 bundle（UPYC 魔数格式）进行防篡改校验并解密；若遇到旧版本未加密的普通 bundle.zip，upy 亦会自动平滑降级直接安全解压部署，绝不阻断历史版本回滚或未加密包的部署。
+static/docker 删除 service。`release.asset` 支持三种写法，按优先级依次尝试：①精确文件名（`bundle-linux-arm64.zip`）；②含通配符的 glob pattern（`bundle-prod-*.zip`，使用 `*`/`?`/`[…]`），glob 有命中时直接返回，无命中立即报错不再继续；③无通配符但精确名不存在时，模糊匹配含项目名 + 版本号的 zip。同一 tag 下有 prod/test 等多个 bundle 时，推荐精确写出文件名或用 glob pattern 锁定目标，避免歧义；多架构不要用不带 arch 的模糊名统一覆盖。name 与 bundle 一致。`releases.keep` 当前仅兼容读取，清理实现不按它控制数量；自动清理保留 current 和 state 中的 previous。不要通过 keep: 3 承诺保留三版，模板默认省略该字段。备份字段是另行核对的能力，不作为默认接入配置。若配置了 `crypto.password`，upy 会在部署时自动识别加密 bundle（UPYC 魔数格式）进行防篡改校验并解密；若遇到旧版本未加密的普通 bundle.zip，upy 亦会自动平滑降级直接安全解压部署，绝不阻断历史版本回滚或未加密包的部署。
 
 私有仓库 token 保存在用户级 `~/.upy/config.yaml` 的 github.token / github.tokens，或使用 `DEPLOY_GITHUB_TOKEN` 环境变量；不要假定普通 GITHUB_TOKEN 是 upy 的读取入口。只按目标仓库授予读取 Release 所需权限。CI 发布使用 github.token 是另一条认证链，不能拿它当服务器长期 token。不要打印、提交或打包 token。
 
