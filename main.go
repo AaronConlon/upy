@@ -15,6 +15,7 @@ import (
 	"github.com/AaronConlon/upy/internal/i18n"
 	"github.com/AaronConlon/upy/internal/log"
 	"github.com/AaronConlon/upy/internal/platform"
+	"github.com/AaronConlon/upy/internal/updatecheck"
 	"github.com/AaronConlon/upy/internal/version"
 )
 
@@ -265,6 +266,22 @@ func parseArgs(argv []string) parsedArgs {
 	return p
 }
 
+func shouldCheckUpdate(p parsedArgs, userCfg *config.UserConfig) bool {
+	if userCfg != nil && !userCfg.Update.IsCheckEnabled() {
+		return false
+	}
+	if p.cmd == "update" || p.cmd == "version" || p.showVersion {
+		return false
+	}
+	if p.json {
+		return false
+	}
+	if len(os.Args) >= 2 && strings.HasPrefix(os.Args[1], "__") {
+		return false
+	}
+	return true
+}
+
 func main() {
 	platform.SetDefaultUmask()
 	cmdStartedAt := time.Now()
@@ -314,8 +331,16 @@ func main() {
 
 	p := parseArgs(os.Args[1:])
 
+	var checker *updatecheck.Checker
+	if shouldCheckUpdate(p, userCfg) {
+		checker = updatecheck.Start(userCfg, version.Value, "", "")
+	}
+
 	if p.showHelp {
 		printHelp()
+		if checker != nil {
+			checker.Notify(os.Stderr)
+		}
 		return
 	}
 	if p.showVersion {
@@ -328,6 +353,9 @@ func main() {
 		cwd, err := os.Getwd()
 		if err != nil {
 			log.Fail(i18n.T("无法获取当前目录: ") + err.Error())
+			if checker != nil {
+				checker.Notify(os.Stderr)
+			}
 			os.Exit(1)
 		}
 		root = cwd
@@ -449,6 +477,13 @@ func main() {
 
 	if err != nil {
 		log.Fail(err.Error())
+		if checker != nil {
+			checker.Notify(os.Stderr)
+		}
 		os.Exit(1)
+	}
+
+	if checker != nil {
+		checker.Notify(os.Stderr)
 	}
 }

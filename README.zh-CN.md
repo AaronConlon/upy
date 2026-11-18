@@ -870,7 +870,8 @@ upy log upy -c
 
 ```yaml
 update:
-  proxy_enabled: true
+  check: true          # 命令执行后自动在后台低优先级检测新版本 (默认开启，设为 false 关闭)
+  proxy_enabled: true  # 自身升级下载加速
 ```
 
 默认关闭（`false` 或不配置）。开启后，`upy update`（含指定版本）通过 `https://ghfast.top/` 加上 GitHub Release 原始 URL 下载二进制及 `SHA256SUMS`，继续执行大小检查和 SHA-256 校验。版本查询仍直连 GitHub API；项目部署下载不受影响，加速请求不携带 GitHub Token。服务不可用时设为 `false` 恢复原下载路径。此开关不控制已有的系统 HTTP / HTTPS 代理。

@@ -186,9 +186,28 @@ type UserGitHub struct {
 	Tokens map[string]string `yaml:"tokens,omitempty"` // 按归属映射: WeiaiHealth-Software: ghp_xxx
 }
 
-// UpdateConfig 仅控制 upy 自身升级，不影响项目 Release 下载及系统网络代理。
+// UpdateConfig 控制 upy 自身升级与自动版本检查，不影响项目 Release 下载及系统网络代理。
 type UpdateConfig struct {
-	ProxyEnabled bool `yaml:"proxy_enabled,omitempty"`
+	ProxyEnabled bool  `yaml:"proxy_enabled,omitempty"`
+	Check        *bool `yaml:"check,omitempty"`        // 是否在命令执行后检查新版本并提示 (默认 true)
+	CheckUpdate  *bool `yaml:"check_update,omitempty"` // 兼容别名
+}
+
+// IsCheckEnabled 检查是否开启指令执行后的自动版本更新检测 (默认开启，可配置 update.check: false 关闭，或环境变量 UPY_NO_UPDATE_CHECK=1)
+func (u *UpdateConfig) IsCheckEnabled() bool {
+	if val := os.Getenv("UPY_NO_UPDATE_CHECK"); val == "1" || strings.EqualFold(val, "true") {
+		return false
+	}
+	if u == nil {
+		return true
+	}
+	if u.Check != nil {
+		return *u.Check
+	}
+	if u.CheckUpdate != nil {
+		return *u.CheckUpdate
+	}
+	return true
 }
 
 // UserConfig ~/.upy/config.yaml

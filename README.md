@@ -871,7 +871,8 @@ Optionally enable accelerated downloads for upy itself in `~/.upy/config.yaml`:
 
 ```yaml
 update:
-  proxy_enabled: true
+  check: true          # Low-priority auto-check for new versions after commands (enabled by default; set to false to disable)
+  proxy_enabled: true  # Self-update download accelerator
 ```
 
 Disabled by default (`false` or omitted). `upy update`, including pinned versions, downloads its binary and `SHA256SUMS` through `https://ghfast.top/` prefixed to the original GitHub Release URL. Size checks and SHA-256 verification remain enabled. Release metadata still uses the GitHub API directly; project deployments are unaffected. No GitHub token is sent to the accelerator. Set this option to `false` to restore the original download path if the service is unavailable. Existing system HTTP / HTTPS proxy settings are independent of this option.

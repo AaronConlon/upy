@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func sampleRelease() *GHRelease {
@@ -117,6 +118,42 @@ func TestFindAssetGlobFallbackToExact(t *testing.T) {
 	}
 	if a.ID != 1 {
 		t.Fatalf("精确匹配仍应优先, 得到 %s", a.Name)
+	}
+}
+
+func TestPeekLatestTagWithTimeout(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/releases/latest") {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"tag_name":"v0.9.0"}`))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts.Close()
+
+	oldAPI := apiBase
+	apiBase = ts.URL
+	defer func() { apiBase = oldAPI }()
+
+	tag := PeekLatestTagWithTimeout("AaronConlon/upy", 2*time.Second)
+	if tag != "v0.9.0" {
+		t.Fatalf("PeekLatestTagWithTimeout returned %q, want v0.9.0", tag)
+	}
+
+	// 测试超时返回空
+	slowTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"tag_name":"v0.9.0"}`))
+	}))
+	defer slowTs.Close()
+
+	apiBase = slowTs.URL
+	timeoutTag := PeekLatestTagWithTimeout("AaronConlon/upy", 10*time.Millisecond)
+	if timeoutTag != "" {
+		t.Fatalf("PeekLatestTagWithTimeout timeout returned %q, want empty string", timeoutTag)
 	}
 }
 

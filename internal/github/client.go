@@ -660,7 +660,15 @@ func downloadToFile(url, token string, asset *GHAsset, dest string) error {
 
 // PeekLatestTag 不强制 token 的 latest tag 探测 (version 自更新检查, 失败返回空)
 func PeekLatestTag(repo string) string {
-	req, err := http.NewRequest(http.MethodGet, apiBase+"/repos/"+repo+"/releases/latest", nil)
+	return PeekLatestTagWithTimeout(repo, 60*time.Second)
+}
+
+// PeekLatestTagWithTimeout 带超时限制的 latest tag 探测 (用于低优先级后台自更新检查)
+func PeekLatestTagWithTimeout(repo string, timeout time.Duration) string {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiBase+"/repos/"+repo+"/releases/latest", nil)
 	if err != nil {
 		return ""
 	}

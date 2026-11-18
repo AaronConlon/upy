@@ -493,6 +493,51 @@ func TestUpdateProxyConfiguration(t *testing.T) {
 	}
 }
 
+func TestUpdateCheckConfiguration(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	t.Setenv("UPY_CONFIG", path)
+
+	// 默认开启
+	var defaultCfg UpdateConfig
+	if !defaultCfg.IsCheckEnabled() {
+		t.Fatal("UpdateConfig 默认应开启检查")
+	}
+
+	// 环境变量关闭
+	t.Setenv("UPY_NO_UPDATE_CHECK", "1")
+	if defaultCfg.IsCheckEnabled() {
+		t.Fatal("UPY_NO_UPDATE_CHECK=1 应关闭检查")
+	}
+	t.Setenv("UPY_NO_UPDATE_CHECK", "")
+
+	for _, tc := range []struct {
+		yaml     string
+		expected bool
+	}{
+		{"", true},
+		{"update: {}", true},
+		{"update:\n  check: true\n", true},
+		{"update:\n  check: false\n", false},
+		{"update:\n  check_update: false\n", false},
+		{"update:\n  check_update: true\n", true},
+	} {
+		if err := os.WriteFile(path, []byte(tc.yaml), 0600); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := LoadUserConfig()
+		if err != nil || cfg.Update.IsCheckEnabled() != tc.expected {
+			t.Fatalf("config %q: IsCheckEnabled() = %v, want %v (err=%v)", tc.yaml, cfg.Update.IsCheckEnabled(), tc.expected, err)
+		}
+		if _, err := saveUserConfig(cfg); err != nil {
+			t.Fatal(err)
+		}
+		again, err := LoadUserConfig()
+		if err != nil || again.Update.IsCheckEnabled() != tc.expected {
+			t.Fatalf("config %q lost check option after save: %v", tc.yaml, err)
+		}
+	}
+}
+
 func TestSaveLanguagePreservesConfiguration(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 	t.Setenv("UPY_CONFIG", path)
